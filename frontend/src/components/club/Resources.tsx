@@ -1002,15 +1002,6 @@ export default function Resources() {
                   >
                     Anmol Ghogare
                   </a>
-                  <span>•</span>
-                  <a
-                    href="https://www.linkedin.com/in/bhagyashree-khemwani/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-foreground transition-colors hover:text-primary underline decoration-border hover:decoration-primary underline-offset-2"
-                  >
-                    Bhagyashree Khemwani
-                  </a>
                 </div>
               </div>
             </div>
