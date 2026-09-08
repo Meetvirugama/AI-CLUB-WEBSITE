@@ -979,8 +979,8 @@ export default function Resources() {
                 </span>
               </div>
 
-              <div className="mt-6 flex flex-col items-center justify-center gap-2 border-t border-border/50 pt-5 text-center">
-                <p className="font-mono text-xs uppercase tracking-[0.12em] font-bold text-foreground">
+              <div className="mt-6 flex flex-col items-center justify-center gap-2.5 border-t border-border/50 pt-5 text-center">
+                <p className="font-mono text-xs sm:text-sm uppercase tracking-[0.12em] font-bold text-foreground">
                   MADE WITH ❤️ BY{" "}
                   <a
                     href="https://www.linkedin.com/in/meet-virugama-76a107320/"
@@ -992,7 +992,7 @@ export default function Resources() {
                   </a>
                 </p>
 
-                <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-mono text-[11px] sm:text-xs uppercase tracking-[0.08em] text-muted-foreground">
                   <span>Other Contributors:</span>
                   <a
                     href="https://www.linkedin.com/in/anmol-ghogare-407244381/"
