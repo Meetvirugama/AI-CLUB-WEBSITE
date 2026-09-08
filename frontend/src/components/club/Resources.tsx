@@ -968,14 +968,51 @@ export default function Resources() {
         {!loading &&
           filteredGroups.length >
             0 && (
-            <div className="mt-4 flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
-              <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">
-                Curated by AI Club / DAIICT
-              </span>
+            <div className="mt-4 border-t border-border pt-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">
+                  Curated by AI Club / DAIICT
+                </span>
 
-              <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">
-                Free resources only
-              </span>
+                <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">
+                  Free resources only
+                </span>
+              </div>
+
+              <div className="mt-6 flex flex-col items-center justify-center gap-2 border-t border-border/50 pt-5 text-center">
+                <p className="font-mono text-xs uppercase tracking-[0.12em] font-bold text-foreground">
+                  MADE WITH ❤️ BY{" "}
+                  <a
+                    href="https://www.linkedin.com/in/meet-virugama-76a107320/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline decoration-primary/40 underline-offset-4 transition-colors hover:decoration-primary hover:text-primary/80"
+                  >
+                    MEET VIRUGAMA
+                  </a>
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                  <span>Other Contributors:</span>
+                  <a
+                    href="https://www.linkedin.com/in/anmol-ghogare-407244381/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-foreground transition-colors hover:text-primary underline decoration-border hover:decoration-primary underline-offset-2"
+                  >
+                    Anmol Ghogare
+                  </a>
+                  <span>•</span>
+                  <a
+                    href="https://www.linkedin.com/in/bhagyashree-khemwani/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-foreground transition-colors hover:text-primary underline decoration-border hover:decoration-primary underline-offset-2"
+                  >
+                    Bhagyashree Khemwani
+                  </a>
+                </div>
+              </div>
             </div>
           )}
       </div>
