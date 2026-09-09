@@ -60,7 +60,7 @@ export const teamMembers: TeamMember[] = [
   },
   {
     name: 'Bhagyashree Khemwani',
-    image: '/bhagyashree-khemwani.png',
+    image: '/bhagyashree-khemwani.png?v=latest',
     linkedin: 'https://www.linkedin.com/in/bhagyashree-khemwani/',
     github: 'https://github.com/bhagy-shr',
     bio: 'I am a B.Tech ICT student at DAU, passionate about AI/ML and everything in between. Core Member of AI Club DAU and a Google Gemini Student Ambassador, exploring how AI can solve real, everyday problems.',

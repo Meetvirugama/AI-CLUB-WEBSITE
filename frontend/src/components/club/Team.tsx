@@ -64,6 +64,7 @@ const LinkedInIcon = () => (
 
 const MEMBER_PHOTO_OVERRIDES: Record<string, string> = {
   'Anmol Ghogare': 'https://lh3.googleusercontent.com/d/1ff8W6U26StDc86Im77NNMcUd6jCLxCgx',
+  'Bhagyashree Khemwani': '/bhagyashree-khemwani.png?v=latest',
 };
 
 function getDriveUrls(url: string): string[] {
@@ -89,7 +90,7 @@ function MemberAvatar({ name, photo }: { name: string; photo: string }) {
     ? 'https://lh3.googleusercontent.com/d/1ff8W6U26StDc86Im77NNMcUd6jCLxCgx'
     : Object.entries(MEMBER_PHOTO_OVERRIDES).find(([k]) => k.toLowerCase() === normalizedName)?.[1];
     
-  const rawPhoto = photo || overridePhoto || '';
+  const rawPhoto = overridePhoto || photo || '';
   const urls = getDriveUrls(rawPhoto);
   const currentUrl = urls[urlIndex] || '';
 
