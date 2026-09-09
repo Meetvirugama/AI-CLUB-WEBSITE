@@ -108,7 +108,7 @@ function MemberAvatar({ name, photo }: { name: string; photo: string }) {
         <img
           src={currentUrl}
           alt={name}
-          className="w-full h-full object-cover object-top"
+          className={`w-full h-full object-cover ${normalizedName.includes('bhagyashree') ? 'object-center' : 'object-top'}`}
           onError={() => setUrlIndex((prev) => prev + 1)}
           referrerPolicy="no-referrer"
         />
