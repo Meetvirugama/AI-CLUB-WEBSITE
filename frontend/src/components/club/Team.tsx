@@ -23,6 +23,7 @@ export interface Member {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useMemo } from 'react';
 import { getApiUrl } from '../../lib/api';
+import TeamWorldBox from './TeamWorldBox';
 import { Search, ArrowRight, Sparkles, X, FolderGit2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -413,6 +414,7 @@ const ROLE_ORDER: Record<string, number> = {
   'Ex Core Member':         8,
   'Alumni':                 9,
 };
+import TeamGlobe from './TeamGlobe';
 
 export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
   const [memberList, setMemberList] = useState<Member[]>([]);
@@ -421,6 +423,8 @@ export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [viewMode, setViewMode] = useState<'globe' | 'grid'>('globe');
+  const [selectedGlobeMember, setSelectedGlobeMember] = useState<Member | null>(null);
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -500,27 +504,28 @@ export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
   return (
     <section
       id="team"
-      className="bg-[#ECF0F7] border-t border-slate-200"
+      className={`bg-[#ECF0F7] ${isHomepage ? 'border-t border-slate-200' : 'flex-1 w-full flex flex-col min-h-0'}`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <h2 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-slate-900 mb-2">
-          The team
-        </h2>
-        <p className="font-sans text-base text-slate-500 mb-10">
-          Students who keep the Wednesday sessions running.
-        </p>
+      <div className={isHomepage ? "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-50" : "w-full flex-1 flex flex-col min-h-0 px-4 sm:px-8 lg:px-12 py-4 max-w-[100vw] relative z-50"}>
+        <div className="relative z-50 bg-[#ECF0F7]/50 backdrop-blur-sm rounded-2xl p-2 -mx-2 mb-2">
+          <h2 className={`font-serif ${isHomepage ? 'text-3xl sm:text-5xl mb-2' : 'text-2xl sm:text-3xl mb-1'} font-bold tracking-tight text-slate-900`}>
+            The team
+          </h2>
+          <p className={`font-sans text-slate-500 ${isHomepage ? 'text-base mb-6' : 'text-sm mb-4'}`}>
+            Students who keep the Wednesday sessions running.
+          </p>
 
-        {/* Search + Filters for full page */}
-        {!isHomepage && (
-          <div className="flex gap-4 flex-wrap items-center mb-8">
-            <div className="relative flex-1 min-w-[260px] max-w-sm">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          {/* Search + Filters for full page */}
+          {!isHomepage && (
+            <div className="flex gap-4 flex-wrap items-center">
+              <div className="relative flex-1 min-w-[200px] max-w-xs">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search by name or role..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-350 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-800 placeholder-slate-400"
+                className="w-full pl-9 pr-4 py-1.5 text-xs bg-white border border-slate-350 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-800 placeholder-slate-400"
               />
             </div>
             <div className="flex gap-1.5 flex-wrap">
@@ -530,12 +535,12 @@ export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
                 { id: 'core', label: 'Core' },
                 { id: 'extended', label: 'Extended Core' },
                 { id: 'member', label: 'Members' },
-                { id: 'alumni', label: 'Alumni / Past Leads' },
+                { id: 'alumni', label: 'Alumni' },
               ].map((pill) => (
                 <button
                   key={pill.id}
                   onClick={() => setRoleFilter(pill.id)}
-                  className={`px-4 py-1.5 rounded-lg border text-xs font-mono transition-all duration-200 ${
+                  className={`px-3 py-1 rounded-lg border text-[10px] uppercase tracking-wider font-bold transition-all duration-200 ${
                     roleFilter === pill.id 
                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-150' 
                       : 'bg-transparent text-slate-500 border-slate-200 hover:bg-slate-100'
@@ -545,28 +550,110 @@ export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
                 </button>
               ))}
             </div>
+            {/* View Mode Toggle */}
+            <div className="flex bg-slate-200/50 p-1 rounded-lg w-fit ml-auto">
+              <button 
+                onClick={() => setViewMode('globe')}
+                className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${viewMode === 'globe' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                Globe
+              </button>
+              <button 
+                onClick={() => setViewMode('grid')}
+                className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                Grid
+              </button>
+            </div>
           </div>
         )}
+        </div>
 
         {loading ? (
-          <div className="flex flex-col items-center py-12">
+          <div className="flex flex-col items-center py-12 flex-1 justify-center">
             <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-3"></div>
             <span className="text-sm font-semibold text-slate-400">Loading team...</span>
           </div>
         ) : displayMembers.length === 0 ? (
-          <p className="font-sans text-sm text-slate-400 py-10">No members found.</p>
+          <p className="font-sans text-sm text-slate-400 py-10 flex-1 flex items-center justify-center">No members found.</p>
+        ) : viewMode === 'globe' ? (
+          <div className="team-globe-scroll">
+            <TeamWorldBox
+              members={displayMembers}
+              onSelectMember={(member) => {
+                setSelectedGlobeMember(member);
+              }}
+              isHomepage={isHomepage}
+            />
+            <p className="team-globe-hint">
+              Drag to rotate · click a member for details · Esc to close
+            </p>
+          </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 border-t border-l border-slate-200 bg-[#ECF0F7] overflow-hidden">
-            {displayMembers.map((m) => (
-              <TeamMemberCard 
-                key={m.id} 
-                member={m} 
-                projects={projects} 
-                achievements={achievements} 
-              />
-            ))}
+          <div className="flex-1 min-h-0 overflow-y-auto w-full mt-2 rounded-lg border border-slate-200">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 bg-[#ECF0F7]">
+              {displayMembers.map((m) => (
+                <TeamMemberCard 
+                  key={m.id} 
+                  member={m} 
+                  projects={projects} 
+                  achievements={achievements} 
+                />
+              ))}
+            </div>
           </div>
         )}
+
+        {/* Modal for Globe selected member */}
+        <AnimatePresence>
+          {selectedGlobeMember && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+                onClick={() => setSelectedGlobeMember(null)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative bg-white rounded-3xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col z-10 p-6"
+              >
+                <div className="flex justify-end">
+                  <button onClick={() => setSelectedGlobeMember(null)} className="text-slate-400 hover:text-slate-700 p-1">
+                    <X size={20} />
+                  </button>
+                </div>
+                <div className="flex flex-col items-center mt-2">
+                  <MemberAvatar name={selectedGlobeMember.name} photo={selectedGlobeMember.photo || ''} />
+                  <h4 className="font-bold text-lg text-slate-900 mt-3 text-center">{selectedGlobeMember.name}</h4>
+                  <RoleBadge role={selectedGlobeMember.role} />
+                  
+                  {selectedGlobeMember.description && (
+                    <p className="text-sm text-slate-500 text-center mt-4 leading-relaxed">
+                      {selectedGlobeMember.description}
+                    </p>
+                  )}
+                  
+                  <div className="flex gap-3 justify-center mt-6">
+                    {selectedGlobeMember.github && (
+                      <a href={selectedGlobeMember.github} target="_blank" rel="noopener noreferrer" className="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-600 transition-colors">
+                        <GitHubIcon />
+                      </a>
+                    )}
+                    {selectedGlobeMember.linkedin && (
+                      <a href={selectedGlobeMember.linkedin} target="_blank" rel="noopener noreferrer" className="p-2.5 bg-slate-100 hover:bg-indigo-100 text-slate-600 hover:text-indigo-600 rounded-full transition-colors">
+                        <LinkedInIcon />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {/* CTA */}
         {isHomepage && (

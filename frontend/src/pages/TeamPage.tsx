@@ -1,24 +1,13 @@
-import Navbar from '@/components/club/Navbar';
 import Team from '@/components/club/Team';
-import Footer from '@/components/club/Footer';
 import Chatbot from '@/components/club/Chatbot';
-import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
 
 const TeamPage = () => {
   return (
-    <div className="relative z-[1] min-h-screen">
-      <div className="pt-28 max-w-[1200px] mx-auto px-6 md:px-12 -mb-16 relative z-10">
-        <Link 
-          to="/" 
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-transparent border border-border/50 text-[10px] font-mono tracking-widest uppercase text-muted-foreground hover:text-foreground hover:border-primary/30 hover:from-primary/15 transition-all duration-300 group"
-        >
-          <ArrowLeft size={11} className="group-hover:-translate-x-1 transition-transform duration-300 text-primary" />
-          <span>Back to Home</span>
-        </Link>
-      </div>
-      <Team isHomepage={false} />
-      <Footer />
+    <div className="relative z-[1] h-[100dvh] overflow-hidden bg-[#ECF0F7] flex flex-col">
+      <main className="flex-1 min-h-0 flex flex-col">
+        <Team isHomepage={false} />
+      </main>
+
       <Chatbot />
     </div>
   );

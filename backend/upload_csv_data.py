@@ -5,12 +5,9 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy import select
 from members.models import ClubMember
 from projects.models import ClubProject
+from db import async_session
 
 CSV_PATH = "../Details For AI Club Website.csv"
-DB_URL = "postgresql+asyncpg://postgres.jtpkznqerxzxkhufgojs:Aiclubdaiict@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
-
-engine = create_async_engine(DB_URL, connect_args={"statement_cache_size": 0}, echo=False)
-async_session = async_sessionmaker(engine, expire_on_commit=False)
 
 def clean_na(val):
     v = val.strip()
@@ -96,22 +93,23 @@ async def main():
                 proj_descs = clean_na(row.get("Description of Projects (if 0 Projects then write NA)", ""))
                 
                 if proj_names:
-                    title = proj_names
-                    if len(title) > 250:
-                        title = title[:247] + "..."
+                    pass
+                    # title = proj_names
+                    # if len(title) > 250:
+                    #     title = title[:247] + "..."
                         
-                    stmt_proj = select(ClubProject).where(ClubProject.author_id == member.id, ClubProject.title == title)
-                    res_proj = await session.execute(stmt_proj)
-                    if res_proj.scalar_one_or_none() is None:
-                        project = ClubProject(
-                            title=title,
-                            author=member.name,
-                            author_id=member.id,
-                            description=proj_descs or "No description provided.",
-                            github_link=github or ""
-                        )
-                        session.add(project)
-                        print(f"  -> Added project: {title[:30]}...")
+                    # stmt_proj = select(ClubProject).where(ClubProject.author_id == member.id, ClubProject.title == title)
+                    # res_proj = await session.execute(stmt_proj)
+                    # if res_proj.scalar_one_or_none() is None:
+                    #     project = ClubProject(
+                    #         title=title,
+                    #         author=member.name,
+                    #         author_id=member.id,
+                    #         description=proj_descs or "No description provided.",
+                    #         github_link=github or ""
+                    #     )
+                    #     session.add(project)
+                    #     print(f"  -> Added project: {title[:30]}...")
                     
             await session.commit()
             print("Successfully committed to DB.")
