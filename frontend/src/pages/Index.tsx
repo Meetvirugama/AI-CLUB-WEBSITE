@@ -9,7 +9,6 @@ import Team from '@/components/club/Team';
 import Resources from '@/components/club/Resources';
 import Roadmap from '@/components/club/Roadmap';
 import Footer from '@/components/club/Footer';
-import Chatbot from '@/components/club/Chatbot';
 
 const Index = () => {
   const location = useLocation();
@@ -37,7 +36,6 @@ const Index = () => {
       <Roadmap />
       <Resources />
       <Footer />
-      <Chatbot />
     </div>
   );
 };

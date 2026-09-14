@@ -15,6 +15,7 @@ import NewsPage from "./pages/NewsPage.tsx";
 import AuraPage from "./pages/AuraPage.tsx";
 import AuthBarrier from "./components/AuthBarrier.tsx";
 import Navbar from "./components/club/Navbar.tsx";
+import Chatbot from "./components/club/Chatbot.tsx";
 import BackgroundCanvas from "./components/club/BackgroundCanvas.tsx";
 import ScrollToTop from "./components/ScrollToTop.tsx";
 
@@ -45,6 +46,16 @@ const HeaderNavbar = () => {
   return <Navbar />;
 };
 
+// Mirrors HeaderNavbar exclusion pattern — hide chatbot on /admin and /aura.
+// /admin has its own dedicated UI; /aura is a standalone experience.
+const GlobalChatbot = () => {
+  const location = useLocation();
+  if (location.pathname.startsWith('/admin') || location.pathname.startsWith('/aura')) {
+    return null;
+  }
+  return <Chatbot />;
+};
+
 const App = () => (
   <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
     <QueryClientProvider client={queryClient}>
@@ -55,6 +66,7 @@ const App = () => (
           <BackgroundCanvas />
           <ScrollToTop />
           <HeaderNavbar />
+          <GlobalChatbot />
           <Routes>
             {/* ── Public routes — no login required ── */}
             <Route path="/" element={<Index />} />
