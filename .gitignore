@@ -63,3 +63,8 @@ pnpm-debug.log*
 # Backend uploads / temporary storage
 backend/uploads/*
 !backend/uploads/.gitkeep
+
+# Project specific ignored files
+*.csv
+task.md
+test_db.py
