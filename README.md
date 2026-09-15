@@ -2,6 +2,10 @@
 
 A modern full-stack platform built for the college AI Club featuring event management, dynamic form builder, member/project showcase, Google OAuth authentication, and an integrated Gemini AI assistant.
 
+### 🌟 Live Demo
+- **Frontend (Vercel)**: [https://ai-club-website-lyart.vercel.app](https://ai-club-website-lyart.vercel.app)
+- **Backend API (Render)**: [https://ai-club-website-e9zk.onrender.com/docs](https://ai-club-website-e9zk.onrender.com/docs)
+
 ---
 
 ## 📁 Repository Structure
