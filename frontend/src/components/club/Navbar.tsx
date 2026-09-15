@@ -161,6 +161,7 @@ export default function Navbar() {
               is_admin: !!data.user.is_admin,
             });
           }
+          window.dispatchEvent(new Event('auth-change'));
         } else {
           console.error('Auth failed:', await authRes.text());
         }
@@ -186,6 +187,7 @@ export default function Navbar() {
     } catch (_) {}
     setUser(null);
     setShowUserDropdown(false);
+    window.dispatchEvent(new Event('auth-change'));
   };
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {

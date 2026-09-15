@@ -111,41 +111,97 @@ const SOURCE_TYPE_LABELS: Record<string, { label: string; color: string }> = {
 // ── Inline markdown renderer ──────────────────────────────────────────────────
 // Returns JSX — no dangerouslySetInnerHTML (XSS-safe).
 
+function parseTableRow(row: string): string[] {
+  let cleaned = row.trim();
+  if (cleaned.startsWith('|')) cleaned = cleaned.slice(1);
+  if (cleaned.endsWith('|')) cleaned = cleaned.slice(0, -1);
+  return cleaned.split('|').map(c => c.trim());
+}
+
 function renderMarkdown(text: string): JSX.Element {
   const lines = text.split('\n');
   const elements: JSX.Element[] = [];
 
-  lines.forEach((line, lineIdx) => {
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
     const trimmed = line.trim();
+
     if (!trimmed) {
-      elements.push(<div key={`gap-${lineIdx}`} style={{ height: '0.35rem' }} />);
-      return;
+      elements.push(<div key={`gap-${i}`} style={{ height: '0.35rem' }} />);
+      i++;
+      continue;
+    }
+
+    if (trimmed.includes('|') && i + 1 < lines.length) {
+      const nextTrimmed = lines[i + 1].trim();
+      if (nextTrimmed.includes('|') && nextTrimmed.includes('---')) {
+        const tableRows: string[] = [];
+        while (i < lines.length && lines[i].trim().includes('|')) {
+          tableRows.push(lines[i].trim());
+          i++;
+        }
+        
+        elements.push(
+          <div key={`table-${i}`} style={{ overflowX: 'auto', margin: '0.75rem 0', borderRadius: '0.5rem', border: '1px solid hsl(var(--border))' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85em', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ backgroundColor: 'hsl(var(--muted) / 0.5)', borderBottom: '1px solid hsl(var(--border))' }}>
+                  {parseTableRow(tableRows[0]).map((cell, idx) => (
+                    <th key={idx} style={{ padding: '0.5rem 0.75rem', fontWeight: 600 }}>
+                      {renderInline(cell, `th-${idx}`)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {tableRows.slice(2).map((row, rowIdx) => (
+                  <tr key={rowIdx} style={{ borderBottom: rowIdx === tableRows.length - 3 ? 'none' : '1px solid hsl(var(--border))' }}>
+                    {parseTableRow(row).map((cell, idx) => (
+                      <td key={idx} style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
+                        {renderInline(cell, `td-${rowIdx}-${idx}`)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+        continue;
+      }
     }
 
     const isBullet = trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ');
     const content = isBullet ? trimmed.slice(2) : trimmed;
-    const inlineNodes = renderInline(content, lineIdx);
+    const inlineNodes = renderInline(content, i);
 
     if (isBullet) {
       elements.push(
-        <div key={`li-${lineIdx}`} style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-start' }}>
+        <div key={`li-${i}`} style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-start' }}>
           <span style={{ color: 'hsl(243 75% 59%)', flexShrink: 0, marginTop: '0.05rem', fontSize: '0.85em' }}>▸</span>
           <span>{inlineNodes}</span>
         </div>
       );
     } else {
-      elements.push(<div key={`p-${lineIdx}`}>{inlineNodes}</div>);
+      elements.push(<div key={`p-${i}`}>{inlineNodes}</div>);
     }
-  });
+    
+    i++;
+  }
 
   return <>{elements}</>;
 }
 
 function renderInline(text: string, lineKey: number | string): JSX.Element {
-  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|https?:\/\/[^\s)]+)/g);
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|https?:\/\/[^\s)]+|<br\s*\/?>)/gi);
   return (
     <>
       {parts.map((part, i) => {
+        if (!part) return null;
+        if (part.toLowerCase().startsWith('<br')) {
+          return <br key={`${lineKey}-${i}`} />;
+        }
         if (part.startsWith('**') && part.endsWith('**')) {
           return <strong key={`${lineKey}-${i}`}>{part.slice(2, -2)}</strong>;
         }

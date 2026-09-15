@@ -74,7 +74,16 @@ export function useAuth(): AuthState {
     };
 
     checkAuth();
-    return () => { cancelled = true; };
+    
+    const handleAuthChange = () => {
+      checkAuth();
+    };
+    window.addEventListener('auth-change', handleAuthChange);
+    
+    return () => { 
+      cancelled = true; 
+      window.removeEventListener('auth-change', handleAuthChange);
+    };
   }, []);
 
   return state;
