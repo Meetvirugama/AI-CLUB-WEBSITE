@@ -96,7 +96,7 @@ export const facultyMembers: FacultyMember[] = [
     email: '',
     office: 'Block 2, Room 412',
     quote: 'An academic who wandered into the industry, spent 18 years there... and have returned to academics.',
-    linkedin: 'https://in.linkedin.com/in/venkatesh-g-a02a58',
+    linkedin: 'https://www.linkedin.com/in/venkatesh-g-a02a58/',
     photo: '/venkatesh-g.png',
     contributions: ['Project Vision', 'Research Direction', 'Mentoring', 'Technical Guidance'],
     skills: ['Theoretical CS', 'Embedded Systems', 'VLSI'],
