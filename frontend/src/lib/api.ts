@@ -7,8 +7,8 @@ export function getApiUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   
   if (import.meta.env.DEV) {
-    const devHost = import.meta.env.VITE_DEV_API_URL || 'http://localhost:8000';
-    return `${devHost}${normalizedPath}`;
+    // Rely on Vite proxy (see vite.config.ts) for local development
+    return normalizedPath;
   }
 
   const prodHost = import.meta.env.VITE_API_URL || '';

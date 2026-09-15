@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import Navbar from '@/components/club/Navbar';
 import Footer from '@/components/club/Footer';
-import { Loader2, Download, Trash2, Calendar, Users, Award, Newspaper, Clipboard, Settings, Edit, Eye, FileText, Archive, Plus, Image, Link2, Tag, LayoutDashboard, LogOut, ChevronRight, Edit2, ArrowUp, ArrowDown, X, BookOpen } from 'lucide-react';
+import { Loader2, Download, Trash2, Calendar, Users, Award, Newspaper, Clipboard, Settings, Edit, Eye, FileText, Archive, Plus, Image, Link2, Tag, LayoutDashboard, LogOut, ChevronRight, Edit2, ArrowUp, ArrowDown, X, BookOpen, Bot } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { supabase } from '../lib/supabase';
 import { getApiUrl } from '../lib/api';
+import ChatbotAnalytics from './ChatbotAnalytics';
 
 
 interface EventModel {
@@ -43,7 +44,7 @@ interface AchievementModel {
 }
 
 const Admin = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'registrations' | 'createEvent' | 'formBuilder' | 'manageEvents' | 'manageMembers' | 'manageProjects' | 'pastEvents' | 'manageAchievements' | 'manageNews' | 'manageResources' | 'manageWeeklyVeneza'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'registrations' | 'createEvent' | 'formBuilder' | 'manageEvents' | 'manageMembers' | 'manageProjects' | 'pastEvents' | 'manageAchievements' | 'manageNews' | 'manageResources' | 'manageWeeklyVeneza' | 'chatbotAnalytics'>('dashboard');
 
   // Auth & Admin Guard State
   const [authState, setAuthState] = useState<{
@@ -1912,6 +1913,7 @@ const Admin = () => {
                 { key: 'manageNews', label: 'News', icon: <Newspaper size={16} /> },
                 { key: 'manageResources', label: 'Resources', icon: <BookOpen size={16} /> },
                 { key: 'manageWeeklyVeneza', label: 'Weekly Veneza', icon: <Clock size={16} /> },
+                { key: 'chatbotAnalytics', label: 'Chatbot Analytics', icon: <Bot size={16} /> },
               ] as { key: string; label: string; icon: any }[]).map((tab) => {
                 const isActive = activeTab === tab.key;
                 return (
@@ -1964,6 +1966,7 @@ const Admin = () => {
                   {activeTab === 'manageResources' && 'Resource Sheet Manager'}
                   {activeTab === 'manageWeeklyVeneza' && 'Weekly Veneza Curriculum Manager'}
                   {activeTab === 'pastEvents' && 'Past Events Archive'}
+                  {activeTab === 'chatbotAnalytics' && 'Chatbot Analytics'}
                 </h2>
               </div>
             </header>
@@ -3468,6 +3471,13 @@ const Admin = () => {
                   )}
                 </motion.div>
               )}
+
+              {activeTab === 'chatbotAnalytics' && (
+                <motion.div key="chatbotAnalytics" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <ChatbotAnalytics getAuthHeaders={getAuthHeaders} />
+                </motion.div>
+              )}
+
             </AnimatePresence>
           </div>
         </div>
