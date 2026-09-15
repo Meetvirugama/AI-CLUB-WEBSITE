@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import Navbar from '@/components/club/Navbar';
 import Footer from '@/components/club/Footer';
-import { Loader2, Download, Trash2, Calendar, Users, Award, Newspaper, Clipboard, Settings, Edit, Eye, FileText, Archive, Plus, Image, Link2, Tag, LayoutDashboard, LogOut, ChevronRight, Edit2, ArrowUp, ArrowDown, X, BookOpen, Bot } from 'lucide-react';
+import { Loader2, Download, Trash2, Calendar, Users, Award, Newspaper, Clipboard, Settings, Edit, Eye, FileText, Archive, Plus, Image, Link2, Tag, LayoutDashboard, LogOut, ChevronRight, Edit2, ArrowUp, ArrowDown, X, BookOpen, Bot, Clock } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { supabase } from '../lib/supabase';
 import { getApiUrl } from '../lib/api';
