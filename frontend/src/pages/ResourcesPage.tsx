@@ -17,8 +17,8 @@ const ResourcesPage = () => {
           <span>Back to Home</span>
         </Link>
       </div>
-      <Roadmap />
-      <Resources />
+      <Roadmap isHomepage={false} />
+      <Resources isHomepage={false} />
       <Footer short />
       <Chatbot />
     </div>

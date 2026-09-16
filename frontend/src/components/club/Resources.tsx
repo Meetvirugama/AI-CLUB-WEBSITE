@@ -441,7 +441,7 @@ function LoadingState() {
    MAIN COMPONENT
 ============================================================ */
 
-export default function Resources() {
+export default function Resources({ isHomepage = true }: { isHomepage?: boolean }) {
   const [resources, setResources] = useState<
     ResourceGroup[]
   >([]);
@@ -685,9 +685,11 @@ export default function Resources() {
         >
           {/* Eyebrow */}
 
-          <div className="section-label text-sm uppercase tracking-widest text-primary mb-4 block">
-            05 — Resources
-          </div>
+          {isHomepage && (
+            <div className="section-label text-sm uppercase tracking-widest text-primary mb-4 block">
+              05 — Resources
+            </div>
+          )}
 
           {/* Heading */}
 
