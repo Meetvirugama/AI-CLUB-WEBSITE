@@ -436,9 +436,9 @@ export default function Roadmap({ isHomepage = true }: { isHomepage?: boolean })
   return (
     <section
       id="roadmaps"
-      className="relative overflow-hidden bg-background py-16"
+      className={`relative overflow-hidden bg-background ${isHomepage ? "py-16" : "pt-0 pb-16"}`}
     >
-      <div className="section-container relative z-10 max-w-6xl mx-auto px-6">
+      <div className={`section-container relative z-10 max-w-6xl mx-auto px-6 ${!isHomepage ? "!pt-0" : ""}`}>
         {/* HEADER */}
 
         <motion.div
