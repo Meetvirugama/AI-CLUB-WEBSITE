@@ -609,7 +609,7 @@ export default function WeeklyVenezaPage() {
 
       </main>
 
-      <Footer />
+      <Footer short />
     </div>
   );
 }

@@ -511,7 +511,7 @@ export default function CurriculumPage() {
         </div>
       </main>
       
-      <Footer />
+      <Footer short />
     </div>
   );
 }

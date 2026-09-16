@@ -293,7 +293,7 @@ const NewsPage = () => {
         </AnimatePresence>
       </section>
 
-      <Footer />
+      <Footer short />
       <Chatbot />
     </div>
   );

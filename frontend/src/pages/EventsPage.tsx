@@ -18,7 +18,7 @@ const EventsPage = () => {
         </Link>
       </div>
       <Events isHomepage={false} />
-      <Footer />
+      <Footer short />
       <Chatbot />
     </div>
   );

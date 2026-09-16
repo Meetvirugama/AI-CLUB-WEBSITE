@@ -18,7 +18,7 @@ const ProjectsPage = () => {
         </Link>
       </div>
       <Projects isHomepage={false} />
-      <Footer />
+      <Footer short />
       <Chatbot />
     </div>
   );
