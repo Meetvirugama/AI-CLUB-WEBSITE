@@ -7,6 +7,8 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 import json
+import hashlib
+from dataclasses import dataclass
 from pydantic import BaseModel, Field
 from db import get_db
 from auth.middleware import get_optional_user
@@ -16,6 +18,35 @@ from chatbot.rag.retriever import retrieve_relevant_chunks, format_rag_context
 from chatbot.context import build_chatbot_context_filtered, CLUB_STATIC_INFO, _get_greeting_reply, _get_navigation_reply, NAVIGATION_ALLOWLIST, _get_faq_reply
 
 router = APIRouter()
+
+# --- STREAMING RESPONSE HEADERS ---
+_STREAMING_HEADERS = {
+    "Cache-Control": "no-cache, no-transform",
+    "X-Accel-Buffering": "no",
+    "Connection": "keep-alive"
+}
+
+# --- STREAMING CACHE ---
+@dataclass
+class CacheEntry:
+    text: str
+    nav_action: dict | None
+    sources: list | None
+    expires_at: float
+
+_STREAMING_CACHE: Dict[str, CacheEntry] = {}
+
+def _get_cache_key(user_message: str, history: List['ChatMessage']) -> str:
+    key_str = user_message.lower().strip() + "|"
+    for h in history:
+        key_str += f"{h.role}:{h.content}|"
+    return hashlib.sha256(key_str.encode()).hexdigest()
+
+def _clean_cache():
+    now = time.time()
+    expired = [k for k, v in _STREAMING_CACHE.items() if v.expires_at < now]
+    for k in expired:
+        del _STREAMING_CACHE[k]
 
 # --- RATE LIMITING ---
 CHAT_RATE_LIMITS: Dict[str, Tuple[int, float]] = {}
@@ -155,7 +186,7 @@ async def club_chat(
                      "Please add Groq or Gemini keys to `backend/.env` to enable the chatbot.",
             "sources": [],
             "navigation_action": None,})}\n\n"
-        return StreamingResponse(_short_circuit(), media_type="text/event-stream")
+        return StreamingResponse(_short_circuit(), media_type="text/event-stream", headers=_STREAMING_HEADERS)
 
     # ── §32 Greeting Short-Circuit — no LLM call for simple greetings ─────
     greeting_reply = _get_greeting_reply(user_message)
@@ -167,7 +198,7 @@ async def club_chat(
         ))
         async def _short_circuit():
             yield f"data: {json.dumps({"text": greeting_reply, "sources": [], "navigation_action": None})}\n\n"
-        return StreamingResponse(_short_circuit(), media_type="text/event-stream")
+        return StreamingResponse(_short_circuit(), media_type="text/event-stream", headers=_STREAMING_HEADERS)
 
     # ── §33 Navigation Short-Circuit — no LLM call for simple nav ─────────
     nav_reply = _get_navigation_reply(user_message, current_user)
@@ -179,7 +210,7 @@ async def club_chat(
         ))
         async def _short_circuit():
             yield f"data: {json.dumps({"text": nav_reply["reply"], "sources": [], "navigation_action": nav_reply["navigation_action"]})}\n\n"
-        return StreamingResponse(_short_circuit(), media_type="text/event-stream")
+        return StreamingResponse(_short_circuit(), media_type="text/event-stream", headers=_STREAMING_HEADERS)
 
     # ── §34 FAQ Short-Circuit — no LLM call for common FAQs ─────────
     faq_reply = _get_faq_reply(user_message)
@@ -191,7 +222,7 @@ async def club_chat(
         ))
         async def _short_circuit():
             yield f"data: {json.dumps({"text": faq_reply, "sources": [], "navigation_action": None})}\n\n"
-        return StreamingResponse(_short_circuit(), media_type="text/event-stream")
+        return StreamingResponse(_short_circuit(), media_type="text/event-stream", headers=_STREAMING_HEADERS)
 
     # ── Scope + retrieval gate ─────────────────────────────────────────────
     # Retrieve first so a legitimate club-specific query can pass even when it
@@ -214,7 +245,7 @@ async def club_chat(
         ))
         async def _short_circuit():
             yield f"data: {json.dumps({"text": reply, "sources": [], "navigation_action": None})}\n\n"
-        return StreamingResponse(_short_circuit(), media_type="text/event-stream")
+        return StreamingResponse(_short_circuit(), media_type="text/event-stream", headers=_STREAMING_HEADERS)
 
     # Prefer compact RAG context. Only fall back to the topic-filtered DB context
     # when RAG has no usable result, preventing the previous double-context token waste.
@@ -305,6 +336,27 @@ PROMPT INJECTION DEFENSE:
     ]
     messages.append({"role": "user", "content": user_message})
 
+    # ── Check Cache ────────────────────────────────────────────────────────
+    _clean_cache()
+    cache_key = _get_cache_key(user_message, history_turns)
+    if cache_key in _STREAMING_CACHE:
+        cached = _STREAMING_CACHE[cache_key]
+        async def cached_event_generator():
+            yield f"data: {json.dumps({'sources': cached.sources, 'text': '', 'navigation_action': None})}\n\n"
+            
+            # Simulate streaming words
+            words = cached.text.split(" ")
+            chunk_size = 3
+            for i in range(0, len(words), chunk_size):
+                chunk = " ".join(words[i:i+chunk_size]) + (" " if i + chunk_size < len(words) else "")
+                yield f"data: {json.dumps({'text': chunk})}\n\n"
+                await asyncio.sleep(0.04)
+            
+            if cached.nav_action:
+                yield f"data: {json.dumps({'navigation_action': cached.nav_action})}\n\n"
+        
+        return StreamingResponse(cached_event_generator(), media_type="text/event-stream", headers=_STREAMING_HEADERS)
+
     async def event_generator():
         # First event: send the sources
         yield f"data: {json.dumps({'sources': sources, 'text': '', 'navigation_action': None})}\n\n"
@@ -370,6 +422,14 @@ PROMPT INJECTION DEFENSE:
                 yield f"data: {json.dumps({'text': safe_text})}\n\n"
                 full_reply += safe_text
                 
+            # Save to cache for 24 hours
+            _STREAMING_CACHE[cache_key] = CacheEntry(
+                text=full_reply,
+                nav_action=final_nav_action,
+                sources=sources,
+                expires_at=time.time() + 86400
+            )
+                
         except Exception as e:
             logging.error(f"Chatbot LLM stream error: {str(e)}", exc_info=True)
             yield f"data: {json.dumps({'error': 'I had trouble completing the response.'})}\n\n"
@@ -399,4 +459,4 @@ PROMPT INJECTION DEFENSE:
                 error_code=call_result.error_code,
             ))
             
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(event_generator(), media_type="text/event-stream", headers=_STREAMING_HEADERS)
