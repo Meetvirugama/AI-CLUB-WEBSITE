@@ -1066,18 +1066,9 @@ async def club_chat(
         logging.warning(f"Chatbot: RAG retrieval failed (non-fatal): {rag_err}")
         rag_chunks = []
 
-    # ── §35 No-Result Short-Circuit — no LLM call if no context found ─────
-    if not rag_chunks and not sources:
-        asyncio.create_task(_log_chat_analytics(
-            request_type="no_answer", provider=None, provider_key_idx=None,
-            model=None, input_tokens=0, output_tokens=0,
-            latency_ms=0, status="success", fallback_used=False, error_code=None,
-        ))
-        return {
-            "reply": "I couldn't find that information on the AI Club website. Try checking the website or asking on Discord!",
-            "sources": [],
-            "navigation_action": None
-        }
+    # ── §35 No-Result Short-Circuit (REMOVED) ─────────────────────────────
+    # We now allow the LLM to handle these cases so it can reply to greetings
+    # or general questions using the static context.
 
     # ── §28 Conversation history — last N turns for follow-up support ─────
     history_turns = request.history[-4:]  # cap at 4 turns to control token budget
@@ -1092,6 +1083,7 @@ INTENT CLASSIFICATION:
 Every user message is either:
   A) KNOWLEDGE — the user wants information (answer using the data below)
   B) NAVIGATE  — the user wants to go to a page (respond with a navigation action)
+  C) GREETING/SMALL TALK — the user is saying hello or chatting (greet them back)
 
 For NAVIGATE intents, you MUST include this exact marker at the END of your reply:
   [NAV:destination_key]
@@ -1106,6 +1098,7 @@ Examples:
   User: "show me admin"                → reply: "Opening the Admin Dashboard!" + [NAV:admin]
   User: "my registrations"             → reply: "Taking you to My Registrations!" + [NAV:my-registrations]
   User: "take me to secret page"       → reply: "I don't know that page. Here are pages I can navigate to: Events, Projects, Team, Resources..."
+  User: "helloe bro"                   → reply: "Hi there! I'm NeuralNode, the AI Club DAU assistant. How can I help you today?"
 
 For KNOWLEDGE intents, answer from the data below. Never include [NAV:...] in knowledge replies.
 
@@ -1115,6 +1108,7 @@ KNOWLEDGE RULES:
 - For questions about registrations, attendee lists, private student data, emails, phone numbers, or attendance records: "I'm not able to share that information."
 - For completely off-topic questions: "I'm best at answering questions about AI Club DAU! Try asking about events, projects, members, resources, or how to join."
 - If asked who built or made this website, answer: "This website was built by Meet Virugama (Extended Core Member)."
+- For greetings or casual chat (e.g., "hello", "hi", "how are you"), reply warmly and ask how you can help them with AI Club DAU.
 - Format responses clearly. Use bullet points for lists. Keep answers concise.
 - When relevant, encourage visitors to explore the website or join the club.
 - Use conversation history above to understand follow-up questions (e.g. "who built it?" after asking about a project).
