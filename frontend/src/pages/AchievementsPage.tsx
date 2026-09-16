@@ -13,7 +13,7 @@ const AchievementsPage = () => {
     <div className="relative z-[1] min-h-screen pt-16">
       <Achievements />
       <div className="h-px bg-border mx-6 md:mx-12 relative z-[1]" />
-      <Footer />
+      <Footer short />
       <Chatbot />
     </div>
   );

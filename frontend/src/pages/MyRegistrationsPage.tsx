@@ -256,7 +256,7 @@ export default function MyRegistrationsPage() {
           </>
         )}
       </div>
-      <Footer />
+      <Footer short />
     </div>
   );
 }

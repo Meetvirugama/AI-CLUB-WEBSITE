@@ -45,7 +45,7 @@ const navLinks = [
   { label: 'Achievements', href: '/achievements' },
 ];
 
-export default function Footer() {
+export default function Footer({ short = false }: { short?: boolean }) {
   return (
     <footer
       style={{
@@ -57,147 +57,171 @@ export default function Footer() {
         style={{
           maxWidth: 1280,
           margin: '0 auto',
-          padding: '4rem 2rem 2.5rem',
+          padding: short ? '2rem' : '4rem 2rem 2.5rem',
         }}
       >
         {/* Top row */}
-        <div
-          style={{
-            gap: '3rem',
-            marginBottom: '3rem',
-          }}
-          className="grid grid-cols-1 md:grid-cols-3"
-        >
-          {/* Brand */}
-          <div>
-            <Link
-              to="/"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', marginBottom: '1rem' }}
-            >
+        {!short ? (
+          <div
+            style={{
+              gap: '3rem',
+              marginBottom: '3rem',
+            }}
+            className="grid grid-cols-1 md:grid-cols-3"
+          >
+            {/* Brand */}
+            <div>
+              <Link
+                to="/"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', marginBottom: '1rem' }}
+              >
+                <img src={aiClubLogo} alt="AI Club DAU" style={{ width: 26, height: 26, borderRadius: 3, objectFit: 'contain' }} />
+                <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.95rem', color: 'hsl(230, 25%, 12%)' }}>
+                  AI Club <span style={{ fontWeight: 400, color: 'hsl(230, 15%, 45%)' }}>DA-IICT</span>
+                </span>
+              </Link>
+              <p
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '0.85rem',
+                  color: 'hsl(230, 15%, 42%)',
+                  lineHeight: 1.65,
+                  maxWidth: 240,
+                  marginBottom: '1rem',
+                }}
+              >
+                Dhirubhai Ambani University's student AI club — building, learning, and shipping together.
+              </p>
+              <a
+                href="mailto:ai_club@dau.ac.in"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '0.72rem',
+                  color: 'hsl(230, 15%, 42%)',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(243, 75%, 59%)'}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230, 15%, 42%)'}
+              >
+                <Mail size={12} /> ai_club@dau.ac.in
+              </a>
+            </div>
+
+            {/* Navigate */}
+            <div>
+              <p
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '0.65rem',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: 'hsl(230, 15%, 50%)',
+                  marginBottom: '1rem',
+                }}
+              >
+                Navigate
+              </p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {navLinks.map((l) => (
+                  <li key={l.label}>
+                    <a
+                      href={l.href}
+                      style={{
+                        fontFamily: 'Inter, sans-serif',
+                        fontSize: '0.88rem',
+                        color: 'hsl(230, 15%, 38%)',
+                        textDecoration: 'none',
+                        transition: 'color 0.15s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230, 25%, 12%)'}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230, 15%, 38%)'}
+                    >
+                      {l.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Community */}
+            <div>
+              <p
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '0.65rem',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: 'hsl(230, 15%, 50%)',
+                  marginBottom: '1rem',
+                }}
+              >
+                Community
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+                {socials.map(({ Icon, href, label }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      fontFamily: 'Inter, sans-serif',
+                      fontSize: '0.85rem',
+                      color: 'hsl(230, 15%, 38%)',
+                      textDecoration: 'none',
+                      transition: 'color 0.15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(243, 75%, 59%)'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230, 15%, 38%)'}
+                  >
+                    <Icon /> {label}
+                  </a>
+                ))}
+              </div>
+              <a
+                href="https://medium.com/@jashshah780"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem',
+                  color: 'hsl(243, 75%, 59%)', textDecoration: 'none',
+                }}
+              >
+                Read our blog on Medium <ArrowUpRight size={11} />
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
               <img src={aiClubLogo} alt="AI Club DAU" style={{ width: 26, height: 26, borderRadius: 3, objectFit: 'contain' }} />
               <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.95rem', color: 'hsl(230, 25%, 12%)' }}>
                 AI Club <span style={{ fontWeight: 400, color: 'hsl(230, 15%, 45%)' }}>DA-IICT</span>
               </span>
             </Link>
-            <p
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '0.85rem',
-                color: 'hsl(230, 15%, 42%)',
-                lineHeight: 1.65,
-                maxWidth: 240,
-                marginBottom: '1rem',
-              }}
-            >
-              Dhirubhai Ambani University's student AI club — building, learning, and shipping together.
-            </p>
-            <a
-              href="mailto:ai_club@dau.ac.in"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '0.72rem',
-                color: 'hsl(230, 15%, 42%)',
-                textDecoration: 'none',
-                transition: 'color 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(243, 75%, 59%)'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230, 15%, 42%)'}
-            >
-              <Mail size={12} /> ai_club@dau.ac.in
-            </a>
-          </div>
-
-          {/* Navigate */}
-          <div>
-            <p
-              style={{
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '0.65rem',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: 'hsl(230, 15%, 50%)',
-                marginBottom: '1rem',
-              }}
-            >
-              Navigate
-            </p>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-              {navLinks.map((l) => (
-                <li key={l.label}>
-                  <a
-                    href={l.href}
-                    style={{
-                      fontFamily: 'Inter, sans-serif',
-                      fontSize: '0.88rem',
-                      color: 'hsl(230, 15%, 38%)',
-                      textDecoration: 'none',
-                      transition: 'color 0.15s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230, 25%, 12%)'}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230, 15%, 38%)'}
-                  >
-                    {l.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Community */}
-          <div>
-            <p
-              style={{
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '0.65rem',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: 'hsl(230, 15%, 50%)',
-                marginBottom: '1rem',
-              }}
-            >
-              Community
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', gap: '1rem' }}>
               {socials.map(({ Icon, href, label }) => (
                 <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '0.85rem',
-                    color: 'hsl(230, 15%, 38%)',
-                    textDecoration: 'none',
-                    transition: 'color 0.15s',
-                  }}
+                  key={label} href={href} target="_blank" rel="noopener noreferrer"
+                  style={{ color: 'hsl(230, 15%, 45%)', transition: 'color 0.15s', display: 'flex', alignItems: 'center' }}
                   onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(243, 75%, 59%)'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230, 15%, 38%)'}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230, 15%, 45%)'}
+                  aria-label={label}
                 >
-                  <Icon /> {label}
+                  <Icon />
                 </a>
               ))}
             </div>
-            <a
-              href="https://medium.com/@jashshah780"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem',
-                color: 'hsl(243, 75%, 59%)', textDecoration: 'none',
-              }}
-            >
-              Read our blog on Medium <ArrowUpRight size={11} />
-            </a>
           </div>
-        </div>
+        )}
 
         {/* Bottom bar */}
         <div

@@ -441,7 +441,7 @@ function LoadingState() {
    MAIN COMPONENT
 ============================================================ */
 
-export default function Resources() {
+export default function Resources({ isHomepage = true }: { isHomepage?: boolean }) {
   const [resources, setResources] = useState<
     ResourceGroup[]
   >([]);
@@ -685,9 +685,11 @@ export default function Resources() {
         >
           {/* Eyebrow */}
 
-          <div className="section-label text-sm uppercase tracking-widest text-primary mb-4 block">
-            05 — Resources
-          </div>
+          {isHomepage && (
+            <div className="section-label text-sm uppercase tracking-widest text-primary mb-4 block">
+              05 — Resources
+            </div>
+          )}
 
           {/* Heading */}
 
@@ -979,31 +981,7 @@ export default function Resources() {
                 </span>
               </div>
 
-              <div className="mt-6 flex flex-col items-center justify-center gap-2.5 border-t border-border/50 pt-5 text-center">
-                <p className="font-mono text-xs sm:text-sm uppercase tracking-[0.12em] font-bold text-foreground">
-                  MADE WITH ❤️ BY{" "}
-                  <a
-                    href="https://www.linkedin.com/in/meet-virugama-76a107320/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline decoration-primary/40 underline-offset-4 transition-colors hover:decoration-primary hover:text-primary/80"
-                  >
-                    MEET VIRUGAMA
-                  </a>
-                </p>
 
-                <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-mono text-[11px] sm:text-xs uppercase tracking-[0.08em] text-muted-foreground">
-                  <span>Other Contributors:</span>
-                  <a
-                    href="https://www.linkedin.com/in/anmol-ghogare-407244381/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-foreground transition-colors hover:text-primary underline decoration-border hover:decoration-primary underline-offset-2"
-                  >
-                    Anmol Ghogare
-                  </a>
-                </div>
-              </div>
             </div>
           )}
       </div>

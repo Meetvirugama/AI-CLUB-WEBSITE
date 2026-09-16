@@ -25,7 +25,7 @@ const navItems = [
   { label: 'News', href: '/news', pagePath: '/news' },
   { label: 'Events', href: '/#events', pagePath: '/events' },
   { label: 'Projects', href: '/#projects', pagePath: '/projects' },
-  { label: 'Resources', href: '/#resources' },
+  { label: 'Resources', href: '/resources', pagePath: '/resources' },
   { label: 'Team', href: '/#team', pagePath: '/team' },
   { label: 'Achievements', href: '/achievements', pagePath: '/achievements' },
 ];

@@ -348,7 +348,7 @@ function RoadmapCard({
   );
 }
 
-export default function Roadmap() {
+export default function Roadmap({ isHomepage = true }: { isHomepage?: boolean }) {
   const [roadmaps, setRoadmaps] = useState<
     Record<string, RoadmapPhase[]>
   >({});
@@ -436,9 +436,9 @@ export default function Roadmap() {
   return (
     <section
       id="roadmaps"
-      className="relative overflow-hidden bg-background py-16"
+      className={`relative overflow-hidden bg-background ${isHomepage ? "py-16" : "pt-0 pb-16"}`}
     >
-      <div className="section-container relative z-10 max-w-6xl mx-auto px-6">
+      <div className={`section-container relative z-10 max-w-6xl mx-auto px-6 ${!isHomepage ? "!pt-0" : ""}`}>
         {/* HEADER */}
 
         <motion.div
@@ -458,9 +458,11 @@ export default function Roadmap() {
           }}
           className="mb-14"
         >
-          <div className="section-label text-sm uppercase tracking-widest text-primary mb-4 block">
-            04 — Roadmaps
-          </div>
+          {isHomepage && (
+            <div className="section-label text-sm uppercase tracking-widest text-primary mb-4 block">
+              04 — Roadmaps
+            </div>
+          )}
 
           <div className="grid gap-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-end">
             <div>

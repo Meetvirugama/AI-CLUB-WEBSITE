@@ -374,7 +374,7 @@ export default function EventDetailPage() {
           </motion.div>
         )}
       </div>
-      <Footer />
+      <Footer short />
     </div>
   );
 }
