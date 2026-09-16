@@ -76,7 +76,7 @@ interface PastEventModel {
 }
 
 export default function Events({ isHomepage = false }: { isHomepage?: boolean }) {
-  const [activeTab, setActiveTab] = useState('upcoming');
+  const [activeTab, setActiveTab] = useState('all');
   const [events, setEvents] = useState<EventModel[]>([]);
   const [pastEvents, setPastEvents] = useState<PastEventModel[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
@@ -84,9 +84,7 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
   const [searchQuery, setSearchQuery] = useState('');
   
   // Filter state (full-page only)
-  const [statusFilter, setStatusFilter] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
-  
   const [selectedEvent, setSelectedEvent] = useState<EventModel | null>(null);
   
   // Dynamic Form schema state
@@ -166,13 +164,6 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
     fetchPastEvents();
     fetchUserData();
   }, []);
-
-  // Effect to re-fetch when filters change (only on full page)
-  useEffect(() => {
-    if (!isHomepage) {
-      fetchEvents(statusFilter, categoryFilter);
-    }
-  }, [statusFilter, categoryFilter, isHomepage]);
 
   const featured = events.find(ev => ev.status === 'registration_open') || events.find(ev => ev.status === 'upcoming');
 
@@ -439,51 +430,151 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
   const displayEvents = events;
 
   // Filter and search logic
-  const filteredEvents = displayEvents.filter(ev => {
-    if (!isHomepage && searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase();
-      const matchesSearch = ev.title.toLowerCase().includes(q) ||
-                            ev.description.toLowerCase().includes(q) ||
-                            ev.category.toLowerCase().includes(q) ||
-                            ev.venue.toLowerCase().includes(q);
-      if (!matchesSearch) return false;
-    }
-    
-    if (isHomepage) {
-      return ev.status === 'registration_open' || ev.status === 'upcoming';
-    }
 
-    if (activeTab === 'upcoming') {
-      return ev.status === 'registration_open' || ev.status === 'upcoming';
-    } else if (activeTab === 'past') {
-      return true;
-    } else if (activeTab === 'workshops') {
-      return (ev.category || '').toLowerCase().includes('workshop');
-    }
-    return true;
-  });
+const matchesSearch = (event: any) => {
+  const query = searchQuery.trim().toLowerCase();
 
-  const allPastCards: any[] = [
-    ...pastEvents.map(p => ({
-      id: `past-${p.id}`,
-      title: p.title,
-      category: p.category || 'Workshop',
-      description: p.description,
-      banner: p.image_url,
-      event_date: p.date_label,
-      speaker: p.speaker,
-      winners: p.winners,
-      winner_link: p.winner_link,
-      isArchived: true
-    })),
-    ...events.filter(ev => ev.status === 'completed' || ev.status === 'registration_closed').map(ev => ({
-      ...ev,
-      isArchived: false
-    }))
+  if (!query) return true;
+
+  const searchableFields = [
+    event.title,
+    event.description,
+    event.category,
+    event.venue,
+    event.speaker,
+    event.winners,
+    event.date_label,
+    event.event_date,
+    event.event_start_date,
+    event.event_end_date,
   ];
 
-  const displayedUpcomingEvents = isHomepage ? filteredEvents.slice(0, 2) : (activeTab === 'past' ? allPastCards : filteredEvents);
+  return searchableFields
+    .filter(Boolean)
+    .some(value => String(value).toLowerCase().includes(query));
+};
 
+const matchesCategory = (event: any) => {
+  if (!categoryFilter) return true;
+
+  return String(event.category || '').toLowerCase() ===
+    categoryFilter.toLowerCase();
+};
+
+const matchesTab = (event: any) => {
+  switch (activeTab) {
+    case 'live':
+      return event.status === 'registration_open';
+
+    case 'upcoming':
+      return event.status === 'upcoming';
+
+    case 'past':
+      return (
+        event.status === 'completed' ||
+        event.status === 'registration_closed' ||
+        event.isArchived === true
+      );
+
+    case 'all':
+    default:
+      return true;
+  }
+};
+
+// Convert archived past events into the same searchable/card shape
+const archivedPastCards = pastEvents.map(p => ({
+  id: `past-${p.id}`,
+  title: p.title,
+  category: p.category || 'Workshop',
+  description: p.description,
+  banner: p.image_url,
+  event_date: p.date_label,
+  date_label: p.date_label,
+  speaker: p.speaker,
+  winners: p.winners,
+  winner_link: p.winner_link,
+  venue: '',
+  event_type: '',
+  isArchived: true,
+}));
+
+// Current database events
+const currentEventCards = events.map(ev => ({
+  ...ev,
+  isArchived: false,
+}));
+
+// All events, including archived past events
+const allEventCards = [
+  ...currentEventCards,
+  ...archivedPastCards,
+];
+
+const filteredEvents = allEventCards
+  .filter(event => {
+    if (isHomepage) {
+      return (
+        event.status === 'registration_open' ||
+        event.status === 'upcoming'
+      );
+    }
+
+    return (
+      matchesTab(event) &&
+      matchesCategory(event) &&
+      matchesSearch(event)
+    );
+  })
+  .sort((a, b) => {
+    const getStart = (event: any) => {
+      const date = event.event_start_date || event.event_date;
+      const time = event.start_time || '00:00:00';
+
+      if (!date) return Infinity;
+
+      return new Date(`${date}T${time}`).getTime();
+    };
+
+    const getEnd = (event: any) => {
+      const date = event.event_end_date || event.event_date;
+      const time = event.end_time || '23:59:59';
+
+      if (!date) return -Infinity;
+
+      return new Date(`${date}T${time}`).getTime();
+    };
+
+    const now = Date.now();
+
+    const getPriority = (event: any) => {
+      const start = getStart(event);
+      const end = getEnd(event);
+
+      if (event.isArchived || end < now) return 2; // Past
+      if (start <= now && now <= end) return 0;     // Live
+      return 1;                                    // Upcoming
+    };
+
+    const priorityA = getPriority(a);
+    const priorityB = getPriority(b);
+
+    // Live → Upcoming → Past
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+
+    // Within each group, chronological order
+    if (priorityA === 2) {
+      return getStart(b) - getStart(a); // Newest past first
+    }
+
+    return getStart(a) - getStart(b); // Earliest live/upcoming first
+  });
+
+const displayedUpcomingEvents = filteredEvents;
+
+const resultCount = displayedUpcomingEvents.length;
 
 
   // ── Homepage: calendar list style ──────────────────────────────
@@ -1031,18 +1122,72 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
 
   // ── Full page: original detailed view ────────────────────────────
   return (
-    <section id="events" style={{ background: 'hsl(228, 30%, 93%)', minHeight: '80vh' }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '4rem 2rem' }}>
-        <h1
-          style={{
-            fontFamily: 'Playfair Display, Georgia, serif',
-            fontSize: 'clamp(2rem, 4vw, 3.5rem)',
-            fontWeight: 700, letterSpacing: '-0.025em',
-            color: 'hsl(230, 25%, 10%)', marginBottom: '2rem',
-          }}
-        >
-          Events {'&'} Workshops
-        </h1>
+    <section id="events" style={{
+  background: `
+    radial-gradient(
+      circle at 10% 10%,
+      rgba(99,102,241,0.08),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 90% 30%,
+      rgba(139,92,246,0.07),
+      transparent 25%
+    ),
+    hsl(228, 28%, 95%)
+  `,
+}}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '4rem 2rem' }}>
+          <motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5 }}
+  className="mb-10"
+>
+  <div
+    className="text-xs font-semibold uppercase tracking-[0.2em] mb-3"
+    style={{
+      color: 'hsl(243,75%,59%)',
+    }}
+  >
+    AI CLUB · EVENTS
+  </div>
+
+  <h1
+    className="font-display font-bold"
+    style={{
+      fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
+      lineHeight: 1,
+      letterSpacing: '-0.045em',
+      color: 'hsl(230,25%,10%)',
+    }}
+  >
+    Discover what&apos;s
+    <br />
+    <span
+      style={{
+        background:
+          'linear-gradient(90deg, hsl(243,75%,59%), hsl(270,80%,62%))',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+      }}
+    >
+      happening next.
+    </span>
+  </h1>
+
+  <p
+    className="mt-5 max-w-2xl"
+    style={{
+      fontSize: '1rem',
+      lineHeight: 1.7,
+      color: 'hsl(230,15%,45%)',
+    }}
+  >
+    Workshops, hackathons, seminars, and AI events organized
+    by the AI Club community.
+  </p>
+</motion.div>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -1113,187 +1258,562 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
           </motion.div>
         )}
 
-        {/* Filters for Live Events on Dedicated Page */}
-        {!isHomepage && activeTab === 'upcoming' && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: 'hsl(230,15%,45%)', fontWeight: 500 }}>Status:</span>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid hsl(228,20%,80%)', fontSize: '0.8rem', fontFamily: 'Inter, sans-serif', outline: 'none' }}
-              >
-                <option value="">All</option>
-                <option value="active">Active</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', color: 'hsl(230,15%,45%)', fontWeight: 500 }}>Category:</span>
-              {['', 'Hackathon', 'Workshop', 'Seminar'].map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setCategoryFilter(cat)}
-                  style={{
-                    padding: '4px 12px',
-                    borderRadius: '99px',
-                    fontSize: '0.75rem',
-                    fontFamily: 'Inter, sans-serif',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    background: categoryFilter === cat ? 'hsl(243,75%,59%)' : 'white',
-                    color: categoryFilter === cat ? 'white' : 'hsl(230,15%,45%)',
-                    border: `1px solid ${categoryFilter === cat ? 'hsl(243,75%,59%)' : 'hsl(228,20%,80%)'}`
-                  }}
-                >
-                  {cat === '' ? 'All' : cat}
-                </button>
-              ))}
-            </div>
-            
-            <div style={{ flex: 1, minWidth: '200px', display: 'flex', justifyContent: 'flex-end' }}>
-              <div style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
-                <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'hsl(230,15%,60%)' }} />
-                <input
-                  type="text"
-                  placeholder="Search events..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ width: '100%', padding: '6px 30px', borderRadius: '6px', border: '1px solid hsl(228,20%,80%)', fontSize: '0.8rem', fontFamily: 'Inter, sans-serif', outline: 'none' }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Event filters */}
+{!isHomepage && (
+  <motion.div
+    initial={{ opacity: 0, y: 15 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4 }}
+    className="rounded-2xl p-4 md:p-5 mb-8"
+    style={{
+      background: 'rgba(255,255,255,0.72)',
+      border: '1px solid rgba(99,102,241,0.12)',
+      boxShadow: '0 8px 30px rgba(45,50,100,0.05)',
+      backdropFilter: 'blur(14px)',
+    }}
+  >
+    <div className="flex flex-col xl:flex-row gap-5 xl:items-center">
 
-        {/* Tabs - Only displayed on dedicated page */}
-        {!isHomepage && (
-          <div className="flex gap-1 border-b border-border mb-10 flex-wrap">
-            {['upcoming', 'past', 'workshops'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`relative px-5 py-2.5 text-sm font-medium -mb-px transition-colors ${activeTab === tab ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                {activeTab === tab && (
-                  <motion.div
-                    layoutId="event-tab-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-              </button>
-            ))}
-          </div>
-        )}
+      {/* Tabs */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {[
+          { value: 'all', label: 'All' },
+          { value: 'live', label: 'Live' },
+          { value: 'upcoming', label: 'Upcoming' },
+          { value: 'past', label: 'Past' },
+        ].map((tab) => (
+          <motion.button
+            key={tab.value}
+            onClick={() => setActiveTab(tab.value)}
+            whileTap={{ scale: 0.96 }}
+            className="relative px-4 py-2 rounded-lg text-xs font-semibold transition-all"
+            style={{
+              background:
+                activeTab === tab.value
+                  ? 'linear-gradient(135deg, hsl(243,75%,59%), hsl(270,80%,62%))'
+                  : 'transparent',
+              color:
+                activeTab === tab.value
+                  ? 'white'
+                  : 'hsl(230,15%,48%)',
+              boxShadow:
+                activeTab === tab.value
+                  ? '0 4px 14px rgba(99,102,241,0.22)'
+                  : 'none',
+            }}
+          >
+            {tab.label}
 
-        {/* Cards list */}
+            {tab.value === 'live' && (
+              <span
+                className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full"
+                style={{
+                  background:
+                    activeTab === 'live' ? 'white' : 'rgb(34,197,94)',
+                }}
+              />
+            )}
+          </motion.button>
+        ))}
+      </div>
+
+      {/* Divider */}
+      <div className="hidden xl:block w-px h-7 bg-border" />
+
+      {/* Categories */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-xs font-semibold text-muted-foreground mr-1">
+          Category
+        </span>
+
+        {[
+          { value: '', label: 'All' },
+          { value: 'Hackathon', label: 'Hackathon' },
+          { value: 'Workshop', label: 'Workshop' },
+          { value: 'Seminar', label: 'Seminar' },
+        ].map((category) => (
+          <motion.button
+            key={category.value}
+            onClick={() => setCategoryFilter(category.value)}
+            whileTap={{ scale: 0.96 }}
+            className="px-3.5 py-1.5 rounded-full text-xs font-medium transition-all"
+            style={{
+              background:
+                categoryFilter === category.value
+                  ? 'rgba(99,102,241,0.10)'
+                  : 'transparent',
+              color:
+                categoryFilter === category.value
+                  ? 'hsl(243,75%,55%)'
+                  : 'hsl(230,15%,50%)',
+              border:
+                categoryFilter === category.value
+                  ? '1px solid rgba(99,102,241,0.25)'
+                  : '1px solid rgba(100,110,150,0.16)',
+            }}
+          >
+            {category.label}
+          </motion.button>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div className="xl:ml-auto w-full xl:w-[280px]">
+        <div
+          className="relative"
+          style={{
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+
+          <input
+            type="text"
+            placeholder="Search events..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-9 py-2.5 rounded-xl text-xs outline-none"
+            style={{
+              background: 'rgba(255,255,255,0.8)',
+              border: '1px solid rgba(100,110,150,0.18)',
+              color: 'hsl(230,25%,15%)',
+            }}
+          />
+
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  </motion.div>
+)}
+
+        {!loadingEvents && (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    className="flex items-center justify-between mb-5"
+  >
+    <div className="text-xs text-muted-foreground">
+      Showing{' '}
+      <span className="font-semibold text-foreground">
+        {displayedUpcomingEvents.length}
+      </span>{' '}
+      {displayedUpcomingEvents.length === 1 ? 'event' : 'events'}
+    </div>
+
+    {(searchQuery || categoryFilter || activeTab !== 'all') && (
+      <button
+        onClick={() => {
+          setSearchQuery('');
+          setCategoryFilter('');
+          setActiveTab('all');
+        }}
+        className="text-xs font-medium text-primary hover:underline"
+      >
+        Clear filters
+      </button>
+    )}
+  </motion.div>
+)}
         {loadingEvents ? (
           <div className="flex justify-center py-12"><Loader2 className="animate-spin text-primary" size={32} /></div>
         ) : displayedUpcomingEvents.length === 0 ? (
           <p className="text-muted-foreground text-center py-12">No events found in this category.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <AnimatePresence mode="popLayout">
-              {displayedUpcomingEvents.map((card, i) => (
-                <motion.div
-                  key={card.id || card.title}
-                  layout
-                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1, transition: { delay: i * 0.08, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } }}
-                  exit={{ opacity: 0, y: -10, scale: 0.95, transition: { duration: 0.2 } }}
-                  whileHover={{ y: -6, transition: { duration: 0.25 } }}
-                  onClick={() => setSelectedEvent(card)}
-                  className="glass-card relative overflow-hidden p-7 flex flex-col justify-between cursor-pointer hover:border-primary/50 transition-colors"
-                >
-                  <div>
-                    {(card.banner || card.image_url) && (
-                      <div className="w-full mb-4 rounded-xl overflow-hidden bg-secondary border border-border/50">
-                        <img src={card.banner || card.image_url} alt={card.title} className="w-full object-contain group-hover:scale-105 transition-transform duration-500" style={{ maxHeight: '220px' }} />
-                      </div>
-                    )}
-                    <span className="font-mono text-[10px] tracking-widest uppercase px-3 py-1 rounded bg-primary/10 text-primary border border-primary/20">{card.category}</span>
-                    <h4 className="font-display font-bold text-lg text-foreground mt-4 mb-2">{card.title}</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{card.description}</p>
-                    {card.winners && (
-                      <div className="mt-6 p-6 md:p-8 rounded-2xl bg-gradient-to-br from-yellow-500/10 via-amber-500/5 to-transparent border-2 border-yellow-500/30 flex flex-col gap-4 shadow-[0_0_30px_rgba(234,179,8,0.2)] backdrop-blur-md relative overflow-hidden group">
-                        {/* Animated Shimmer */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-500/10 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
-                        
-                        <span className="font-bold text-yellow-500 flex items-center gap-3 uppercase font-mono tracking-widest text-lg md:text-xl relative z-10 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">
-                          <span className="text-3xl animate-bounce">🏆</span> Winners Declared
-                        </span>
-                        
-                        <div className="whitespace-pre-line text-foreground text-base md:text-lg leading-relaxed font-sans pl-4 border-l-4 border-yellow-500/50 relative z-10 font-semibold bg-yellow-500/5 p-4 rounded-r-xl shadow-[inset_0_0_20px_rgba(234,179,8,0.05)]">
-                          {card.winners}
-                        </div>
-                        
-                        {card.winner_link && (
-                          <a
-                            href={card.winner_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-4 inline-flex w-fit bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 px-6 py-3 rounded-xl transition-all duration-300 items-center gap-3 text-sm md:text-base font-mono tracking-wider uppercase font-bold relative z-10 hover:shadow-[0_0_20px_rgba(234,179,8,0.4)] hover:-translate-y-1"
-                          >
-                            <ExternalLink size={18} /> View Winner Details / PDF
-                          </a>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-3 mt-5 pt-4 border-t border-border text-xs text-muted-foreground">
-                      {(card.event_start_date || card.event_date) && (
-                        <>
-                          <span className="flex items-center gap-1.5">
-                            {card.event_start_date && card.event_end_date && card.event_start_date !== card.event_end_date
-                              ? `${card.event_start_date} to ${card.event_end_date}`
-                              : card.event_start_date || card.event_date}
-                          </span>
-                          <span className="w-1 h-1 bg-muted-foreground rounded-full" />
-                        </>
-                      )}
-                      {card.venue && (
-                        <>
-                          <span className="flex items-center gap-1.5">{card.venue}</span>
-                          <span className="w-1 h-1 bg-muted-foreground rounded-full" />
-                        </>
-                      )}
-                      <span className="flex items-center gap-1.5 capitalize">{card.event_type} Event</span>
-                    </div>
+          <div
+  className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+  style={{
+    perspective: '1200px',
+  }}
+>
+  <AnimatePresence mode="popLayout">
+    {displayedUpcomingEvents.map((card, i) => {
+      const eventImage = card.banner || card.image_url;
 
-                    {card.status === 'registration_open' && (
-                      registeredEventIds.includes(card.id) ? (
-                        <button disabled className="mt-5 w-full py-2 text-xs font-semibold rounded-lg bg-primary/10 border border-primary/20 text-primary/50 cursor-not-allowed flex items-center justify-center gap-1.5">
-                          Already Registered
-                        </button>
-                      ) : card.registration_link ? (
-                        <a
-                          href={card.registration_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-5 w-full py-2 text-xs font-semibold rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 flex items-center justify-center gap-1.5"
-                        >
-                          Register Now
-                        </a>
-                      ) : (
-                        <button
-                          onClick={() => setSelectedEvent(card)}
-                          className="mt-5 w-full py-2 text-xs font-semibold rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 flex items-center justify-center gap-1.5"
-                        >
-                          Register Now
-                        </button>
-                      )
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+      const isLive = card.status === 'registration_open';
+      const isPast =
+        card.status === 'completed' ||
+        card.status === 'registration_closed' ||
+        card.isArchived;
+
+      return (
+        <motion.div
+          key={card.id || card.title}
+          layout
+          initial={{ opacity: 0, y: 30, scale: 0.96 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            transition: {
+              delay: i * 0.07,
+              duration: 0.45,
+              ease: [0.22, 1, 0.36, 1],
+            },
+          }}
+          exit={{
+            opacity: 0,
+            scale: 0.95,
+            y: -15,
+            transition: { duration: 0.2 },
+          }}
+          whileHover={{
+            y: -8,
+            transition: {
+              duration: 0.25,
+              ease: 'easeOut',
+            },
+          }}
+          onClick={() => setSelectedEvent(card)}
+          className="group relative overflow-hidden rounded-2xl cursor-pointer"
+          style={{
+            background:
+              'linear-gradient(145deg, rgba(255,255,255,0.95), rgba(246,247,255,0.92))',
+            border: '1px solid rgba(99,102,241,0.16)',
+            boxShadow:
+              '0 8px 30px rgba(45, 50, 100, 0.08)',
+            transition:
+              'box-shadow 0.3s ease, border-color 0.3s ease',
+          }}
+        >
+          {/* Hover glow */}
+          <div
+            className="absolute -top-24 -right-24 w-48 h-48 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+            style={{
+              background:
+                'radial-gradient(circle, rgba(99,102,241,0.18), transparent 70%)',
+              filter: 'blur(10px)',
+            }}
+          />
+
+          {/* Event Image */}
+          <div
+            className="relative w-full overflow-hidden"
+            style={{
+              height: '210px',
+              background:
+                'linear-gradient(135deg, hsl(243,75%,59%,0.12), hsl(270,80%,65%,0.08))',
+            }}
+          >
+            {eventImage ? (
+              <motion.img
+                src={eventImage}
+                alt={card.title}
+                loading="lazy"
+                className="w-full h-full object-cover"
+                whileHover={{ scale: 1.06 }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <CalendarDays
+                  size={48}
+                  className="text-primary/30"
+                />
+              </div>
+            )}
+
+            {/* Image gradient */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background:
+                  'linear-gradient(to top, rgba(10,12,30,0.72) 0%, rgba(10,12,30,0.08) 55%, transparent 100%)',
+              }}
+            />
+
+            {/* Category */}
+            <div className="absolute top-4 left-4">
+              <span
+                className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-[0.14em] uppercase"
+                style={{
+                  background: 'rgba(255,255,255,0.9)',
+                  color: 'hsl(243,75%,50%)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255,255,255,0.7)',
+                }}
+              >
+                {card.category}
+              </span>
+            </div>
+
+            {/* Live / Past badge */}
+            <div className="absolute top-4 right-4">
+              {isLive ? (
+                <span
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase"
+                  style={{
+                    background: 'rgba(34,197,94,0.92)',
+                    color: 'white',
+                    boxShadow: '0 4px 15px rgba(34,197,94,0.3)',
+                  }}
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-white"
+                    style={{
+                      animation: 'pulse 1.5s infinite',
+                    }}
+                  />
+                  Live
+                </span>
+              ) : isPast ? (
+                <span
+                  className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-wider uppercase"
+                  style={{
+                    background: 'rgba(15,23,42,0.72)',
+                    color: 'white',
+                    backdropFilter: 'blur(8px)',
+                  }}
+                >
+                  Past
+                </span>
+              ) : (
+                <span
+                  className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-wider uppercase"
+                  style={{
+                    background: 'rgba(99,102,241,0.9)',
+                    color: 'white',
+                    backdropFilter: 'blur(8px)',
+                  }}
+                >
+                  Upcoming
+                </span>
+              )}
+            </div>
+
+            {/* Date on image */}
+            <div className="absolute bottom-4 left-4 text-white">
+              <div
+                className="text-xs font-medium opacity-80"
+                style={{ letterSpacing: '0.08em' }}
+              >
+                EVENT DATE
+              </div>
+              <div className="text-sm font-semibold mt-0.5">
+                {card.event_start_date || card.event_date || card.date_label}
+              </div>
+            </div>
           </div>
+
+          {/* Card content */}
+          <div className="p-6">
+            <h4
+              className="font-display font-bold text-xl leading-tight mb-3"
+              style={{
+                color: 'hsl(230,25%,12%)',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              {card.title}
+            </h4>
+
+            <p
+              className="text-sm leading-relaxed mb-5"
+              style={{
+                color: 'hsl(230,15%,45%)',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+            >
+              {card.description}
+            </p>
+
+            {/* Event information */}
+            <div
+              className="space-y-2.5 pt-4"
+              style={{
+                borderTop: '1px solid rgba(100,110,150,0.14)',
+              }}
+            >
+              {(card.venue || card.event_type) && (
+                <div className="flex items-center gap-2 text-xs">
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    style={{
+                      background: 'rgba(99,102,241,0.08)',
+                      color: 'hsl(243,75%,59%)',
+                    }}
+                  >
+                    <CalendarDays size={13} />
+                  </div>
+
+                  <span
+                    style={{
+                      color: 'hsl(230,15%,48%)',
+                    }}
+                  >
+                    {card.venue || 'Online'}
+                  </span>
+
+                  {card.event_type && (
+                    <>
+                      <span className="text-muted-foreground/40">
+                        •
+                      </span>
+                      <span
+                        className="capitalize"
+                        style={{
+                          color: 'hsl(230,15%,48%)',
+                        }}
+                      >
+                        {card.event_type} event
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {card.speaker && (
+                <div className="flex items-center gap-2 text-xs">
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    style={{
+                      background: 'rgba(139,92,246,0.08)',
+                      color: 'rgb(139,92,246)',
+                    }}
+                  >
+                    <Mic size={13} />
+                  </div>
+
+                  <span
+                    style={{
+                      color: 'hsl(230,15%,48%)',
+                    }}
+                  >
+                    {card.speaker}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Winners */}
+            {card.winners && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mt-4 p-3 rounded-xl"
+                style={{
+                  background:
+                    'linear-gradient(135deg, rgba(234,179,8,0.10), rgba(245,158,11,0.04))',
+                  border: '1px solid rgba(234,179,8,0.20)',
+                }}
+              >
+                <div className="flex items-center gap-2 text-xs font-semibold text-yellow-600 mb-1">
+                  <span>🏆</span>
+                  Winners
+                </div>
+
+                <div
+                  className="text-xs leading-relaxed"
+                  style={{
+                    color: 'hsl(230,15%,40%)',
+                  }}
+                >
+                  {card.winners}
+                </div>
+
+                {card.winner_link && (
+                  <a
+                    href={card.winner_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-primary hover:underline"
+                  >
+                    View results
+                    <ExternalLink size={11} />
+                  </a>
+                )}
+              </motion.div>
+            )}
+
+            {/* Register button */}
+            {card.status === 'registration_open' && !card.isArchived && (
+              <div className="mt-5">
+                {registeredEventIds.includes(card.id) ? (
+                  <button
+                    disabled
+                    className="w-full py-2.5 rounded-xl text-xs font-semibold"
+                    style={{
+                      background: 'rgba(99,102,241,0.07)',
+                      color: 'rgba(99,102,241,0.45)',
+                      border: '1px solid rgba(99,102,241,0.12)',
+                    }}
+                  >
+                    Already Registered
+                  </button>
+                ) : card.registration_link ? (
+                  <a
+                    href={card.registration_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="group/button w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, hsl(243,75%,59%), hsl(270,80%,62%))',
+                      color: 'white',
+                      boxShadow:
+                        '0 5px 18px rgba(99,102,241,0.22)',
+                    }}
+                  >
+                    Register Now
+                    <ArrowRight
+                      size={14}
+                      className="group-hover/button:translate-x-1 transition-transform"
+                    />
+                  </a>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedEvent(card);
+                    }}
+                    className="group/button w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, hsl(243,75%,59%), hsl(270,80%,62%))',
+                      color: 'white',
+                      boxShadow:
+                        '0 5px 18px rgba(99,102,241,0.22)',
+                    }}
+                  >
+                    Register Now
+                    <ArrowRight
+                      size={14}
+                      className="group-hover/button:translate-x-1 transition-transform"
+                    />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Bottom accent */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{
+              background:
+                'linear-gradient(90deg, hsl(243,75%,59%), hsl(270,80%,65%))',
+            }}
+          />
+        </motion.div>
+      );
+    })}
+  </AnimatePresence>
+</div>
         )}
 
         {/* placeholder - homepage handled above */}
