@@ -27,10 +27,12 @@ from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from chatbot_analytics.models import (
-    ChatDailyMetric, ChatUsageEvent, ProviderKeyStats,
+from chatbot.analytics.models import (
+    ChatUsageEvent,
+    ChatDailyMetric,
+    ProviderKeyStats,
 )
-from chatbot_analytics.schemas import (
+from chatbot.analytics.schemas import (
     ActivityEntry, CategoryBreakdown, CategoriesResponse,
     DailyUsagePoint, DailyUsageResponse, KeyHealthEntry, KeyHealthResponse,
     ModelSummary, ProviderSummary, ProvidersResponse, ChatOverviewResponse,
@@ -83,7 +85,7 @@ async def log_chat_event(
         session.add(event)
 
         # 2. Upsert daily_metrics
-        is_success   = 1 if status == "success" else 0
+        is_success   = 1 if status in ("success", "fallback") else 0
         is_failure   = 1 if status in ("error", "rate_limited", "payload_too_large") else 0
         is_rl        = 1 if status == "rate_limited" else 0
         is_fallback  = 1 if fallback_used else 0
@@ -214,7 +216,7 @@ async def get_overview(session: AsyncSession) -> ChatOverviewResponse:
         today_req = today_ok = today_fail = today_in = today_out = today_rl = today_fb = 0
         today_lat = today_sr = None
 
-    from chatbot_provider import provider_manager
+    from chatbot.provider import provider_manager
     return ChatOverviewResponse(
         today_requests=today_req,
         today_successful=today_ok,
@@ -274,7 +276,7 @@ async def get_providers(session: AsyncSession, days: int = 30) -> ProvidersRespo
         select(
             ChatUsageEvent.provider,
             func.count().label("requests"),
-            func.sum(sa_case((ChatUsageEvent.status == "success", 1), else_=0)).label("successes"),
+            func.sum(sa_case((ChatUsageEvent.status.in_(["success", "fallback"]), 1), else_=0)).label("successes"),
             func.sum(sa_case((ChatUsageEvent.fallback_used == True, 1), else_=0)).label("fallbacks"),
             func.coalesce(func.sum(ChatUsageEvent.input_tokens),  0).label("input_tokens"),
             func.coalesce(func.sum(ChatUsageEvent.output_tokens), 0).label("output_tokens"),
@@ -293,7 +295,7 @@ async def get_providers(session: AsyncSession, days: int = 30) -> ProvidersRespo
             func.count().label("requests"),
             func.coalesce(func.sum(ChatUsageEvent.input_tokens),  0).label("input_tokens"),
             func.coalesce(func.sum(ChatUsageEvent.output_tokens), 0).label("output_tokens"),
-            func.sum(sa_case((ChatUsageEvent.status != "success", 1), else_=0)).label("failures"),
+            func.sum(sa_case((ChatUsageEvent.status.not_in(["success", "fallback"]), 1), else_=0)).label("failures"),
             func.avg(ChatUsageEvent.latency_ms).label("avg_latency"),
         )
         .where(ChatUsageEvent.date >= cutoff, ChatUsageEvent.model.is_not(None))
@@ -346,7 +348,7 @@ async def get_key_health(session: AsyncSession) -> KeyHealthResponse:
     Today's per-key counters from DB + live health from in-memory KeyState.
     Returns safe labels ("Groq Key 01") — never raw key values.
     """
-    from chatbot_provider import provider_manager
+    from chatbot.provider import provider_manager
 
     today = datetime.now(timezone.utc).date()
 

@@ -7,7 +7,7 @@ import { Loader2, Download, Trash2, Calendar, Users, Award, Newspaper, Clipboard
 import { GoogleLogin } from '@react-oauth/google';
 import { supabase } from '../lib/supabase';
 import { getApiUrl } from '../lib/api';
-import ChatbotAnalytics from './ChatbotAnalytics';
+import ChatbotAnalytics from '../chatbot/ChatbotAnalytics';
 
 
 interface EventModel {
@@ -40,6 +40,7 @@ interface AchievementModel {
   description: string;
   category: string;
   icon: string;
+  image_url?: string;
   created_at?: string;
 }
 
@@ -69,6 +70,7 @@ const Admin = () => {
   const [editForm, setEditForm] = useState({
     title: '',
     description: '',
+    banner: '',
     category: 'workshop',
     venue: '',
     contact_email: 'ai_club@dau.ac.in',
@@ -2892,7 +2894,8 @@ const Admin = () => {
                           author_id: '',
                           description: '',
                           tags: 'Machine Learning, Python',
-                          github_link: ''
+                          github_link: '',
+                          contributors: ''
                         });
                         setIsProjectModalOpen(true);
                       }}

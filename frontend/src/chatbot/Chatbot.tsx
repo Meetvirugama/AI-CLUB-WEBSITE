@@ -23,8 +23,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { getApiUrl } from '../../lib/api';
-import { useAuth } from '../../hooks/useAuth';
+import { getApiUrl } from '../lib/api';
+import { useAuth } from '../hooks/useAuth';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -289,14 +289,20 @@ export default function Chatbot() {
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
     setShowSuggestions(false);
-    setMessages(prev => [...prev, { sender: 'user', text }]);
+    
+    // Append user message and empty bot placeholder
+    setMessages(prev => [
+      ...prev,
+      { sender: 'user', text },
+      { sender: 'bot', text: '', sources: [], navigation_action: null, messageType: 'knowledge' }
+    ]);
+    
     setInputValue('');
     setIsLoading(true);
 
     try {
       const token = localStorage.getItem('access_token');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      // Send auth token so backend can check admin for navigation
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const res = await fetch(getApiUrl('/api/club-chat'), {
@@ -307,38 +313,86 @@ export default function Chatbot() {
       });
 
       if (res.status === 429) {
-        setMessages(prev => [...prev, {
-          sender: 'bot',
-          text: "You're sending messages a little fast! Please wait a moment and try again. 🙏",
-          messageType: 'error',
-        }]);
+        setMessages(prev => {
+          const newMsgs = [...prev];
+          newMsgs[newMsgs.length - 1] = {
+            sender: 'bot',
+            text: "You're sending messages a little fast! Please wait a moment and try again. 🙏",
+            messageType: 'error',
+          };
+          return newMsgs;
+        });
         return;
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.body) throw new Error("No readable stream");
 
-      const data = await res.json();
-      const navAction: NavigationAction | null = data.navigation_action ?? null;
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let buffer = "";
 
-      const botMsg: Message = {
-        sender: 'bot',
-        text: data.reply || "I couldn't generate a response. Please try again!",
-        sources: data.sources ?? [],
-        navigation_action: navAction,
-        messageType: navAction ? 'navigation' : 'knowledge',
-      };
-      setMessages(prev => [...prev, botMsg]);
+      setIsLoading(false); // Turn off spinner once stream starts
 
-      // Execute navigation if the response includes a valid, permitted action
-      if (navAction) {
-        executeNavigation(navAction);
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        if (value) {
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          
+          // Process all complete lines
+          buffer = lines.pop() || ''; // Keep the last incomplete line in the buffer
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const dataStr = line.slice(6);
+              if (dataStr.trim() === '[DONE]') continue;
+              
+              try {
+                const data = JSON.parse(dataStr);
+                
+                setMessages(prev => {
+                  const newMsgs = [...prev];
+                  const lastMsg = { ...newMsgs[newMsgs.length - 1] };
+                  
+                  if (data.error) {
+                    lastMsg.text = data.error;
+                    lastMsg.messageType = 'error';
+                  } else {
+                    if (data.sources) lastMsg.sources = data.sources;
+                    if (data.text) lastMsg.text += data.text;
+                    if (data.navigation_action) {
+                      lastMsg.navigation_action = data.navigation_action;
+                      lastMsg.messageType = 'navigation';
+                    }
+                  }
+                  
+                  newMsgs[newMsgs.length - 1] = lastMsg;
+                  return newMsgs;
+                });
+                
+                if (data.navigation_action) {
+                  executeNavigation(data.navigation_action);
+                }
+              } catch (e) {
+                // Ignore parse errors from partial chunks
+              }
+            }
+          }
+        }
       }
 
-    } catch {
-      setMessages(prev => [...prev, {
-        sender: 'bot',
-        text: "Sorry, I couldn't reach the server right now. Please try again in a moment!",
-        messageType: 'error',
-      }]);
+    } catch (err) {
+      setMessages(prev => {
+        const newMsgs = [...prev];
+        newMsgs[newMsgs.length - 1] = {
+          sender: 'bot',
+          text: "Sorry, I couldn't reach the server right now. Please try again in a moment!",
+          messageType: 'error',
+        };
+        return newMsgs;
+      });
     } finally {
       setIsLoading(false);
     }

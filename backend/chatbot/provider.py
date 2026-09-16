@@ -34,7 +34,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, AsyncGenerator, Any
 
 import httpx
 from google import genai as google_genai
@@ -44,8 +44,8 @@ logger = logging.getLogger(__name__)
 # ── Configuration ──────────────────────────────────────────────────────────────
 
 GROQ_MODEL       = "openai/gpt-oss-120b"    # Best available on these Groq accounts
-GROQ_MODEL_FAST  = "qwen/qwen3.8-27b"        # Fallback within Groq if 120b fails
-GEMINI_MODEL     = "gemini-3.6-flash"         # Current Gemini model (2.5-flash deprecated)
+GROQ_MODEL_FAST  = "qwen/qwen3.8-27b"        # Secondary Groq model; verify availability per account
+GEMINI_MODEL     = "gemini-3.6-flash"         # Configured Gemini model
 
 # How long (seconds) to cool down a key after a rate-limit or repeated server error
 KEY_COOLDOWN_S   = 60
@@ -163,34 +163,34 @@ class ProviderManager:
         Falls back to legacy GOOGLE_API_KEY for backward compatibility.
         """
         # ── Groq keys ──
-        groq_keys: List[str] = []
+        groq_keys: List[tuple[int, str]] = []
         for i in range(1, 8):
             v = os.getenv(f"GROQ_API_KEY_{i}", "").strip()
             if v and not v.startswith("your_"):
-                groq_keys.append(v)
+                groq_keys.append((i, v))
 
         self._groq_pool = [
-            KeyState(key=k, provider="groq", index=i + 1)
-            for i, k in enumerate(groq_keys)
+            KeyState(key=k, provider="groq", index=env_idx)
+            for env_idx, k in groq_keys
         ]
 
         # ── Gemini keys ──
-        gemini_keys: List[str] = []
+        gemini_keys: List[tuple[int, str]] = []
         for i in range(1, 6):
             v = os.getenv(f"GEMINI_API_KEY_{i}", "").strip()
             if v and not v.startswith("your_"):
-                gemini_keys.append(v)
+                gemini_keys.append((i, v))
 
         # Backward-compat: if no numbered Gemini keys, try legacy GOOGLE_API_KEY
         if not gemini_keys:
             legacy = os.getenv("GOOGLE_API_KEY", "").strip()
             if legacy and not legacy.startswith("your_"):
-                gemini_keys.append(legacy)
+                gemini_keys.append((1, legacy))
                 logger.info("[LLM] Using legacy GOOGLE_API_KEY as GEMINI_API_KEY_1")
 
         self._gemini_pool = [
-            KeyState(key=k, provider="gemini", index=i + 1)
-            for i, k in enumerate(gemini_keys)
+            KeyState(key=k, provider="gemini", index=env_idx)
+            for env_idx, k in gemini_keys
         ]
 
         self._ready = bool(self._groq_pool or self._gemini_pool)
@@ -333,7 +333,7 @@ class ProviderManager:
                     input_tokens=in_tok,
                     output_tokens=out_tok,
                     latency_ms=latency,
-                    status="fallback" if groq_was_tried else "success",
+                    status="success",
                     fallback_used=groq_was_tried,
                 )
             except _RateLimitError:
@@ -491,7 +491,7 @@ class ProviderManager:
         to avoid blocking the event loop.
         Returns (text, input_tokens, output_tokens).
         """
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         try:
             result = await asyncio.wait_for(
                 loop.run_in_executor(
@@ -560,6 +560,172 @@ class ProviderManager:
             if "quota" in err_str or "resource_exhausted" in err_str or "429" in err_str:
                 raise _RateLimitError() from exc
             raise _ProviderError(0) from exc
+
+
+
+    async def generate_stream(
+        self,
+        system_prompt: str,
+        user_message: str,
+        messages: Optional[List[dict]] = None,
+    ) -> AsyncGenerator[Tuple[Optional[str], Optional[ChatCallResult]], None]:
+        if not self._ready:
+            raise RuntimeError("No API keys configured.")
+
+        errors: List[str] = []
+        
+        groq_system_prompt = system_prompt
+        if len(system_prompt) > GROQ_MAX_PROMPT_CHARS:
+            groq_system_prompt = system_prompt[:GROQ_MAX_PROMPT_CHARS] + (
+                "\n\n[Context truncated due to length. Answer from the information provided above.]"
+            )
+
+        first_groq_tried = False
+        for _ in range(len(self._groq_pool)):
+            state = self._next_groq_key()
+            if state is None:
+                break
+            first_groq_tried = True
+            try:
+                t_call = time.monotonic()
+                async for chunk in self._call_groq_stream(state, groq_system_prompt, user_message, messages):
+                    if isinstance(chunk, ChatCallResult):
+                        chunk.provider = "groq"
+                        chunk.provider_key_idx = state.index
+                        chunk.model = GROQ_MODEL
+                        chunk.latency_ms = int((time.monotonic() - t_call) * 1000)
+                        chunk.status = "success"
+                        chunk.fallback_used = False
+                        state.mark_success()
+                        yield None, chunk
+                    else:
+                        yield chunk, None
+                return
+            except _RateLimitError:
+                state.mark_rate_limited()
+                errors.append(f"groq#{state.index}: rate-limited")
+            except _PayloadTooLargeError:
+                errors.append("groq: payload too large")
+                break
+            except Exception as exc:
+                state.mark_error()
+                errors.append(f"groq#{state.index}: {type(exc).__name__}")
+
+        groq_was_tried = bool(errors) or first_groq_tried
+        for _ in range(len(self._gemini_pool)):
+            state = self._next_gemini_key()
+            if state is None:
+                break
+            try:
+                t_call = time.monotonic()
+                async for chunk in self._call_gemini_stream(state, system_prompt, user_message, messages):
+                    if isinstance(chunk, ChatCallResult):
+                        chunk.provider = "gemini"
+                        chunk.provider_key_idx = state.index
+                        chunk.model = GEMINI_MODEL
+                        chunk.latency_ms = int((time.monotonic() - t_call) * 1000)
+                        chunk.status = "success"
+                        chunk.fallback_used = groq_was_tried
+                        state.mark_success()
+                        yield None, chunk
+                    else:
+                        yield chunk, None
+                return
+            except _RateLimitError:
+                state.mark_rate_limited()
+                errors.append(f"gemini#{state.index}: rate-limited")
+            except Exception as exc:
+                state.mark_error()
+                errors.append(f"gemini#{state.index}: {type(exc).__name__}")
+
+        raise RuntimeError("All LLM providers are currently unavailable.")
+
+    async def _call_groq_stream(self, state, system_prompt, user_message, messages):
+        if messages:
+            api_messages = [{"role": "system", "content": system_prompt}] + messages
+        else:
+            api_messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": user_message},
+            ]
+        payload = {
+            "model": GROQ_MODEL,
+            "messages": api_messages,
+            "max_tokens": MAX_OUTPUT_TOKENS,
+            "temperature": 0.4,
+            "stream": True,
+        }
+        headers = {
+            "Authorization": f"Bearer {state.key}",
+            "Content-Type":  "application/json",
+        }
+        async with httpx.AsyncClient(timeout=CALL_TIMEOUT_S) as client:
+            async with client.stream("POST", GROQ_CHAT_URL, json=payload, headers=headers) as resp:
+                if resp.status_code == 429: raise _RateLimitError()
+                if resp.status_code == 413: raise _PayloadTooLargeError()
+                if resp.status_code >= 400: raise _ProviderError(resp.status_code)
+                
+                import json
+                in_tok, out_tok = 0, 0
+                async for line in resp.aiter_lines():
+                    if line.startswith("data: ") and line != "data: [DONE]":
+                        try:
+                            data = json.loads(line[6:])
+                            if "choices" in data and len(data["choices"]) > 0:
+                                delta = data["choices"][0].get("delta", {})
+                                if "content" in delta and delta["content"]:
+                                    yield delta["content"]
+                            if "x_groq" in data and "usage" in data["x_groq"]:
+                                usage = data["x_groq"]["usage"]
+                                in_tok = usage.get("prompt_tokens", 0)
+                                out_tok = usage.get("completion_tokens", 0)
+                        except:
+                            pass
+                yield ChatCallResult(input_tokens=in_tok, output_tokens=out_tok)
+
+    async def _call_gemini_stream(self, state, system_prompt, user_message, messages):
+        client = google_genai.Client(api_key=state.key)
+        if messages and len(messages) > 1:
+            history_text = "\n".join(f"{m['role'].capitalize()}: {m['content']}" for m in messages[:-1])
+            content = f"{system_prompt}\n\n--- Conversation History ---\n{history_text}\n--- Current Message ---\nUser: {user_message}"
+        else:
+            content = f"{system_prompt}\n\nUser message: {user_message}"
+        
+        loop = asyncio.get_running_loop()
+        q = asyncio.Queue()
+        
+        def _run_sync():
+            try:
+                response = client.models.generate_content_stream(model=GEMINI_MODEL, contents=content)
+                in_tok, out_tok = 0, 0
+                for chunk in response:
+                    if chunk.text:
+                        loop.call_soon_threadsafe(q.put_nowait, ("chunk", chunk.text))
+                    try:
+                        if chunk.usage_metadata:
+                            in_tok = getattr(chunk.usage_metadata, "prompt_token_count", 0) or 0
+                            out_tok = getattr(chunk.usage_metadata, "candidates_token_count", 0) or 0
+                    except:
+                        pass
+                loop.call_soon_threadsafe(q.put_nowait, ("done", ChatCallResult(input_tokens=in_tok, output_tokens=out_tok)))
+            except Exception as exc:
+                err_str = str(exc).lower()
+                if "quota" in err_str or "resource_exhausted" in err_str or "429" in err_str:
+                    loop.call_soon_threadsafe(q.put_nowait, ("error", _RateLimitError()))
+                else:
+                    loop.call_soon_threadsafe(q.put_nowait, ("error", exc))
+                    
+        task = loop.run_in_executor(None, _run_sync)
+        
+        while True:
+            msg_type, data = await q.get()
+            if msg_type == "chunk":
+                yield data
+            elif msg_type == "done":
+                yield data
+                break
+            elif msg_type == "error":
+                raise data
 
 
 # ── Internal exception types ──────────────────────────────────────────────────

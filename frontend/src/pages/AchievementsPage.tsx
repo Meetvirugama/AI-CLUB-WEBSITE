@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import Navbar from '@/components/club/Navbar';
 import Achievements from '@/components/club/Achievements';
 import Footer from '@/components/club/Footer';
-import Chatbot from '@/components/club/Chatbot';
+import Chatbot from '@/chatbot/Chatbot';
 
 const AchievementsPage = () => {
   useEffect(() => {

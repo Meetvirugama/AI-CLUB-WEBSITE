@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from events.admin import require_admin
 from db import get_db
-from chatbot_rag.indexer import run_full_reindex, run_incremental_index
+from chatbot.rag.indexer import run_full_reindex, run_incremental_index
 
 logger = logging.getLogger(__name__)
 

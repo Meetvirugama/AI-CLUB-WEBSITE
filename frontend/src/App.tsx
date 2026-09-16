@@ -15,7 +15,7 @@ import NewsPage from "./pages/NewsPage.tsx";
 import AuraPage from "./pages/AuraPage.tsx";
 import AuthBarrier from "./components/AuthBarrier.tsx";
 import Navbar from "./components/club/Navbar.tsx";
-import Chatbot from "./components/club/Chatbot.tsx";
+import Chatbot from "./chatbot/Chatbot.tsx";
 import BackgroundCanvas from "./components/club/BackgroundCanvas.tsx";
 import ScrollToTop from "./components/ScrollToTop.tsx";
 

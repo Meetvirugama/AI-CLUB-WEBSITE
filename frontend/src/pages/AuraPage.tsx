@@ -154,12 +154,11 @@ const AuraPage = () => {
                 key={`ring-${index}`}
                 className="absolute inset-0 rounded-full border border-orange-500/20"
                 style={{ scale: 1 + index * 0.4 }}
-                animate={{ rotate: [0, 360] }}
+                animate={{ rotate: index % 2 === 0 ? [360, 0] : [0, 360] }}
                 transition={{
                   duration: 20 + index * 15,
                   repeat: Infinity,
                   ease: 'linear',
-                  direction: index % 2 === 0 ? 'reverse' : 'normal',
                 }}
               />
             ))}

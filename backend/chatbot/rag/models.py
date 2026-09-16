@@ -9,8 +9,8 @@ required. All existing PostgreSQL installations support this natively.
 Schema:
   chatbot_knowledge_chunks
     id            SERIAL PK
-    source_type   VARCHAR  — "member", "project", "event", "resource", "roadmap",
-                              "achievement", "news", "faq", "static"
+    source_type   VARCHAR  — "members", "projects", "events", "past_events", "resources", "roadmaps",
+                              "achievements", "news", "faq", "static"
     source_id     VARCHAR  — original DB row ID (nullable for static content)
     title         TEXT     — human-readable chunk title (used in source attribution)
     content       TEXT     — the chunk text sent to the LLM as retrieved context
@@ -43,7 +43,7 @@ class KnowledgeChunk(Base):
 
     id          = Column(Integer, primary_key=True, autoincrement=True)
     source_type = Column(String(50),  nullable=False, index=True)
-    source_id   = Column(String(100), nullable=True,  index=True)  # FK value as string
+    source_id   = Column(String(100), nullable=True,  index=True)  # Public source row ID; NULL for static chunks
     title       = Column(Text,        nullable=False, default="")
     content     = Column(Text,        nullable=False)
     url         = Column(String(500), nullable=True,  default="")
@@ -58,8 +58,7 @@ class KnowledgeChunk(Base):
         Index("ix_knowledge_chunks_ts_vector", "ts_vector", postgresql_using="gin"),
         # Unique constraint enables ON CONFLICT upserts in the indexer
         UniqueConstraint("source_type", "source_id",
-                         name="uq_knowledge_chunks_source",
-                         deferrable=True),
+                         name="uq_knowledge_chunks_source"),
     )
 
     def __repr__(self) -> str:

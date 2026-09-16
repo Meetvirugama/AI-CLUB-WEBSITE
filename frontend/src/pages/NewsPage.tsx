@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { ExternalLink, Newspaper, X, ArrowRight, Sparkles } from 'lucide-react';
 import Navbar from '@/components/club/Navbar';
 import Footer from '@/components/club/Footer';
-import Chatbot from '@/components/club/Chatbot';
+import Chatbot from '@/chatbot/Chatbot';
 import { getApiUrl } from '@/lib/api';
 
 interface NewsModel {

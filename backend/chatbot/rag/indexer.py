@@ -39,6 +39,18 @@ _PUBLIC_SOURCES = (
     "resources", "roadmaps", "achievements", "news",
 )
 
+ROADMAP_PATHS = {
+    "ml": "/roadmaps/ml",
+    "dl": "/roadmaps/dl",
+    "rl": "/roadmaps/rl",
+    "nlp": "/roadmaps/nlp",
+    "transformers": "/roadmaps/transformers",
+    "genai": "/roadmaps/genai",
+    "llm": "/roadmaps/llm",
+    "agentic": "/roadmaps/agentic-ai",
+    "agentic-ai": "/roadmaps/agentic-ai",
+}
+
 
 # ── Chunk builders — one per source type ─────────────────────────────────────
 
@@ -183,7 +195,7 @@ async def _collect_chunks(session: AsyncSession) -> list[dict]:
                 content += f"\n{rm.description}"
             chunks.append(_chunk("roadmaps", rm.id,
                                  f"{rm.roadmap_type} Roadmap — Phase {rm.phase}: {rm.title}",
-                                 content, f"/roadmaps/{rm.roadmap_type.lower()}"))
+                                 content, ROADMAP_PATHS.get(str(rm.roadmap_type).strip().lower(), "/roadmaps")))
     except Exception as exc:
         logger.warning(f"[RAG Indexer] roadmaps: {exc}")
 
@@ -223,11 +235,11 @@ async def _collect_chunks(session: AsyncSession) -> list[dict]:
     return chunks
 
 
-async def _upsert_chunks(session: AsyncSession, chunks: list[dict]) -> int:
-    """
-    Upsert chunks into the knowledge table using a raw SQL ON CONFLICT statement,
-    then refresh the tsvector column for inserted/updated rows.
-    Returns the number of rows upserted.
+async def _upsert_chunks(session: AsyncSession, chunks: list[dict], *, commit: bool = True) -> int:
+    """Upsert public chunks without relying on a partial/deferrable ON CONFLICT index.
+
+    Existing installations may still have the old deferrable constraint, so this
+    deliberately uses UPDATE-then-INSERT inside the current transaction.
     """
     if not chunks:
         return 0
@@ -236,71 +248,107 @@ async def _upsert_chunks(session: AsyncSession, chunks: list[dict]) -> int:
     upserted = 0
 
     for chunk in chunks:
-        await session.execute(text("""
-            INSERT INTO chatbot_knowledge_chunks
-                (source_type, source_id, title, content, url, visibility, created_at, updated_at)
-            VALUES
-                (:source_type, :source_id, :title, :content, :url, :visibility, :now, :now)
-            ON CONFLICT (source_type, source_id)
-                WHERE source_id IS NOT NULL
-            DO UPDATE SET
-                title      = EXCLUDED.title,
-                content    = EXCLUDED.content,
-                url        = EXCLUDED.url,
-                updated_at = EXCLUDED.updated_at
-        """), {**chunk, "now": now})
+        source_type = chunk["source_type"]
+        source_id = chunk["source_id"]
+        if source_id is None:
+            # Static chunks are identified by source_type + title.
+            result = await session.execute(text("""
+                UPDATE chatbot_knowledge_chunks
+                SET title=:title, content=:content, url=:url, visibility=:visibility, updated_at=:now
+                WHERE source_type=:source_type AND source_id IS NULL AND title=:title
+            """), {**chunk, "now": now})
+        else:
+            result = await session.execute(text("""
+                UPDATE chatbot_knowledge_chunks
+                SET title=:title, content=:content, url=:url, visibility=:visibility, updated_at=:now
+                WHERE source_type=:source_type AND source_id=:source_id
+            """), {**chunk, "now": now})
+
+        if result.rowcount == 0:
+            await session.execute(text("""
+                INSERT INTO chatbot_knowledge_chunks
+                    (source_type, source_id, title, content, url, visibility, created_at, updated_at)
+                VALUES
+                    (:source_type, :source_id, :title, :content, :url, :visibility, :now, :now)
+            """), {**chunk, "now": now})
         upserted += 1
 
-    # Refresh ts_vector for all public chunks in bulk
+    # Always refresh vectors for rows touched in this transaction.  The explicit
+    # predicate avoids the previous AND/OR precedence bug.
     await session.execute(text("""
         UPDATE chatbot_knowledge_chunks
-        SET ts_vector = to_tsvector('english', title || ' ' || content)
-        WHERE visibility = 'public' AND ts_vector IS NULL
-           OR updated_at > created_at
-    """))
+        SET ts_vector = to_tsvector('english', coalesce(title, '') || ' ' || coalesce(content, ''))
+        WHERE visibility = 'public'
+          AND (ts_vector IS NULL OR updated_at >= :now)
+    """), {"now": now})
 
-    await session.commit()
+    if commit:
+        await session.commit()
     return upserted
 
 
 async def run_full_reindex(session: AsyncSession) -> dict:
-    """
-    Delete all existing chunks and rebuild the entire knowledge base from scratch.
-    Returns stats dict: {deleted, indexed, sources}.
-    """
-    # Count existing
-    from chatbot_rag.models import KnowledgeChunk  # noqa: ensure registered
-    count_result = await session.execute(text("SELECT COUNT(*) FROM chatbot_knowledge_chunks"))
-    deleted = count_result.scalar_one() or 0
+    """Atomically rebuild the public knowledge index.
 
-    # Delete all
-    await session.execute(text("DELETE FROM chatbot_knowledge_chunks"))
-    await session.commit()
+    The old index remains intact until the transaction commits. Any collection
+    or indexing error rolls the transaction back instead of leaving a partial KB.
+    """
+    from chatbot.rag.models import KnowledgeChunk  # noqa: F401
 
-    # Collect and index
-    chunks = await _collect_chunks(session)
-    indexed = await _upsert_chunks(session, chunks)
+    try:
+        count_result = await session.execute(text("SELECT COUNT(*) FROM chatbot_knowledge_chunks"))
+        existing = int(count_result.scalar_one() or 0)
+
+        chunks = await _collect_chunks(session)
+        await session.execute(text("DELETE FROM chatbot_knowledge_chunks"))
+        indexed = await _upsert_chunks(session, chunks, commit=False)
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
 
     source_counts: dict[str, int] = {}
     for c in chunks:
         source_counts[c["source_type"]] = source_counts.get(c["source_type"], 0) + 1
 
-    logger.info(f"[RAG] Full reindex complete: {deleted} deleted, {indexed} indexed — {source_counts}")
-    return {"deleted": deleted, "indexed": indexed, "sources": source_counts}
+    logger.info("[RAG] Full reindex complete: %s replaced, %s indexed — %s", existing, indexed, source_counts)
+    return {"deleted": existing, "indexed": indexed, "sources": source_counts}
 
 
 async def run_incremental_index(session: AsyncSession) -> dict:
-    """
-    Upsert all public content without deleting existing chunks.
-    Useful for background refresh after content changes.
-    Returns stats dict: {indexed, sources}.
-    """
+    """Synchronize the public KB, including deletion of stale source rows."""
     chunks = await _collect_chunks(session)
-    indexed = await _upsert_chunks(session, chunks)
+    current_keys = {(c["source_type"], c["source_id"]) for c in chunks if c["source_id"] is not None}
+
+    try:
+        indexed = await _upsert_chunks(session, chunks, commit=False)
+
+        # Remove stale rows only for sources owned by this public indexer.
+        result = await session.execute(text("""
+            SELECT id, source_type, source_id
+            FROM chatbot_knowledge_chunks
+            WHERE visibility='public'
+              AND source_type = ANY(:source_types)
+        """), {"source_types": list(_PUBLIC_SOURCES)})
+        stale_ids = [
+            row.id for row in result
+            if row.source_id is not None and (row.source_type, row.source_id) not in current_keys
+        ]
+        if stale_ids:
+            await session.execute(
+                text("DELETE FROM chatbot_knowledge_chunks WHERE id = ANY(:ids)"),
+                {"ids": stale_ids},
+            )
+
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
 
     source_counts: dict[str, int] = {}
     for c in chunks:
         source_counts[c["source_type"]] = source_counts.get(c["source_type"], 0) + 1
 
-    logger.info(f"[RAG] Incremental index complete: {indexed} upserted — {source_counts}")
-    return {"indexed": indexed, "sources": source_counts}
+    logger.info("[RAG] Incremental index complete: %s upserted, %s stale removed — %s", indexed, len(stale_ids), source_counts)
+    return {"indexed": indexed, "stale_deleted": len(stale_ids), "sources": source_counts}
+

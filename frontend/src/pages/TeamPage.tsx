@@ -1,5 +1,5 @@
 import Team from '@/components/club/Team';
-import Chatbot from '@/components/club/Chatbot';
+import Chatbot from '@/chatbot/Chatbot';
 
 const TeamPage = () => {
   return (

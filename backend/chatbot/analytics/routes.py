@@ -32,15 +32,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import get_db
 from events.admin import require_admin
-from chatbot_analytics.queries import (
-    get_categories,
-    get_daily_usage,
-    get_key_health,
+from chatbot.analytics.queries import (
     get_overview,
+    get_daily_usage,
     get_providers,
+    get_key_health,
     get_recent_activity,
+    get_categories,
 )
-from chatbot_analytics.schemas import (
+from chatbot.analytics.schemas import (
     ActivityResponse,
     CategoriesResponse,
     ChatOverviewResponse,
