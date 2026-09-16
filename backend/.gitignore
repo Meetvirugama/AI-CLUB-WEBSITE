@@ -15,3 +15,6 @@ uploads/
 # Ignore SQLite databases
 *.db
 *.sqlite3
+
+# Dummy data
+seed_dummy.py
