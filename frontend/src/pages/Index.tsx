@@ -6,6 +6,7 @@ import ProgressTrackerCard from '@/components/club/ProgressTrackerCard';
 import Events from '@/components/club/Events';
 import Projects from '@/components/club/Projects';
 import Team from '@/components/club/Team';
+import Resources from '@/components/club/Resources';
 import Roadmap from '@/components/club/Roadmap';
 import Footer from '@/components/club/Footer';
 
@@ -33,6 +34,7 @@ const Index = () => {
       <Projects isHomepage={true} />
       <Team isHomepage={true} />
       <Roadmap />
+      <Resources />
       <Footer />
     </div>
   );

@@ -1,4 +1,5 @@
 import Resources from '@/components/club/Resources';
+import Roadmap from '@/components/club/Roadmap';
 import Footer from '@/components/club/Footer';
 import Chatbot from '@/components/club/Chatbot';
 import { Link } from 'react-router-dom';
@@ -16,6 +17,7 @@ const ResourcesPage = () => {
           <span>Back to Home</span>
         </Link>
       </div>
+      <Roadmap />
       <Resources />
       <Footer short />
       <Chatbot />
