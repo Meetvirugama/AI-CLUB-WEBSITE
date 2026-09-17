@@ -1,7 +1,7 @@
 import Resources from '@/components/club/Resources';
 import Roadmap from '@/components/club/Roadmap';
 import Footer from '@/components/club/Footer';
-import Chatbot from '@/components/club/Chatbot';
+import Chatbot from '@/chatbot/Chatbot';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
