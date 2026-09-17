@@ -20,7 +20,7 @@ users
 
 import os
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from db import Base
 
 
@@ -43,13 +43,7 @@ class User(Base):
     last_login    = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     created_at    = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
-    @property
-    def is_admin(self) -> bool:
-        admin_env = os.getenv("SUPER_ADMIN_EMAIL", "")  # No hardcoded fallback — fail-closed if unset
-        if not admin_env:
-            return False
-        admins = [email.strip() for email in admin_env.split(",") if email.strip()]
-        return self.email in admins
+    is_admin      = Column(Boolean, default=False, nullable=False)
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<User id={self.id} email={self.email!r}>"

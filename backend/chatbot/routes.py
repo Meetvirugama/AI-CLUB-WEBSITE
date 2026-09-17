@@ -68,7 +68,7 @@ class ChatRequest(BaseModel):
 # final gate also requires either a known club intent or a successful retrieval.
 _SCOPE_TERMS = {
     "ai club", "aiclub", "club dau", "dau ai", "daiict", "dhirubhai",
-    "event", "events", "workshop", "hackathon", "project", "projects",
+    "event", "events", "workshop", "hackathon", "build night", "project", "projects",
     "member", "members", "team", "roadmap", "roadmaps", "resource",
     "resources", "achievement", "achievements", "join", "registration",
     "discord", "instagram", "github", "linkedin", "about the club",
@@ -422,13 +422,14 @@ PROMPT INJECTION DEFENSE:
                 yield f"data: {json.dumps({'text': safe_text})}\n\n"
                 full_reply += safe_text
                 
-            # Save to cache for 24 hours
-            _STREAMING_CACHE[cache_key] = CacheEntry(
-                text=full_reply,
-                nav_action=final_nav_action,
-                sources=sources,
-                expires_at=time.time() + 86400
-            )
+            # Save to cache for 24 hours (unless it has a navigation action which depends on auth)
+            if not final_nav_action:
+                _STREAMING_CACHE[cache_key] = CacheEntry(
+                    text=full_reply,
+                    nav_action=final_nav_action,
+                    sources=sources,
+                    expires_at=time.time() + 86400
+                )
                 
         except Exception as e:
             logging.error(f"Chatbot LLM stream error: {str(e)}", exc_info=True)

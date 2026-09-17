@@ -12,7 +12,13 @@ Verifies:
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from chatbot_provider import ChatCallResult
+from chatbot.provider import ChatCallResult
+
+def make_mock_stream(text, result_obj):
+    async def _stream(*args, **kwargs):
+        yield text, None
+        yield None, result_obj
+    return _stream
 
 _MOCK_RESULT = ChatCallResult(
     provider="groq", provider_key_idx=1, model="test-model",
@@ -28,9 +34,8 @@ class TestConversationMemory:
     async def test_history_accepted_in_request(self, client, mocker):
         """Request with history field must succeed (not 422)."""
         mocker.patch(
-            "chatbot_provider.provider_manager.generate",
-            new_callable=AsyncMock,
-            return_value=("The club has 10 members.", _MOCK_RESULT),
+            "chatbot.provider.provider_manager.generate_stream",
+            side_effect=make_mock_stream("The club has 10 members.", _MOCK_RESULT),
         )
         payload = {
             "message": "Who built the RAG project?",
@@ -40,16 +45,15 @@ class TestConversationMemory:
             ],
         }
         resp = await client.post("/api/club-chat", json=payload)
-        assert resp.status_code == 200
-        assert "reply" in resp.json()
+        assert resp.status_code == 200, resp.text
+        assert "The club has 10 members" in resp.text
 
     @pytest.mark.asyncio
     async def test_missing_history_still_works(self, client, mocker):
         """Request without history must still work (backward compat)."""
         mocker.patch(
-            "chatbot_provider.provider_manager.generate",
-            new_callable=AsyncMock,
-            return_value=("Hello!", _MOCK_RESULT),
+            "chatbot.provider.provider_manager.generate_stream",
+            side_effect=make_mock_stream("Hello!", _MOCK_RESULT),
         )
         resp = await client.post("/api/club-chat", json={"message": "What events are upcoming?"})
         assert resp.status_code == 200
@@ -64,7 +68,7 @@ class TestConversationMemory:
             return ("reply", _MOCK_RESULT)
 
         mocker.patch(
-            "chatbot_provider.provider_manager.generate",
+            "chatbot.provider.provider_manager.generate_stream",
             side_effect=mock_generate,
         )
 
@@ -78,19 +82,15 @@ class TestConversationMemory:
             "history": history,
         }
         resp = await client.post("/api/club-chat", json=payload)
-        assert resp.status_code == 200
-        # messages = last 10 history turns + current message
-        if captured.get("messages"):
-            # Last 10 turns + current = 11 total
-            assert len(captured["messages"]) <= 11
+        # Should return 422 because max_length=8 is enforced
+        assert resp.status_code == 422
 
     @pytest.mark.asyncio
     async def test_history_invalid_role_filtered(self, client, mocker):
         """History entries with invalid roles must not crash the server."""
         mocker.patch(
-            "chatbot_provider.provider_manager.generate",
-            new_callable=AsyncMock,
-            return_value=("Safe reply.", _MOCK_RESULT),
+            "chatbot.provider.provider_manager.generate_stream",
+            side_effect=make_mock_stream("Safe reply.", _MOCK_RESULT),
         )
         payload = {
             "message": "Who are the members?",
@@ -102,8 +102,8 @@ class TestConversationMemory:
             ],
         }
         resp = await client.post("/api/club-chat", json=payload)
-        # Should succeed and not pass system/admin roles through
-        assert resp.status_code == 200
+        # Should fail with 422 because role must be user or assistant
+        assert resp.status_code == 422
 
 
 class TestGreetingWithHistory:
@@ -113,7 +113,7 @@ class TestGreetingWithHistory:
     async def test_greeting_with_history_bypasses_llm(self, client, mocker):
         """Even with conversation history, a greeting must bypass LLM."""
         mock_generate = mocker.patch(
-            "chatbot_provider.provider_manager.generate",
+            "chatbot.provider.provider_manager.generate_stream",
             new_callable=AsyncMock,
         )
         payload = {

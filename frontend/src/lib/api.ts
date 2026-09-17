@@ -14,3 +14,10 @@ export function getApiUrl(path: string): string {
   const prodHost = import.meta.env.VITE_API_URL || '';
   return `${prodHost}${normalizedPath}`;
 }
+
+export function getAuthHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  return {
+    'Content-Type': 'application/json',
+    ...extra,
+  };
+}

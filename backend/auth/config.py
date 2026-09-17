@@ -42,6 +42,8 @@ class AuthConfig:
         if not cls.GOOGLE_CLIENT_ID:
             logging.warning("GOOGLE_CLIENT_ID environment variable is not set. Google Auth will be disabled.")
         if cls.JWT_SECRET_KEY == "CHANGE_ME_IN_PRODUCTION":
+            if cls.ENVIRONMENT == "production":
+                raise ValueError("FATAL: JWT_SECRET_KEY is missing or insecure in production environment.")
             logging.warning(
                 "JWT_SECRET_KEY is set to default. Please set a strong JWT_SECRET_KEY in environment variables."
             )

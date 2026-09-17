@@ -153,10 +153,10 @@ app.add_middleware(
     max_age=600,
 )
 
-# --- SERVE UPLOADS STATICALLY ---
-uploads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+# --- UPLOADS DIRECTORY SETUP ---
+uploads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "private_uploads")
 os.makedirs(uploads_dir, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+# Intentionally not mounting /uploads statically to protect files
 
 
 

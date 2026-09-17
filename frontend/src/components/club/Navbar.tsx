@@ -5,13 +5,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { getApiUrl } from '../../lib/api';
 import aiClubLogo from '@/assets/ai-club-logo.png';
 import FireworkLauncher, { type FireworkLauncherHandle } from './FireworkLauncher';
-
-interface UserProfile {
-  name: string;
-  email: string;
-  picture: string;
-  is_admin: boolean;
-}
+import { useAuth } from '../../contexts/AuthContext';
 
 interface NavCounts {
   events: number;
@@ -48,9 +42,8 @@ const linkStyle = (active: boolean) => ({
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const { user, isAuthenticated, isLoading: authLoading, login, logout } = useAuth();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [authLoading, setAuthLoading] = useState(false);
   const [counts, setCounts] = useState<NavCounts>({ events: 0, projects: 0, members: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fireworkRef = useRef<FireworkLauncherHandle | null>(null);
@@ -99,95 +92,24 @@ export default function Navbar() {
     fetchCounts();
   }, []);
 
-  // Auth check — uses HttpOnly cookie and/or localStorage Bearer token
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = localStorage.getItem('access_token');
-        const headers: Record<string, string> = {};
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        const res = await fetch(getApiUrl('/api/auth/me'), { credentials: 'include', headers });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.authenticated && data.user) {
-            setUser({
-              name: data.user.name,
-              email: data.user.email,
-              picture: data.user.profile_image || '',
-              is_admin: !!data.user.is_admin,
-            });
-            return;
-          }
-        }
-      } catch (_) {}
-      setUser(null);
-    };
-    checkAuth();
-  }, []);
-
-  // Google OAuth login — exchanges Google credential for backend JWT
+  // Google OAuth login — uses access token implicitly
   const googleLogin = useGoogleLogin({
     flow: 'implicit',
     onSuccess: async (tokenResponse) => {
-      setAuthLoading(true);
       try {
-        // Get user info from Google
-        const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        });
-        if (!userInfoRes.ok) throw new Error('Failed to get user info');
-        const googleUser = await userInfoRes.json();
-
-        // Exchange with backend
-        const authRes = await fetch(getApiUrl('/api/auth/google'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ id_token: tokenResponse.access_token }),
-        });
-
-        if (authRes.ok) {
-          const data = await authRes.json();
-          if (data.access_token) {
-            localStorage.setItem('access_token', data.access_token);
-          }
-          if (data.user) {
-            setUser({
-              name: data.user.name,
-              email: data.user.email,
-              picture: data.user.profile_image || googleUser.picture || '',
-              is_admin: !!data.user.is_admin,
-            });
-          }
-          window.dispatchEvent(new Event('auth-change'));
-        } else {
-          console.error('Auth failed:', await authRes.text());
-        }
+        await login(tokenResponse.access_token);
       } catch (err) {
         console.error('Login error:', err);
-      } finally {
-        setAuthLoading(false);
       }
     },
     onError: (err) => {
       console.error('Google login error:', err);
-      setAuthLoading(false);
     },
   });
 
-  const logout = async () => {
-    localStorage.removeItem('access_token');
-    try {
-      await fetch(getApiUrl('/api/auth/logout'), {
-        method: 'POST',
-        credentials: 'include',
-      });
-    } catch (_) {}
-    setUser(null);
+  const handleLogout = async () => {
+    await logout();
     setShowUserDropdown(false);
-    window.dispatchEvent(new Event('auth-change'));
   };
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -375,8 +297,8 @@ export default function Navbar() {
                   background: 'white', cursor: 'pointer', transition: 'border-color 0.15s',
                 }}
               >
-                {user.picture ? (
-                  <img src={user.picture} alt={user.name} style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover' }} />
+                {user.profile_image ? (
+                  <img src={user.profile_image} alt={user.name} style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover' }} />
                 ) : (
                   <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'hsl(243,75%,90%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.7rem', color: 'hsl(243,75%,59%)' }}>
                     {user.name[0]}
@@ -408,7 +330,7 @@ export default function Navbar() {
                   {user.is_admin && dropdownItem('/admin', <Shield size={13} style={{ color: 'hsl(243,75%,59%)' }} />, 'Admin Dashboard')}
                   <div style={{ borderTop: '1px solid hsl(228,20%,88%)' }}>
                     <button
-                      onClick={logout}
+                      onClick={handleLogout}
                       style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', width: '100%', border: 'none', background: 'transparent', fontSize: '0.8rem', color: 'hsl(0,70%,50%)', cursor: 'pointer', transition: 'background 0.15s' }}
                       onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'hsl(0,70%,97%)'}
                       onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
@@ -510,8 +432,8 @@ export default function Navbar() {
 
             {user && (
               <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: 10, padding: '10px', background: 'white', border: '1px solid hsl(228,20%,80%)', borderRadius: 4 }}>
-                {user.picture ? (
-                  <img src={user.picture} alt={user.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+                {user.profile_image ? (
+                  <img src={user.profile_image} alt={user.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
                 ) : (
                   <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'hsl(243,75%,90%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'hsl(243,75%,59%)' }}>
                     {user.name[0]}

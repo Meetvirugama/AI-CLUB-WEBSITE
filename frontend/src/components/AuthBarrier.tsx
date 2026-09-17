@@ -1,80 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { Loader2, ShieldAlert } from "lucide-react";
 import aiClubLogo from "@/assets/ai-club-logo.png";
-import { getApiUrl } from "../lib/api";
+import { useAuth } from "../contexts/AuthContext";
+import { Navigate } from "react-router-dom";
 
 interface AuthBarrierProps {
   children: React.ReactNode;
+  requireAdmin?: boolean;
 }
 
-export default function AuthBarrier({ children }: AuthBarrierProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      const res = await fetch(getApiUrl('/api/auth/me'), { credentials: 'include', headers });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.authenticated && data.user) {
-          setIsAuthenticated(true);
-          setErrorMsg(null);
-          return true;
-        }
-      }
-    } catch (e) {
-      console.error('Auth check failed:', e);
-    }
-    setIsAuthenticated(false);
-    return false;
-  };
-
-  useEffect(() => {
-    const initAuth = async () => {
-      await checkAuth();
-      setIsLoading(false);
-    };
-    initAuth();
-  }, []);
+export default function AuthBarrier({ children, requireAdmin = false }: AuthBarrierProps) {
+  const { isAuthenticated, isAdmin, isLoading, login } = useAuth();
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     if (!credentialResponse.credential) return;
-    setIsLoading(true);
     setErrorMsg(null);
     try {
-      const syncRes = await fetch(getApiUrl('/api/auth/google'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_token: credentialResponse.credential }),
-        credentials: 'include',  // Cookie is set by the server
-      });
-
-      if (syncRes.ok) {
-        const syncData = await syncRes.json();
-        if (syncData.status === 'success') {
-          if (syncData.access_token) {
-            localStorage.setItem('access_token', syncData.access_token);
-          }
-          setIsAuthenticated(true);
-        } else {
-          setErrorMsg(syncData.message || 'Failed to authenticate with backend.');
-        }
-      } else {
-        const errText = await syncRes.text();
-        setErrorMsg(`Server Error: ${errText || syncRes.statusText}`);
-      }
-    } catch (syncErr: any) {
-      console.error('Failed to sync login:', syncErr);
-      setErrorMsg('Unable to connect to the authentication server.');
-    } finally {
-      setIsLoading(false);
+      await login(credentialResponse.credential);
+    } catch (err: any) {
+      console.error('Failed to sync login:', err);
+      setErrorMsg(err.message || 'Unable to connect to the authentication server.');
     }
   };
 
@@ -155,6 +102,11 @@ export default function AuthBarrier({ children }: AuthBarrierProps) {
         </div>
       </div>
     );
+  }
+
+  // Enforce admin check if requested
+  if (requireAdmin && !isAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

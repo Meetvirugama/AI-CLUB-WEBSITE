@@ -16,17 +16,21 @@ import os
 # Ensure the backend directory is on the path so imports resolve
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+# Set required environment variables for tests
+os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
+os.environ["JWT_SECRET_KEY"] = "test-secret-key-123"
+
 import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
 # Patch provider_manager before importing main so no real API keys are needed
-import chatbot_provider
+import chatbot.provider as chatbot_provider
 chatbot_provider.provider_manager = MagicMock()
 chatbot_provider.provider_manager.is_ready = True
 
-from chatbot_provider import ChatCallResult
+from chatbot.provider import ChatCallResult
 
 # Default mock result — Groq key 1 success
 _DEFAULT_CALL_RESULT = ChatCallResult(
@@ -44,21 +48,21 @@ _DEFAULT_CALL_RESULT = ChatCallResult(
 @pytest.fixture(autouse=True)
 def patch_analytics(mocker):
     """Silence analytics so every test doesn't need a real DB."""
-    mocker.patch("main.log_chat_event", new_callable=AsyncMock)
-    mocker.patch("main._log_chat_analytics", new_callable=AsyncMock)
+    mocker.patch("chatbot.routes.log_chat_event", new_callable=AsyncMock)
+    mocker.patch("chatbot.routes._log_chat_analytics", new_callable=AsyncMock)
 
 
 @pytest.fixture(autouse=True)
 def patch_rag(mocker):
     """Return empty RAG results by default (tests that need RAG override this)."""
-    mocker.patch("main.retrieve_relevant_chunks", new_callable=AsyncMock, return_value=[])
+    mocker.patch("chatbot.routes.retrieve_relevant_chunks", new_callable=AsyncMock, return_value=[])
 
 
 @pytest.fixture(autouse=True)
 def patch_db_context(mocker):
     """Return empty context string by default (tests override per-case)."""
     mocker.patch(
-        "main.build_chatbot_context_filtered",
+        "chatbot.routes.build_chatbot_context_filtered",
         new_callable=AsyncMock,
         return_value=("AI Club DAU is an AI/ML club at DAU, Gandhinagar.", []),
     )
@@ -67,8 +71,9 @@ def patch_db_context(mocker):
 @pytest.fixture(autouse=True)
 def clear_rate_limits():
     """Clear the rate limit dictionary before each test to avoid 429 errors."""
-    from main import CHAT_RATE_LIMITS
+    from chatbot.routes import CHAT_RATE_LIMITS, _STREAMING_CACHE
     CHAT_RATE_LIMITS.clear()
+    _STREAMING_CACHE.clear()
 
 
 @pytest_asyncio.fixture
@@ -117,7 +122,11 @@ async def normal_client(client):
 
 
 def make_generate_mock(reply: str, call_result: ChatCallResult | None = None):
-    """Helper: return an AsyncMock that yields the given reply from generate()."""
+    """Helper: return a function that returns an async generator for generate_stream()."""
     result = call_result or _DEFAULT_CALL_RESULT
-    mock = AsyncMock(return_value=(reply, result))
-    return mock
+    
+    async def mock_generator(*args, **kwargs):
+        yield reply, None
+        yield None, result
+        
+    return MagicMock(side_effect=mock_generator)

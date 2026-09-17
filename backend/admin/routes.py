@@ -3,7 +3,7 @@ admin/routes.py
 ---------------
 FastAPI router for the Admin Dashboard.
 
-All routes require the `require_admin` dependency (JWT + SUPER_ADMIN_EMAIL).
+All routes require the `require_admin` dependency (JWT + DB is_admin check).
 
 Endpoints
 ─────────
@@ -41,9 +41,10 @@ import math
 import re
 from datetime import date
 from typing import Optional
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import async_session
@@ -55,6 +56,7 @@ from admin.queries import (
     recent_registrations,
     registration_detail_admin,
     search_registrations,
+    log_audit_action,
 )
 from admin.schemas import (
     AdminRegistrationDetail,
@@ -358,7 +360,24 @@ async def delete_registration_admin(
     db: AsyncSession = Depends(get_db),
 ):
     try:
+        # Fetch the registration state before deleting for audit logging
+        reg_state = await registration_detail_admin(db, registration_id)
+        
         deleted = await delete_registration(db, registration_id)
+        
+        if deleted and reg_state:
+            # Log the destructive action
+            await log_audit_action(
+                session=db,
+                admin_id=admin.id,
+                admin_email=admin.email,
+                action="DELETE_REGISTRATION",
+                entity_type="EventRegistration",
+                entity_id=str(registration_id),
+                before_state=reg_state,
+                after_state=None,
+            )
+            
     except Exception as exc:
         logger.exception("Delete failed id=%d: %s", registration_id, exc)
         raise HTTPException(
@@ -375,3 +394,32 @@ async def delete_registration_admin(
     return DeleteRegistrationResponse(
         message=f"Registration id={registration_id} and all related data deleted successfully."
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GET /api/admin/files/{filename}
+# ─────────────────────────────────────────────────────────────────────────────
+@router.get(
+    "/files/{filename:path}",
+    response_class=FileResponse,
+    summary="Download uploaded file",
+    description="Serve private uploaded files to admins only.",
+)
+async def get_private_file(filename: str, _: None = Depends(require_admin)):
+    from forms.file_handler import get_upload_dir
+    upload_dir = get_upload_dir()
+    file_path = upload_dir / filename
+
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
+
+    # Prevent path traversal
+    try:
+        resolved_path = file_path.resolve()
+        resolved_upload_dir = upload_dir.resolve()
+        if not str(resolved_path).startswith(str(resolved_upload_dir)):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid path")
+
+    return FileResponse(path=file_path)

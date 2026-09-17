@@ -2,7 +2,7 @@
 // Drop-in card component for the Members section.
 // Uses the members[] array from src/data/members.ts
 
-import { Member } from "../data/members";
+import { Member } from "./club/Team";
 
 interface MemberCardProps {
   member: Member;

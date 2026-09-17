@@ -4,10 +4,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/club/Navbar';
 import Footer from '@/components/club/Footer';
 import { Loader2, Download, Trash2, Calendar, Users, Award, Newspaper, Clipboard, Settings, Edit, Eye, FileText, Archive, Plus, Image, Link2, Tag, LayoutDashboard, LogOut, ChevronRight, Edit2, ArrowUp, ArrowDown, X, BookOpen, Bot, Clock } from 'lucide-react';
-import { GoogleLogin } from '@react-oauth/google';
-import { supabase } from '../lib/supabase';
+
+import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
+import { useDashboardStats, useSupabaseCounts } from './admin/queries';
+import DashboardTab from './admin/DashboardTab';
+import RegistrationsTab from './admin/RegistrationsTab';
+import CreateEventTab from './admin/CreateEventTab';
 import ChatbotAnalytics from '../chatbot/ChatbotAnalytics';
+import { useQueryClient } from '@tanstack/react-query';
 
 
 interface EventModel {
@@ -47,18 +53,21 @@ interface AchievementModel {
 const Admin = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'registrations' | 'createEvent' | 'formBuilder' | 'manageEvents' | 'manageMembers' | 'manageProjects' | 'pastEvents' | 'manageAchievements' | 'manageNews' | 'manageResources' | 'manageWeeklyVeneza' | 'chatbotAnalytics'>('dashboard');
 
-  // Auth & Admin Guard State
-  const [authState, setAuthState] = useState<{
-    isLoading: boolean;
-    isAuthenticated: boolean;
-    isAuthorized: boolean;
-    user: any;
-  }>({
-    isLoading: true,
-    isAuthenticated: false,
-    isAuthorized: false,
-    user: null
-  });
+  // Auth & Admin Guard State (Provided via Context)
+  const { user, isAuthenticated, isAdmin, isLoading: authLoading } = useAuth();
+  const authState = {
+    isLoading: authLoading,
+    isAuthenticated,
+    isAuthorized: isAdmin,
+    user
+  };
+
+  useEffect(() => {
+    if (!authLoading && isAdmin) {
+      fetchEventsList();
+      fetchDashboardMetrics();
+    }
+  }, [authLoading, isAdmin]);
 
   // Registration Details inspection state
   const [selectedRegId, setSelectedRegId] = useState<number | null>(null);
@@ -151,12 +160,13 @@ const Admin = () => {
   };
   
   // Dashboard & Metrics State
-  const [metrics, setMetrics] = useState<any>(null);
+  const { data: metrics, isLoading: loadingMetrics } = useDashboardStats();
+  const queryClient = useQueryClient();
+  
+  const fetchDashboardMetrics = () => queryClient.invalidateQueries({ queryKey: ['admin', 'dashboardMetrics'] });
+  const fetchSupabaseCounts = () => queryClient.invalidateQueries({ queryKey: ['admin', 'supabaseCounts'] });
+
   const [loadingEvents, setLoadingEvents] = useState(false);
-  const [loadingMetrics, setLoadingMetrics] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [registrations, setRegistrations] = useState<any[]>([]);
-  const [regSearch, setRegSearch] = useState('');
 
   // Members & Projects State
   const [adminMembers, setAdminMembers] = useState<any[]>([]);
@@ -181,7 +191,7 @@ const Admin = () => {
     winners: '',
     winner_link: ''
   });
-  const [supabaseCounts, setSupabaseCounts] = useState({ members: 0, projects: 0, pastEvents: 0 });
+  const { data: supabaseCounts = { members: 0, projects: 0, pastEvents: 0 } } = useSupabaseCounts();
 
   // Modals / Editor States for Members
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
@@ -223,43 +233,37 @@ const Admin = () => {
     image_url: ''
   });
 
-  // Create Event Form State (Matching Backend ClubEvent constraints)
-  const [eventForm, setEventForm] = useState({
-    title: '',
-    description: '',
-    banner: '',
-    category: 'workshop',
-    venue: '',
-    contact_email: 'ai_club@dau.ac.in',
-    event_type: 'individual' as 'individual' | 'team',
-    min_team_size: 2,
-    max_team_size: 4,
-    event_date: '',
-    event_start_date: '',
-    event_end_date: '',
-    start_time: '18:00:00',
-    end_time: '21:00:00',
-    registration_start: '',
-    registration_end: '',
-    winners: '',
-    winner_link: '',
-    registration_link: ''
-  });
-  const [eventMessage, setEventMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Auth uses HttpOnly cookie set by the backend — credentials:'include' handles it automatically.
   // getAuthHeaders only carries content-type or other non-auth headers.
   const getAuthHeaders = (extra: Record<string, string> = {}): Record<string, string> => {
-    const token = localStorage.getItem('access_token');
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...extra
     };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
     return headers;
+  };
+
+  const fetchRegistrationDetail = async (regId: number) => {
+    setSelectedRegId(regId);
+    setLoadingRegDetail(true);
+    try {
+      const res = await fetch(getApiUrl(`/api/admin/registrations/${regId}`), {
+        headers: getAuthHeaders(),
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        throw new Error('Failed to fetch registration details');
+      }
+      const data = await res.json();
+      setSelectedRegDetail(data);
+    } catch (err: any) {
+      showToast(err.message, 'error');
+      setSelectedRegId(null);
+    } finally {
+      setLoadingRegDetail(false);
+    }
   };
 
   const fetchAchievementsList = async () => {
@@ -356,53 +360,6 @@ const Admin = () => {
       setLoadingEvents(false);
     }
   };
-
-  // 2. Fetch Dashboard stats (Total, upcoming, completed count)
-  const fetchDashboardMetrics = async () => {
-    setLoadingMetrics(true);
-    try {
-      const res = await fetch(getApiUrl('/api/admin/dashboard'), {
-        headers: getAuthHeaders(),
-        credentials: 'include'
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setMetrics(data);
-      }
-    } catch (e) {
-      console.error('Failed to load dashboard metrics', e);
-    } finally {
-      setLoadingMetrics(false);
-    }
-  };
-
-  // 3. Fetch Registrations for a specific Event
-  const fetchRegistrations = async (eventId: number | '') => {
-    if (!eventId) return;
-    setIsLoading(true);
-    try {
-      // Use search registrations endpoint
-      const searchParam = regSearch ? `&search=${encodeURIComponent(regSearch)}` : '';
-      const res = await fetch(
-        getApiUrl(`/api/admin/events/${eventId}/registrations?limit=100${searchParam}`),
-        {
-          headers: getAuthHeaders(),
-          credentials: 'include'
-        }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setRegistrations(data.registrations || []);
-      }
-    } catch (e) {
-      console.error('Failed to fetch registrations', e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-
-
 
   // News States
   const [newsList, setNewsList] = useState<any[]>([]);
@@ -509,7 +466,6 @@ const Admin = () => {
   const handleSaveWeek = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('access_token');
       const url = editingWeek
         ? getApiUrl(`/api/admin/weekly-veneza/weeks/${editingWeek.id}`)
         : getApiUrl('/api/admin/weekly-veneza/weeks');
@@ -518,8 +474,7 @@ const Admin = () => {
       const res = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify(weekForm)
@@ -540,10 +495,8 @@ const Admin = () => {
       'Are you sure you want to delete this week and all its resources?',
       async () => {
         try {
-          const token = localStorage.getItem('access_token');
           const res = await fetch(getApiUrl(`/api/admin/weekly-veneza/weeks/${weekId}`), {
             method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
             credentials: 'include'
           });
           if (!res.ok) throw new Error('Failed to delete week');
@@ -559,12 +512,10 @@ const Admin = () => {
 
   const handleSetCurrentWeek = async (week: any) => {
     try {
-      const token = localStorage.getItem('access_token');
       const res = await fetch(getApiUrl(`/api/admin/weekly-veneza/weeks/${week.id}`), {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify({ is_current: true })
@@ -580,7 +531,6 @@ const Admin = () => {
   const handleSaveWeeklyResource = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('access_token');
       const url = editingWeeklyResource
         ? getApiUrl(`/api/admin/weekly-veneza/resources/${editingWeeklyResource.id}`)
         : getApiUrl('/api/admin/weekly-veneza/resources');
@@ -589,8 +539,7 @@ const Admin = () => {
       const res = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify(weeklyResourceForm)
@@ -611,10 +560,8 @@ const Admin = () => {
       'Are you sure you want to delete this resource?',
       async () => {
         try {
-          const token = localStorage.getItem('access_token');
           const res = await fetch(getApiUrl(`/api/admin/weekly-veneza/resources/${resourceId}`), {
             method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
             credentials: 'include'
           });
           if (!res.ok) throw new Error('Failed to delete resource');
@@ -733,119 +680,13 @@ const Admin = () => {
     );
   };
 
-  const checkAdminAuth = async () => {
-    try {
-      const meUrl = getApiUrl('/api/auth/me');
-      const res = await fetch(meUrl, {
-        headers: getAuthHeaders(),
-        credentials: 'include'
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.authenticated && data.user) {
-          const isAdmin = !!data.user.is_admin;
-          setAuthState({
-            isLoading: false,
-            isAuthenticated: true,
-            isAuthorized: isAdmin,
-            user: data.user
-          });
-          
-          if (isAdmin) {
-            fetchEventsList();
-            fetchDashboardMetrics();
-          }
-          return;
-        }
-      }
-    } catch (e) {
-      console.error('Admin auth check failed:', e);
-    }
-    
-    setAuthState({
-      isLoading: false,
-      isAuthenticated: false,
-      isAuthorized: false,
-      user: null
-    });
-  };
-
-  const handleGoogleSuccess = async (credentialResponse: any) => {
-    if (!credentialResponse.credential) return;
-    setAuthState(prev => ({ ...prev, isLoading: true }));
-    try {
-      const apiBaseUrl = getApiUrl('/api/auth/google');
-      const syncRes = await fetch(apiBaseUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id_token: credentialResponse.credential
-        }),
-        credentials: 'include'
-      });
-      if (syncRes.ok) {
-        const syncData = await syncRes.json();
-        if (syncData.status === 'success' && syncData.user) {
-          if (syncData.access_token) {
-            localStorage.setItem('access_token', syncData.access_token);
-          }
-          const isAdmin = !!syncData.user.is_admin;
-          setAuthState({
-            isLoading: false,
-            isAuthenticated: true,
-            isAuthorized: isAdmin,
-            user: syncData.user
-          });
-          if (isAdmin) {
-            fetchEventsList();
-            fetchDashboardMetrics();
-          } else {
-            showToast('Access denied: You are not an administrator.', 'error');
-          }
-          return;
-        }
-      }
-    } catch (syncErr) {
-      console.error('Failed to sync login with PostgreSQL database:', syncErr);
-    }
-    setAuthState({
-      isLoading: false,
-      isAuthenticated: false,
-      isAuthorized: false,
-      user: null
-    });
-    showToast('Login verification failed. Please try again.', 'error');
-  };
-
-  const fetchRegistrationDetail = async (regId: number) => {
-    setSelectedRegId(regId);
-    setLoadingRegDetail(true);
-    try {
-      const res = await fetch(getApiUrl(`/api/admin/registrations/${regId}`), { headers: getAuthHeaders(), credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setSelectedRegDetail(data);
-      } else {
-        showToast('Failed to load registration details.', 'error');
-        setSelectedRegId(null);
-      }
-    } catch (e) {
-      console.error('Failed to load registration details', e);
-      showToast('Error loading registration details.', 'error');
-      setSelectedRegId(null);
-    } finally {
-      setLoadingRegDetail(false);
-    }
-  };
-
   useEffect(() => {
-    checkAdminAuth();
+    // Auth logic is now handled in the authState useEffect
   }, []);
 
   // Lock body scroll when any modal is open
   useEffect(() => {
     const isAnyModalOpen =
-      !!selectedRegId ||
       !!editingEvent ||
       confirmModal.isOpen ||
       isMemberModalOpen ||
@@ -866,7 +707,7 @@ const Admin = () => {
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     };
-  }, [selectedRegId, editingEvent, confirmModal.isOpen, isMemberModalOpen, isProjectModalOpen, isAchievementModalOpen, isNewsModalOpen, isPastEventModalOpen]);
+  }, [editingEvent, confirmModal.isOpen, isMemberModalOpen, isProjectModalOpen, isAchievementModalOpen, isNewsModalOpen, isPastEventModalOpen]);
 
   const fetchFormFields = async (eventId: number | '') => {
     if (!eventId) return;
@@ -1258,10 +1099,7 @@ const Admin = () => {
       } catch (_) {}
 
       if (!membersData || membersData.length === 0) {
-        const { data, error } = await supabase
-          .from('club_members')
-          .select('*');
-        if (data) membersData = data;
+        // Removed Supabase fallback
       }
 
       const sorted = [...(membersData || [])].sort((a, b) => {
@@ -1518,33 +1356,6 @@ const Admin = () => {
     }
   };
 
-  const fetchSupabaseCounts = async () => {
-    try {
-      const [mem, proj, past] = await Promise.all([
-        supabase.from('club_members').select('id', { count: 'exact', head: true }),
-        supabase.from('club_projects').select('id', { count: 'exact', head: true }),
-        supabase.from('past_events').select('id', { count: 'exact', head: true }),
-      ]);
-      let memberCount = mem.count ?? 0;
-      if (memberCount === 0) {
-        try {
-          const res = await fetch(getApiUrl('/api/members'));
-          if (res.ok) {
-            const data = await res.json();
-            memberCount = data.length || 0;
-          }
-        } catch (_) {}
-      }
-      setSupabaseCounts({
-        members: memberCount,
-        projects: proj.count ?? 0,
-        pastEvents: past.count ?? 0,
-      });
-    } catch (e) {
-      // non-critical
-    }
-  };
-
   const handlePastEventSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -1634,9 +1445,7 @@ const Admin = () => {
   };
 
   useEffect(() => {
-    if (activeTab === 'registrations' && selectedEventId) {
-      fetchRegistrations(selectedEventId);
-    } else if (activeTab === 'dashboard') {
+    if (activeTab === 'dashboard') {
       fetchDashboardMetrics();
       fetchSupabaseCounts();
     } else if (activeTab === 'formBuilder' && builderEventId) {
@@ -1660,213 +1469,6 @@ const Admin = () => {
     }
   }, [activeTab, selectedEventId, builderEventId]);
 
-  // Handle Search submit
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchRegistrations(selectedEventId);
-  };
-
-  // Deletion logic
-  const handleDeleteRegistration = (regId: number) => {
-    openConfirm(
-      'Delete Registration',
-      'Are you sure you want to delete this registration? All responses, teams, and files will be permanently deleted.',
-      async () => {
-        try {
-          const res = await fetch(getApiUrl(`/api/admin/registrations/${regId}`), {
-            method: 'DELETE',
-            headers: getAuthHeaders(),
-            credentials: 'include'
-          });
-          if (res.ok) {
-            showToast('Registration deleted successfully.', 'success');
-            fetchRegistrations(selectedEventId);
-            fetchDashboardMetrics();
-          } else {
-            const data = await res.json();
-            showToast('Deletion failed: ' + (data.detail || 'Server error'), 'error');
-          }
-        } catch (e: any) {
-          showToast('Error: ' + e.message, 'error');
-        }
-      },
-      true
-    );
-  };
-
-  // Export CSV download
-  const handleExportCSV = async () => {
-    if (!selectedEventId) return;
-    const ev = events.find(e => e.id === selectedEventId);
-    const title = ev ? ev.title : `event_${selectedEventId}`;
-    try {
-      const res = await fetch(getApiUrl(`/api/admin/events/${selectedEventId}/export`), { headers: getAuthHeaders(), credentials: 'include' });
-      if (!res.ok) throw new Error('Export failed');
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${title.toLowerCase().replace(/\s+/g, '_')}_registrations.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      showToast('CSV exported successfully.', 'success');
-    } catch (e: any) {
-      showToast('Failed to export CSV: ' + e.message, 'error');
-    }
-  };
-
-  // Create Event Submit
-  const handleCreateEvent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setEventMessage(null);
-
-    try {
-      const payload = {
-        title: eventForm.title.trim(),
-        description: eventForm.description.trim(),
-        banner: eventForm.banner ? eventForm.banner.trim() : null,
-        category: eventForm.category,
-        venue: eventForm.venue.trim() || null,
-        contact_email: eventForm.contact_email.trim() || null,
-        event_type: eventForm.event_type,
-        min_team_size: eventForm.event_type === 'team' ? Number(eventForm.min_team_size) : null,
-        max_team_size: eventForm.event_type === 'team' ? Number(eventForm.max_team_size) : null,
-        event_date: parseLocalDate(eventForm.event_start_date),
-        event_start_date: parseLocalDate(eventForm.event_start_date),
-        event_end_date: parseLocalDate(eventForm.event_end_date),
-        start_time: eventForm.start_time ? (eventForm.start_time.includes(':') && eventForm.start_time.split(':').length === 2 ? `${eventForm.start_time}:00` : eventForm.start_time) : null,
-        end_time: eventForm.end_time ? (eventForm.end_time.includes(':') && eventForm.end_time.split(':').length === 2 ? `${eventForm.end_time}:00` : eventForm.end_time) : null,
-        registration_start: parseLocalDateTime(eventForm.registration_start),
-        registration_end: parseLocalDateTime(eventForm.registration_end),
-        winners: eventForm.winners.trim() || null,
-        winner_link: eventForm.winner_link.trim() || null,
-        registration_link: eventForm.registration_link.trim() || null
-      };
-
-      const res = await fetch(getApiUrl('/api/admin/events'), {
-        method: 'POST',
-        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(payload),
-        credentials: 'include'
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        const errMsg = Array.isArray(data.detail)
-          ? data.detail.map((err: any) => `${err.loc.slice(1).join('.') || 'field'}: ${err.msg}`).join(', ')
-          : (typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail));
-        throw new Error(errMsg || 'Failed to create event');
-      }
-
-      setEventMessage({ type: 'success', text: 'Event created successfully!' });
-      setEventForm({
-        title: '',
-        description: '',
-        banner: '',
-        category: 'workshop',
-        venue: '',
-        contact_email: 'ai_club@dau.ac.in',
-        event_type: 'individual',
-        min_team_size: 2,
-        max_team_size: 4,
-        event_date: '',
-        event_start_date: '',
-        event_end_date: '',
-        start_time: '18:00:00',
-        end_time: '21:00:00',
-        registration_start: '',
-        registration_end: '',
-        winners: '',
-        winner_link: '',
-        registration_link: ''
-      });
-      fetchEventsList();
-      fetchDashboardMetrics();
-    } catch (err: any) {
-      setEventMessage({ type: 'error', text: err.message || 'Error creating event' });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (authState.isLoading) {
-    return (
-      <>
-        <div className="min-h-screen flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm relative z-[1]">
-          <Loader2 className="animate-spin text-primary w-12 h-12 mb-4" />
-          <p className="text-xs font-mono tracking-widest text-primary uppercase">Verifying Authorization...</p>
-        </div>
-      </>
-    );
-  }
-
-  if (!authState.isAuthenticated) {
-    return (
-      <>
-        <div className="min-h-screen flex items-center justify-center px-6 relative z-[1] bg-background">
-          <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="glass-card p-8 md:p-12 max-w-md w-full text-center border border-border bg-card/30 backdrop-blur-md"
-          >
-            <div className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-[10px] font-mono mb-6 bg-primary/10 border border-primary/30 text-primary">
-              <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-              RESTRICTED AREA
-            </div>
-            <h2 className="text-xl md:text-2xl font-bold font-display text-foreground mb-3">Admin Portal</h2>
-            <p className="text-sm text-muted-foreground mb-8 leading-relaxed">
-              Please authenticate with your administrator account to access event templates, dynamic form configuration, and registrations.
-            </p>
-            <div className="flex justify-center">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => showToast('Login Failed', 'error')}
-                theme="filled_blue"
-                size="large"
-                shape="rectangular"
-              />
-            </div>
-          </motion.div>
-        </div>
-      </>
-    );
-  }
-
-  if (!authState.isAuthorized) {
-    return (
-      <>
-        <div className="min-h-screen flex items-center justify-center px-6 relative z-[1] bg-background">
-          <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="glass-card p-8 md:p-12 max-w-md w-full text-center border border-border bg-card/30 backdrop-blur-md"
-          >
-            <div className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-[10px] font-mono mb-6 bg-destructive/10 border border-destructive/30 text-destructive">
-              <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-              ACCESS DENIED
-            </div>
-            <h2 className="text-xl md:text-2xl font-bold font-display text-foreground mb-3">Unauthorized</h2>
-            <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-              Your account (<span className="text-primary font-mono">{authState.user.email}</span>) does not have administrative privileges.
-            </p>
-            <p className="text-xs text-muted-foreground/60 mb-8 leading-relaxed">
-              If you believe this is an error, please contact the lead administrator.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <a
-                href="/"
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-xs font-bold btn-glow text-primary-foreground transition-all duration-300"
-              >
-                Go to Homepage
-              </a>
-            </div>
-          </motion.div>
-        </div>
-      </>
-    );
-  }
 
   return (
     <>
@@ -1888,8 +1490,8 @@ const Admin = () => {
             {/* Profile Info */}
             <div className="flex items-center gap-3 bg-slate-800/90 p-3 rounded-xl border border-slate-700/80">
               <div className="w-9 h-9 rounded-full bg-indigo-600/30 flex items-center justify-center font-display text-sm font-bold text-indigo-300 border border-indigo-500/30 overflow-hidden shrink-0">
-                {authState.user?.picture ? (
-                  <img src={authState.user.picture} alt={authState.user.name} className="w-full h-full object-cover" />
+                {authState.user?.profile_image ? (
+                  <img src={authState.user.profile_image} alt={authState.user.name} className="w-full h-full object-cover" />
                 ) : (
                   authState.user?.name ? authState.user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() : 'A'
                 )}
@@ -2003,446 +1605,30 @@ const Admin = () => {
             <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm flex-1 overflow-y-auto min-h-0">
               <AnimatePresence mode="wait">
                 {activeTab === 'dashboard' && (
-                  <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-                    {/* Welcome banner */}
-                    <div className="bg-gradient-to-r from-primary/15 via-primary/5 to-transparent border border-primary/20 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div>
-                        <h3 className="font-display font-bold text-lg text-foreground">Welcome back, {authState.user?.name || 'Administrator'}!</h3>
-                        <p className="text-xs text-muted-foreground mt-1">Here is a quick snapshot of what is happening in the AI Club platform today.</p>
-                      </div>
-                      <button 
-                        onClick={() => setActiveTab('createEvent')}
-                        className="px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-1.5 self-start md:self-auto"
-                      >
-                        <Plus size={14} />
-                        Create New Event
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      {/* Left: Recent Activity List */}
-                      <div className="lg:col-span-2 space-y-4">
-                        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider font-mono">Recent Activity</h3>
-                        {loadingMetrics ? (
-                          <div className="flex justify-center py-12"><Loader2 className="animate-spin text-primary" /></div>
-                        ) : !metrics || metrics.recent_registrations.length === 0 ? (
-                          <div className="bg-secondary/15 border border-border/50 rounded-xl p-8 text-center text-xs text-muted-foreground">
-                            No recent registrations found.
-                          </div>
-                        ) : (
-                          <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1.5 custom-scrollbar">
-                            {metrics.recent_registrations.map((reg: any) => (
-                              <div key={reg.id} className="flex items-center justify-between bg-secondary/20 p-4 rounded-xl border border-border/40 hover:border-primary/20 transition-all group">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center font-display text-xs font-extrabold text-primary border border-primary/10 group-hover:scale-105 transition-transform duration-300">
-                                    {reg.user_name ? reg.user_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() : 'U'}
-                                  </div>
-                                  <div>
-                                    <p className="text-xs font-bold text-foreground leading-snug">{reg.user_name}</p>
-                                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                                      {reg.user_email} • Registered for <span className="text-primary font-medium">{reg.event_title}</span>
-                                    </p>
-                                  </div>
-                                </div>
-                                <span className="text-[10px] text-muted-foreground/60 font-mono bg-secondary/50 border border-border/40 px-2 py-0.5 rounded shrink-0">
-                                  {new Date(reg.registered_at).toLocaleDateString()}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right: Quick Stats / Console Meta */}
-                      <div className="space-y-5">
-                        {/* Quick Actions Panel */}
-                        <div className="bg-secondary/15 border border-border/50 rounded-2xl p-5 space-y-4">
-                          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider font-mono">Console Quick Actions</h4>
-                          <div className="grid grid-cols-1 gap-2">
-                            <button
-                              onClick={() => {
-                                if (events.length > 0) {
-                                  setSelectedEventId(events[0].id);
-                                  setActiveTab('registrations');
-                                }
-                              }}
-                              className="w-full flex items-center justify-between p-3 bg-secondary/35 border border-border hover:border-primary/30 rounded-xl text-left text-xs text-foreground transition-all"
-                            >
-                              <span>View Registration Logs</span>
-                              <ChevronRight size={14} className="text-primary" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (events.length > 0) {
-                                  setBuilderEventId(events[0].id);
-                                  setActiveTab('formBuilder');
-                                }
-                              }}
-                              className="w-full flex items-center justify-between p-3 bg-secondary/35 border border-border hover:border-primary/30 rounded-xl text-left text-xs text-foreground transition-all"
-                            >
-                              <span>Manage Form Schemas</span>
-                              <ChevronRight size={14} className="text-primary" />
-                            </button>
-                            <button
-                              onClick={() => setActiveTab('manageEvents')}
-                              className="w-full flex items-center justify-between p-3 bg-secondary/35 border border-border hover:border-primary/30 rounded-xl text-left text-xs text-foreground transition-all"
-                            >
-                              <span>Manage Live Events</span>
-                              <ChevronRight size={14} className="text-primary" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* System Information Panel */}
-                        <div className="bg-secondary/15 border border-border/50 rounded-2xl p-5 space-y-3 text-[11px]">
-                          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider font-mono mb-2">System Status</h4>
-                          <div className="flex justify-between py-1 border-b border-border/30">
-                            <span className="text-muted-foreground">Environment:</span>
-                            <span className="font-mono text-foreground font-semibold uppercase">Production</span>
-                          </div>
-                          <div className="flex justify-between py-1 border-b border-border/30">
-                            <span className="text-muted-foreground">Database:</span>
-                            <span className="font-mono text-foreground font-semibold">Supabase (AWS)</span>
-                          </div>
-                          <div className="flex justify-between py-1">
-                            <span className="text-muted-foreground">Session Auth:</span>
-                            <span className="font-mono text-primary font-semibold">Google OAuth 2.0</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
+                  <DashboardTab 
+                    setActiveTab={setActiveTab} 
+                    setSelectedEventId={setSelectedEventId} 
+                    setBuilderEventId={setBuilderEventId} 
+                  />
                 )}
 
               {/* REGISTRATIONS TAB */}
               {activeTab === 'registrations' && (
-                <motion.div key="reg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                    <h2 className="text-xl font-bold font-display">Registrations</h2>
-                    
-                    {/* Event Selector and Search form */}
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <select
-                        value={selectedEventId}
-                        onChange={(e) => setSelectedEventId(Number(e.target.value))}
-                        className="bg-secondary border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none"
-                      >
-                        <option value="" disabled>Select Event...</option>
-                        {events.map(ev => (
-                          <option key={ev.id} value={ev.id}>{ev.title}</option>
-                        ))}
-                      </select>
-
-                      <form onSubmit={handleSearchSubmit} className="flex gap-2">
-                        <input
-                          type="text"
-                          value={regSearch}
-                          onChange={(e) => setRegSearch(e.target.value)}
-                          placeholder="Search registrations..."
-                          className="bg-secondary border border-border rounded-lg px-3 py-1.5 text-xs text-foreground outline-none w-44"
-                        />
-                        <button type="submit" className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg">Search</button>
-                      </form>
-
-                      {selectedEventId && (
-                        <button
-                          onClick={handleExportCSV}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold rounded-lg hover:bg-green-500 hover:text-white transition-all"
-                        >
-                          <Download size={14} />
-                          Export CSV
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {events.find(e => e.id === selectedEventId)?.registration_link ? (
-                    <div className="bg-secondary/20 p-8 rounded-xl text-center border border-border mt-8">
-                      <p className="text-muted-foreground text-sm">
-                        This event uses an external registration link: <a href={events.find(e => e.id === selectedEventId)?.registration_link!} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{events.find(e => e.id === selectedEventId)?.registration_link}</a>
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Internal registrations are disabled. To re-enable them, edit the event and remove the external link.
-                      </p>
-                    </div>
-                  ) : isLoading ? (
-                    <div className="flex justify-center py-12"><Loader2 className="animate-spin text-primary" /></div>
-                  ) : registrations.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-12">No registrations found for this event.</p>
-                  ) : (
-                    <div className="max-h-[500px] overflow-y-auto overflow-x-auto border border-border/30 rounded-xl bg-[#090d16]/40 shadow-inner">
-                      <table className="w-full text-left border-collapse">
-                        <thead className="sticky top-0 bg-[#0c1222] z-10 border-b border-border/80 shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
-                          <tr className="text-muted-foreground text-xs uppercase tracking-wider">
-                            <th className="p-3.5 font-semibold">Date</th>
-                            <th className="p-3.5 font-semibold">Name</th>
-                            <th className="p-3.5 font-semibold">Email</th>
-                            <th className="p-3.5 font-semibold">Team Name</th>
-                            <th className="p-3.5 font-semibold text-right">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="text-sm divide-y divide-border/20">
-                          {registrations.map((reg) => (
-                            <tr key={reg.id} className="hover:bg-white/5 transition-colors">
-                              <td className="p-3.5 whitespace-nowrap text-xs text-muted-foreground">{new Date(reg.registered_at).toLocaleDateString()}</td>
-                              <td className="p-3.5 font-medium text-foreground">{reg.user_name}</td>
-                              <td className="p-3.5 text-muted-foreground text-xs">{reg.user_email}</td>
-                              <td className="p-3.5 font-mono text-xs text-foreground/80">{reg.team_name || 'Individual'}</td>
-                              <td className="p-3.5 text-right">
-                                <button
-                                  onClick={() => fetchRegistrationDetail(reg.id)}
-                                  className="p-1.5 text-muted-foreground hover:text-primary rounded-lg hover:bg-primary/10 transition-colors mr-1.5"
-                                  title="View Details"
-                                >
-                                  <Eye size={14} />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteRegistration(reg.id)}
-                                  className="p-1.5 text-muted-foreground hover:text-destructive rounded-lg hover:bg-destructive/10 transition-colors"
-                                  title="Delete Registration"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </motion.div>
+                <RegistrationsTab
+                  events={events}
+                  selectedEventId={selectedEventId}
+                  setSelectedEventId={setSelectedEventId}
+                  openConfirm={openConfirm}
+                  fetchRegistrationDetail={fetchRegistrationDetail}
+                  showToast={showToast}
+                />
               )}
 
 
 
               {/* CREATE EVENT TAB */}
               {activeTab === 'createEvent' && (
-                <motion.div key="create" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-2xl mx-auto">
-                  <h2 className="text-xl font-bold font-display mb-6">Create New Event</h2>
-                  
-                  {eventMessage && (
-                    <div className={`p-4 rounded-lg mb-6 text-sm ${eventMessage.type === 'success' ? 'bg-green-500/10 border border-green-500/20 text-green-500' : 'bg-red-500/10 border border-red-500/20 text-red-500'}`}>
-                      {eventMessage.text}
-                    </div>
-                  )}
-
-                  <form onSubmit={handleCreateEvent} className="space-y-5">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Event Title</label>
-                        <input
-                          type="text"
-                          required
-                          value={eventForm.title}
-                          onChange={(e) => setEventForm({...eventForm, title: e.target.value})}
-                          className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                          placeholder="e.g. Kaggle ML Cup 2026"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Category</label>
-                        <select
-                          value={eventForm.category}
-                          onChange={(e) => setEventForm({...eventForm, category: e.target.value})}
-                          className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                        >
-                          <option value="competition">Competition</option>
-                          <option value="hackathon">Hackathon</option>
-                          <option value="workshop">Workshop</option>
-                          <option value="talk">Guest Lecture / Talk</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Image / Banner URL (Optional)</label>
-                      <input
-                        type="url"
-                        value={eventForm.banner}
-                        onChange={(e) => setEventForm({...eventForm, banner: e.target.value})}
-                        className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                        placeholder="e.g. https://images.unsplash.com/... or https://drive.google.com/..."
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">External Registration Link (Optional)</label>
-                      <input
-                        type="url"
-                        value={eventForm.registration_link}
-                        onChange={(e) => setEventForm({...eventForm, registration_link: e.target.value})}
-                        className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                        placeholder="e.g. https://forms.gle/... or unstop.com/..."
-                      />
-                      <p className="text-[10px] text-muted-foreground mt-1.5 ml-1">If provided, the "Register Now" button will redirect users to this URL, bypassing the built-in form.</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Venue / Online Link (Optional)</label>
-                        <input
-                          type="text"
-                          value={eventForm.venue}
-                          onChange={(e) => setEventForm({...eventForm, venue: e.target.value})}
-                          className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                          placeholder="e.g. Lab 102 or MS Teams URL"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Contact Email (Optional)</label>
-                        <input
-                          type="email"
-                          value={eventForm.contact_email}
-                          onChange={(e) => setEventForm({...eventForm, contact_email: e.target.value})}
-                          className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                      <div>
-                        <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Event Type</label>
-                        <select
-                          value={eventForm.event_type}
-                          onChange={(e) => setEventForm({...eventForm, event_type: e.target.value as any})}
-                          className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                        >
-                          <option value="individual">Individual</option>
-                          <option value="team">Team</option>
-                        </select>
-                      </div>
-                      
-                      {eventForm.event_type === 'team' && (
-                        <>
-                          <div>
-                            <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Min Team Size</label>
-                            <input
-                              type="number"
-                              min={2}
-                              value={eventForm.min_team_size}
-                              onChange={(e) => setEventForm({...eventForm, min_team_size: Number(e.target.value)})}
-                              className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Max Team Size</label>
-                            <input
-                              type="number"
-                              min={eventForm.min_team_size}
-                              value={eventForm.max_team_size}
-                              onChange={(e) => setEventForm({...eventForm, max_team_size: Number(e.target.value)})}
-                              className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                            />
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-                      <div>
-                        <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Event Start Date (Optional)</label>
-                        <input
-                          type="date"
-                          value={eventForm.event_start_date}
-                          onChange={(e) => setEventForm({...eventForm, event_start_date: e.target.value})}
-                          className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Event End Date (Optional)</label>
-                        <input
-                          type="date"
-                          value={eventForm.event_end_date}
-                          onChange={(e) => setEventForm({...eventForm, event_end_date: e.target.value})}
-                          className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Start Time (Optional)</label>
-                        <input
-                          type="time"
-                          value={eventForm.start_time}
-                          onChange={(e) => setEventForm({...eventForm, start_time: e.target.value})}
-                          className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">End Time (Optional)</label>
-                        <input
-                          type="time"
-                          value={eventForm.end_time}
-                          onChange={(e) => setEventForm({...eventForm, end_time: e.target.value})}
-                          className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Registration Start Date (Optional)</label>
-                        <input
-                          type="datetime-local"
-                          value={eventForm.registration_start}
-                          onChange={(e) => setEventForm({...eventForm, registration_start: e.target.value})}
-                          className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Registration End Date (Optional)</label>
-                        <input
-                          type="datetime-local"
-                          value={eventForm.registration_end}
-                          onChange={(e) => setEventForm({...eventForm, registration_end: e.target.value})}
-                          className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Description</label>
-                      <textarea
-                        required
-                        value={eventForm.description}
-                        onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
-                        rows={4}
-                        className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors resize-none"
-                        placeholder="Comprehensive event description..."
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Winners (Optional)</label>
-                      <textarea
-                        value={eventForm.winners}
-                        onChange={(e) => setEventForm({...eventForm, winners: e.target.value})}
-                        rows={3}
-                        className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors resize-none"
-                        placeholder="Declare competition winners, e.g.&#10;1st: Daiya Jeet Ajaykumar&#10;2nd: Tirth Gandhi"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Winner Document / Link (Optional)</label>
-                      <input
-                        type="url"
-                        value={eventForm.winner_link}
-                        onChange={(e) => setEventForm({...eventForm, winner_link: e.target.value})}
-                        className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                        placeholder="e.g. https://drive.google.com/... or https://domain.com/winners.pdf"
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full py-3 mt-4 text-sm font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/95 transition-all duration-300 disabled:opacity-50 flex justify-center items-center gap-2"
-                    >
-                      {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                      {isSubmitting ? 'Creating Event...' : 'Create Event'}
-                    </button>
-                  </form>
-                </motion.div>
+                <CreateEventTab />
               )}
 
               {/* FORM BUILDER TAB */}

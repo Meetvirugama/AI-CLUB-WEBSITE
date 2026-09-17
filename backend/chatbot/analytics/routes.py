@@ -4,7 +4,7 @@ chatbot_analytics/routes.py
 Admin-only FastAPI router for chatbot analytics endpoints.
 
 All 6 endpoints verify admin authorization via `require_admin` dependency
-(JWT + SUPER_ADMIN_EMAIL email check). Non-admins receive HTTP 403.
+(JWT + DB is_admin check). Non-admins receive HTTP 403.
 
 Endpoints
 ─────────
@@ -109,3 +109,31 @@ async def chatbot_categories(
 ):
     """Query category distribution over the last N days."""
     return await get_categories(db, days=days)
+
+
+@router.get("/dashboard")
+async def chatbot_dashboard(
+    days: int = Query(default=30, ge=1, le=90),
+    limit: int = Query(default=50, ge=1, le=200),
+    _admin=Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Aggregated analytics dashboard data in a single request."""
+    import asyncio
+    ov, us, pr, ky, ac, ca = await asyncio.gather(
+        get_overview(db),
+        get_daily_usage(db, days=days),
+        get_providers(db, days=days),
+        get_key_health(db),
+        get_recent_activity(db, limit=limit),
+        get_categories(db, days=days),
+    )
+    return {
+        "overview": ov,
+        "usage": us,
+        "providers": pr,
+        "keys": ky,
+        "activity": ac,
+        "categories": ca,
+    }
+

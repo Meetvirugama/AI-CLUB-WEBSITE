@@ -8,6 +8,7 @@ import {
   WeeklyResource
 } from "@/hooks/useWeeklyVeneza";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   CheckCircle2, 
   Circle, 
@@ -177,11 +178,11 @@ function TickingClockDivider({ currentWeek }: { currentWeek?: WeeklyVenezaWeek }
 
 export default function WeeklyVenezaPage() {
   const { data: weeks = [], isLoading: loadingWeeks } = useWeeklyVenezaData();
-  const token = localStorage.getItem("access_token");
-  const { data: remoteProgress = [], isLoading: loadingProgress } = useWeeklyVenezaProgress(token);
+  const { data: remoteProgress = [], isLoading: loadingProgress } = useWeeklyVenezaProgress();
   const toggleProgressMutation = useToggleWeeklyProgress();
   const resetProgressMutation = useResetWeeklyProgress();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
 
   // Local storage state for guest user support
   const [localProgress, setLocalProgress] = useState<number[]>(() => {
@@ -195,8 +196,8 @@ export default function WeeklyVenezaPage() {
 
   // Effective progress: remote if authenticated, local if guest
   const progress = useMemo(() => {
-    return token ? remoteProgress : localProgress;
-  }, [token, remoteProgress, localProgress]);
+    return isAuthenticated ? remoteProgress : localProgress;
+  }, [isAuthenticated, remoteProgress, localProgress]);
 
   const [openWeeks, setOpenWeeks] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -271,9 +272,9 @@ export default function WeeklyVenezaPage() {
   };
 
   const handleToggleResource = async (resourceId: number) => {
-    if (token) {
+    if (isAuthenticated) {
       try {
-        await toggleProgressMutation.mutateAsync({ resourceId, token });
+        await toggleProgressMutation.mutateAsync({ resourceId });
         const isCompletedNow = !progress.includes(resourceId);
         toast({
           title: isCompletedNow ? "Resource Completed! 🎉" : "Resource Unchecked",
@@ -302,9 +303,9 @@ export default function WeeklyVenezaPage() {
   };
 
   const handleResetProgress = async () => {
-    if (token) {
+    if (isAuthenticated) {
       try {
-        await resetProgressMutation.mutateAsync(token);
+        await resetProgressMutation.mutateAsync();
         setShowResetConfirm(false);
         toast({
           title: "Progress Reset",
@@ -453,7 +454,7 @@ export default function WeeklyVenezaPage() {
               <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">SETTINGS & ACTIONS</span>
               <h3 className="text-lg font-bold text-slate-900 mt-1">Manage Progress</h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                {token ? "Your progress is saved to your account." : "Working as guest. Sign in to sync across devices."}
+                {isAuthenticated ? "Your progress is saved to your account." : "Working as guest. Sign in to sync across devices."}
               </p>
             </div>
             
