@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import { ExternalLink, Newspaper, X, ArrowRight, Sparkles } from 'lucide-react';
+import { ExternalLink, Newspaper, X, ArrowRight, Sparkles, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Navbar from '@/components/club/Navbar';
 import Footer from '@/components/club/Footer';
 import Chatbot from '@/components/club/Chatbot';
@@ -16,96 +17,50 @@ interface NewsModel {
   created_at: string;
 }
 
-// Ambient animated background orbs
-const AmbientBackground = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-    <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-600/20 blur-[120px] mix-blend-screen animate-pulse duration-[8000ms]" />
-    <div className="absolute top-[20%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-purple-600/20 blur-[120px] mix-blend-screen animate-pulse duration-[10000ms] delay-1000" />
-    <div className="absolute bottom-[-20%] left-[20%] w-[60vw] h-[60vw] rounded-full bg-blue-600/20 blur-[120px] mix-blend-screen animate-pulse duration-[12000ms] delay-500" />
-  </div>
-);
-
-// Magic Spotlight & 3D Tilt Card Component
-const MagicCard = ({ item, onClick, featured = false }: { item: NewsModel, onClick: () => void, featured?: boolean }) => {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    setMousePosition({ x, y });
-  };
-
-  // Calculate subtle 3D rotation based on mouse position relative to center
-  const rotateX = isHovered && cardRef.current ? (mousePosition.y - cardRef.current.clientHeight / 2) / -20 : 0;
-  const rotateY = isHovered && cardRef.current ? (mousePosition.x - cardRef.current.clientWidth / 2) / 20 : 0;
-
+// News Card Component
+const NewsCard = ({ item, onClick, featured = false }: { item: NewsModel, onClick: () => void, featured?: boolean }) => {
   return (
     <motion.div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
-      animate={{ 
-        rotateX: isHovered ? rotateX : 0, 
-        rotateY: isHovered ? rotateY : 0,
-        scale: isHovered ? 1.02 : 1
-      }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       onClick={onClick}
-      className={`relative group backdrop-blur-xl border border-white/10 dark:border-white/5 rounded-3xl overflow-hidden cursor-pointer shadow-2xl ${
-        featured ? 'md:col-span-2 md:row-span-2 min-h-[500px]' : 'h-full min-h-[350px]'
+      className={`group relative overflow-hidden bg-white border border-[hsl(228,20%,84%)] rounded-2xl cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_-6px_rgba(99,102,241,0.18)] hover:border-primary/50 flex flex-col ${
+        featured ? 'md:col-span-2 md:row-span-2 min-h-[450px]' : 'h-full min-h-[350px]'
       }`}
-      style={{
-        transformPerspective: 1000,
-        background: isHovered 
-          ? `radial-gradient(circle 600px at ${mousePosition.x}px ${mousePosition.y}px, rgba(99,102,241,0.15), rgba(15,23,42,0.8))` 
-          : 'rgba(15,23,42,0.6)'
-      }}
     >
-      {/* Glossy top edge highlight */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-50" />
-      
       {item.image_url ? (
-        <div className="absolute inset-0 z-0">
-          <img src={item.image_url} alt={item.title || 'News'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out opacity-50 group-hover:opacity-70" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-900/60 to-slate-900/20" />
+        <div className={`relative overflow-hidden bg-secondary w-full ${featured ? 'h-64 md:h-72' : 'h-48'}`}>
+          <img src={item.image_url} alt={item.title || 'News'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         </div>
       ) : (
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-slate-800 to-slate-950 flex justify-center items-center opacity-60">
-           <Newspaper className="w-32 h-32 text-indigo-500/10 group-hover:scale-125 transition-transform duration-1000" />
-           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-900/40 to-transparent" />
+        <div className={`relative flex justify-center items-center overflow-hidden bg-gradient-to-br from-indigo-50 to-purple-50 w-full ${featured ? 'h-64 md:h-72' : 'h-48'}`}>
+           <Newspaper className="w-16 h-16 text-indigo-200 group-hover:scale-110 transition-transform duration-500" />
         </div>
       )}
 
-      <div className="relative z-10 p-8 h-full flex flex-col justify-end">
+      <div className="p-6 md:p-8 flex flex-col flex-grow">
         {featured && (
-          <div className="mb-auto self-start bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2 backdrop-blur-md">
-            <Sparkles size={14} /> Featured Story
+          <div className="mb-4 self-start bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded text-[10px] font-mono font-bold tracking-widest uppercase flex items-center gap-2">
+            <Sparkles size={12} /> Featured Story
           </div>
         )}
         
-        <h3 className={`font-bold text-white mb-3 line-clamp-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-300 group-hover:to-purple-300 transition-colors duration-300 ${featured ? 'text-4xl md:text-5xl mt-8 leading-tight' : 'text-xl md:text-2xl'}`}>
+        <h3 className={`font-display font-bold text-[hsl(230,25%,12%)] mb-3 line-clamp-2 group-hover:text-primary transition-colors duration-300 ${featured ? 'text-2xl md:text-4xl leading-tight' : 'text-xl'}`}>
           {item.title || 'Untitled News'}
         </h3>
         
         {item.description && (
-          <p className={`text-slate-300 leading-relaxed line-clamp-3 mb-6 ${featured ? 'text-lg md:text-xl max-w-3xl opacity-90' : 'text-sm opacity-80'}`}>
+          <p className="text-[hsl(230,15%,45%)] text-sm leading-relaxed line-clamp-3 mb-6">
             {item.description}
           </p>
         )}
         
-        <div className="flex items-center justify-between mt-auto pt-5 border-t border-white/10">
-          <span className="text-sm font-bold text-indigo-400 flex items-center gap-2 group-hover:text-indigo-300 transition-colors">
-            Read Story <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform duration-300" />
+        <div className="flex items-center justify-between mt-auto pt-5 border-t border-[hsl(228,20%,84%)]">
+          <span className="text-xs font-semibold text-primary flex items-center gap-2">
+            Read Story <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-300" />
           </span>
-          <span className="text-xs font-medium text-slate-400 bg-black/30 px-3 py-1 rounded-full backdrop-blur-md">
+          <span className="text-[10px] font-mono tracking-widest uppercase text-[hsl(230,15%,50%)]">
             {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
           </span>
         </div>
@@ -118,9 +73,6 @@ const NewsPage = () => {
   const [newsList, setNewsList] = useState<NewsModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedNews, setSelectedNews] = useState<NewsModel | null>(null);
-  
-  const { scrollY } = useScroll();
-  const yParallax = useTransform(scrollY, [0, 1000], [0, 200]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -132,7 +84,6 @@ const NewsPage = () => {
         const res = await fetch(getApiUrl('/api/news'));
         if (res.ok) {
           const data = await res.json();
-          // Sort by newest first
           const sorted = data.sort((a: NewsModel, b: NewsModel) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
           setNewsList(sorted);
         }
@@ -146,143 +97,144 @@ const NewsPage = () => {
   }, []);
 
   return (
-    <div className="relative z-[1] min-h-screen bg-slate-950 pt-20">
-      <AmbientBackground />
-      <Navbar />
-      <section className="py-20 relative overflow-hidden min-h-screen">
-        <div className="container mx-auto px-6 md:px-12 relative z-10">
+    <div className="relative z-[1] min-h-screen">
+      <div className="pt-28 max-w-[1280px] mx-auto px-8 -mb-16 relative z-10">
+        <Link 
+          to="/" 
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-transparent border border-border/50 text-[10px] font-mono tracking-widest uppercase text-muted-foreground hover:text-foreground hover:border-primary/30 hover:from-primary/15 transition-all duration-300 group"
+        >
+          <ArrowLeft size={11} className="group-hover:-translate-x-1 transition-transform duration-300 text-primary" />
+          <span>Back to Home</span>
+        </Link>
+      </div>
+
+      <section className="relative overflow-hidden min-h-screen" style={{ background: 'hsl(228, 30%, 93%)' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '4rem 2rem' }}>
           
-          <motion.div style={{ y: yParallax }} className="text-center mb-24 relative">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/20 blur-[100px] rounded-full pointer-events-none" />
-            <motion.h1 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-6xl md:text-8xl font-display font-extrabold mb-6 text-white tracking-tight"
-            >
-              Latest <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 animate-gradient-x">Dispatch</span>
-            </motion.h1>
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-              className="text-slate-400 text-xl md:text-2xl max-w-3xl mx-auto font-light"
-            >
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-16"
+          >
+            <h1 style={{
+              fontFamily: 'Playfair Display, Georgia, serif',
+              fontSize: 'clamp(2rem, 4vw, 3.5rem)',
+              fontWeight: 700,
+              letterSpacing: '-0.025em',
+              color: 'hsl(230, 25%, 10%)',
+              marginBottom: '0.5rem',
+            }}>
+              Latest Dispatch
+            </h1>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.95rem', color: 'hsl(230, 15%, 45%)', maxWidth: '600px' }}>
               Immerse yourself in the cutting-edge developments, club milestones, and global AI breakthroughs.
-            </motion.p>
+            </p>
           </motion.div>
 
           {loading ? (
             <div className="flex justify-center items-center py-20">
-              <div className="relative w-16 h-16">
-                <div className="absolute inset-0 rounded-full border-t-2 border-indigo-500 animate-spin" />
-                <div className="absolute inset-2 rounded-full border-r-2 border-purple-500 animate-spin animation-delay-200" />
-                <div className="absolute inset-4 rounded-full border-b-2 border-blue-500 animate-spin animation-delay-400" />
+              <div className="relative w-12 h-12">
+                <div className="absolute inset-0 rounded-full border-t-2 border-primary animate-spin" />
               </div>
             </div>
           ) : newsList.length === 0 ? (
-            <div className="text-center py-24 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl max-w-2xl mx-auto shadow-2xl relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent" />
-              <Newspaper className="w-16 h-16 text-slate-500 mx-auto mb-6 opacity-50 relative z-10" />
-              <h3 className="text-2xl font-bold text-white mb-3 relative z-10">The wire is silent</h3>
-              <p className="text-slate-400 text-lg relative z-10">Check back soon for groundbreaking updates.</p>
+            <div className="text-center py-24 bg-white border border-[hsl(228,20%,84%)] rounded-2xl max-w-2xl mx-auto shadow-sm">
+              <Newspaper className="w-12 h-12 text-[hsl(228,20%,80%)] mx-auto mb-4" />
+              <h3 className="text-xl font-display font-bold text-[hsl(230,25%,12%)] mb-2">No News Yet</h3>
+              <p className="text-[hsl(230,15%,45%)] text-sm">Check back soon for groundbreaking updates.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto auto-rows-[350px]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[auto]">
               {newsList.map((item, index) => (
-                <MagicCard 
+                <NewsCard 
                   key={item.id} 
                   item={item} 
                   onClick={() => setSelectedNews(item)}
-                  featured={index === 0} // First item spans larger
+                  featured={index === 0}
                 />
               ))}
             </div>
           )}
         </div>
 
-        {/* Edge-to-Edge Cinematic Detail Modal */}
+        {/* Modal */}
         <AnimatePresence>
           {selectedNews && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-hidden">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.3 }}
                 onClick={() => setSelectedNews(null)}
-                className="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl"
+                className="absolute inset-0 bg-[hsl(230,25%,12%)]/40 backdrop-blur-sm"
               />
               
               <motion.div
-                initial={{ opacity: 0, y: 100, scale: 0.95 }}
+                initial={{ opacity: 0, y: 40, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 50, scale: 0.95 }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="relative w-full max-w-5xl min-h-[70vh] rounded-[2rem] bg-slate-900 border border-white/10 shadow-2xl z-10 mx-4 overflow-hidden flex flex-col md:flex-row"
+                exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="relative w-full max-w-4xl max-h-[90vh] rounded-2xl bg-white shadow-2xl z-10 overflow-hidden flex flex-col md:flex-row"
               >
                 {/* Close Button */}
                 <button
                   onClick={() => setSelectedNews(null)}
-                  className="absolute top-6 right-6 z-50 p-3 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-md transition-all hover:rotate-90 hover:scale-110"
+                  className="absolute top-4 right-4 z-50 p-2 bg-white/80 hover:bg-[hsl(228,30%,93%)] text-[hsl(230,25%,12%)] rounded-full backdrop-blur-md transition-all shadow-sm"
                 >
-                  <X size={24} />
+                  <X size={20} />
                 </button>
 
-                {/* Left Side: Image (if exists) */}
+                {/* Left Side: Image */}
                 {selectedNews.image_url && (
-                  <div className="md:w-1/2 relative min-h-[300px] md:min-h-full overflow-hidden bg-black">
-                    <div className="absolute inset-0 bg-indigo-500/20 mix-blend-screen z-10 pointer-events-none" />
+                  <div className="md:w-5/12 relative h-48 md:h-auto bg-secondary shrink-0">
                     <img
                       src={selectedNews.image_url}
                       alt={selectedNews.title || 'News image'}
-                      className="w-full h-full object-cover opacity-80"
+                      className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-slate-900 via-transparent to-transparent z-10" />
                   </div>
                 )}
 
                 {/* Right Side: Content */}
-                <div className={`p-8 md:p-12 flex flex-col justify-center ${selectedNews.image_url ? 'md:w-1/2' : 'w-full'} bg-slate-900/90 backdrop-blur-xl relative z-20`}>
+                <div className={`p-6 md:p-10 flex flex-col ${selectedNews.image_url ? 'md:w-7/12' : 'w-full'} overflow-y-auto custom-scrollbar`}>
                   
-                  <div className="mb-8">
-                    <span className="inline-block px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold tracking-widest uppercase mb-4 border border-indigo-500/30">
+                  <div className="mb-6">
+                    <span className="inline-block px-3 py-1 rounded bg-primary/10 text-primary text-[10px] font-mono font-bold tracking-widest uppercase mb-4 border border-primary/20">
                       {new Date(selectedNews.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
                     </span>
-                    <h2 className="text-3xl md:text-5xl font-bold font-display text-white leading-tight">
+                    <h2 className="text-2xl md:text-3xl font-bold font-display text-[hsl(230,25%,12%)] leading-tight">
                       {selectedNews.title || 'Untitled News'}
                     </h2>
                   </div>
 
-                  <div className="prose prose-invert prose-slate max-w-none mb-10 overflow-y-auto pr-4 custom-scrollbar" style={{ maxHeight: '40vh' }}>
+                  <div className="prose prose-slate max-w-none mb-8">
                     {selectedNews.description ? (
-                      <p className="text-slate-300 leading-relaxed text-lg whitespace-pre-line">
+                      <p className="text-[hsl(230,15%,35%)] leading-relaxed text-[0.95rem] whitespace-pre-line">
                         {selectedNews.description}
                       </p>
                     ) : (
-                      <p className="text-slate-500 italic text-lg">No additional details provided.</p>
+                      <p className="text-[hsl(230,15%,50%)] italic text-[0.95rem]">No additional details provided.</p>
                     )}
                     
                     {selectedNews.sources && (
-                      <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10">
-                        <strong className="text-white block mb-1">Sources & References:</strong>
-                        <p className="text-slate-400 text-sm">{selectedNews.sources}</p>
+                      <div className="mt-8 p-4 bg-[hsl(228,30%,96%)] rounded-lg border border-[hsl(228,20%,84%)]">
+                        <strong className="text-[hsl(230,25%,12%)] block mb-1 text-sm font-semibold">Sources & References:</strong>
+                        <p className="text-[hsl(230,15%,45%)] text-xs">{selectedNews.sources}</p>
                       </div>
                     )}
                   </div>
                   
                   {selectedNews.link && (
-                    <div className="mt-auto">
+                    <div className="mt-auto pt-4 border-t border-[hsl(228,20%,84%)]">
                       <a 
                         href={selectedNews.link} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="group relative inline-flex items-center justify-center w-full sm:w-auto gap-3 px-8 py-4 bg-white text-slate-900 font-bold rounded-xl overflow-hidden transition-all hover:scale-105"
+                        className="inline-flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors shadow-sm text-sm"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-300 to-purple-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <span className="relative z-10 flex items-center gap-2">
-                          Access Full Article <ExternalLink size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                        </span>
+                        Access Full Article <ExternalLink size={16} />
                       </a>
                     </div>
                   )}
