@@ -9,7 +9,7 @@ export interface WeeklyResource {
   resource_type: string;
   url: string;
   est_minutes: number;
-  order_no: int;
+  order_no: number;
 }
 
 export interface WeeklyVenezaWeek {
@@ -37,13 +37,11 @@ export function useWeeklyVenezaData() {
   });
 }
 
-export function useWeeklyVenezaProgress(token: string | null) {
+export function useWeeklyVenezaProgress() {
   return useQuery<number[]>({
-    queryKey: ["weekly-veneza-progress", token],
+    queryKey: ["weekly-veneza-progress"],
     queryFn: async () => {
-      if (!token) return [];
       const res = await fetch(getApiUrl("/api/weekly-veneza/progress"), {
-        headers: { Authorization: `Bearer ${token}` },
         credentials: "include",
       });
       if (!res.ok) {
@@ -51,7 +49,6 @@ export function useWeeklyVenezaProgress(token: string | null) {
       }
       return res.json();
     },
-    enabled: !!token,
   });
 }
 
@@ -59,11 +56,10 @@ export function useToggleWeeklyProgress() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ resourceId, token }: { resourceId: number; token: string }) => {
+    mutationFn: async ({ resourceId }: { resourceId: number }) => {
       const res = await fetch(getApiUrl(`/api/weekly-veneza/${resourceId}/toggle`), {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         credentials: "include",
@@ -83,11 +79,10 @@ export function useResetWeeklyProgress() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (token: string) => {
+    mutationFn: async () => {
       const res = await fetch(getApiUrl("/api/weekly-veneza/reset"), {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         credentials: "include",

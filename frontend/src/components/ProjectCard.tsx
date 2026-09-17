@@ -2,7 +2,7 @@
 // Drop-in card for the Projects tab.
 // Uses the projects[] array from src/data/projects.ts
 
-import { Project } from "../data/projects";
+import { Project } from "./club/Projects";
 
 interface ProjectCardProps {
   project: Project;

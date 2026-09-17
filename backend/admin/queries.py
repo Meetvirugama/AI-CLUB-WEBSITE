@@ -43,6 +43,35 @@ logger = logging.getLogger(__name__)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Audit Log Helper
+# ─────────────────────────────────────────────────────────────────────────────
+
+async def log_audit_action(
+    session: AsyncSession,
+    admin_id: int,
+    admin_email: str,
+    action: str,
+    entity_type: str,
+    entity_id: Optional[str] = None,
+    before_state: Optional[Dict] = None,
+    after_state: Optional[Dict] = None,
+    ip_address: Optional[str] = None,
+):
+    from admin.models import AuditLog
+    audit = AuditLog(
+        admin_id=admin_id,
+        admin_email=admin_email,
+        action=action,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        before_state=before_state,
+        after_state=after_state,
+        ip_address=ip_address,
+    )
+    session.add(audit)
+    await session.commit()
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Lazy imports (avoid circular deps at module load time)
 # ─────────────────────────────────────────────────────────────────────────────
 

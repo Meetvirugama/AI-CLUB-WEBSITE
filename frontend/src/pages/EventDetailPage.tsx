@@ -5,6 +5,7 @@ import { Calendar, MapPin, Users, Clock, ArrowLeft, Tag, CheckCircle, XCircle, A
 import Navbar from '../components/club/Navbar';
 import Footer from '../components/club/Footer';
 import { getApiUrl } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface EventDetail {
   id: number;
@@ -61,6 +62,27 @@ export default function EventDetailPage() {
   const [teamName, setTeamName] = useState('');
   const [teamMembers, setTeamMembers] = useState([{ name: '', email: '' }]);
 
+  const { user: authUser } = useAuth();
+
+  useEffect(() => {
+    setUserProfile(authUser);
+    if (authUser && id) {
+      const fetchRegs = async () => {
+        try {
+          const regRes = await fetch(getApiUrl('/api/user/registrations'), { credentials: 'include' });
+          if (regRes.ok) {
+            const regData = await regRes.json();
+            const ids = (regData.registrations || []).map((r: any) => r.event_id);
+            setIsRegistered(ids.includes(Number(id)));
+          }
+        } catch (_) {}
+      };
+      fetchRegs();
+    } else {
+      setIsRegistered(false);
+    }
+  }, [authUser, id]);
+
   useEffect(() => {
     if (!id) return;
     const fetchAll = async () => {
@@ -85,22 +107,7 @@ export default function EventDetailPage() {
           }
         } catch (_) {}
 
-        // Fetch auth + registrations
-        try {
-          const meRes = await fetch(getApiUrl('/api/auth/me'), { credentials: 'include' });
-          if (meRes.ok) {
-            const meData = await meRes.json();
-            if (meData.authenticated && meData.user) {
-              setUserProfile(meData.user);
-              const regRes = await fetch(getApiUrl('/api/user/registrations'), { credentials: 'include' });
-              if (regRes.ok) {
-                const regData = await regRes.json();
-                const ids = (regData.registrations || []).map((r: any) => r.event_id);
-                setIsRegistered(ids.includes(Number(id)));
-              }
-            }
-          }
-        } catch (_) {}
+        // Auth and registrations are now handled by the separate useEffect listening to authUser
       } catch (err: any) {
         setError(err.message);
       } finally {

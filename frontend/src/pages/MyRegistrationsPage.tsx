@@ -144,8 +144,11 @@ function RegistrationCard({ reg }: { reg: Registration }) {
   );
 }
 
+import { useAuth } from '../contexts/AuthContext';
+
 export default function MyRegistrationsPage() {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -153,44 +156,31 @@ export default function MyRegistrationsPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
+    setAuthChecked(true);
+    setIsLoggedIn(isAuthenticated);
+
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem('access_token');
-        const headers: Record<string, string> = {};
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        const meRes = await fetch(getApiUrl('/api/auth/me'), { credentials: 'include', headers });
-        if (!meRes.ok) {
-          setIsLoggedIn(false);
-          setAuthChecked(true);
-          setLoading(false);
-          return;
-        }
-        const meData = await meRes.json();
-        if (!meData.authenticated) {
-          setIsLoggedIn(false);
-          setAuthChecked(true);
-          setLoading(false);
-          return;
-        }
-        setIsLoggedIn(true);
-
-        const regRes = await fetch(getApiUrl('/api/user/registrations'), { credentials: 'include', headers });
+        const regRes = await fetch(getApiUrl('/api/user/registrations'), { credentials: 'include' });
         if (!regRes.ok) throw new Error('Failed to fetch registrations');
         const data = await regRes.json();
         setRegistrations(data.registrations || []);
       } catch (err: any) {
         setError(err.message);
       } finally {
-        setAuthChecked(true);
         setLoading(false);
       }
     };
+
     fetchData();
-  }, []);
+  }, [isAuthenticated, authLoading]);
 
   return (
     <div style={{ background: 'hsl(228,30%,93%)', minHeight: '100vh' }}>

@@ -6,8 +6,7 @@ import { useMemo } from "react";
 
 export default function ProgressTrackerCard() {
   const { data: resources = [], isLoading: loadingResources } = useCurriculumResources();
-  const token = localStorage.getItem("access_token");
-  const { data: progress = [], isLoading: loadingProgress } = useCurriculumProgress(token);
+  const { data: progress = [], isLoading: loadingProgress } = useCurriculumProgress();
 
   const totalResources = resources.length;
   const totalCompleted = progress.length;

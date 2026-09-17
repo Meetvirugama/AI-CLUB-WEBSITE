@@ -22,23 +22,16 @@ export function useCurriculumResources() {
   });
 }
 
-export function useCurriculumProgress(token: string | null) {
-  const activeToken = token || localStorage.getItem("access_token");
+export function useCurriculumProgress() {
   return useQuery({
-    queryKey: ["curriculumProgress", activeToken],
+    queryKey: ["curriculumProgress"],
     queryFn: async (): Promise<number[]> => {
-      const authToken = activeToken || localStorage.getItem("access_token");
-      if (!authToken) return [];
       const res = await fetch(getApiUrl("/api/resources/progress"), {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to fetch progress");
+      if (!res.ok) return [];
       return res.json();
-    },
-    enabled: !!(activeToken || localStorage.getItem("access_token")),
+    }
   });
 }
 
@@ -47,17 +40,11 @@ export function useToggleProgress() {
   return useMutation({
     mutationFn: async ({
       resourceId,
-      token,
     }: {
       resourceId: number;
-      token?: string;
     }) => {
-      const authToken = token || localStorage.getItem("access_token");
       const res = await fetch(getApiUrl(`/api/resources/${resourceId}/toggle`), {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to toggle progress");
@@ -74,13 +61,9 @@ export function useToggleProgress() {
 export function useResetProgress() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (token?: string) => {
-      const authToken = token || localStorage.getItem("access_token");
+    mutationFn: async () => {
       const res = await fetch(getApiUrl("/api/resources/reset"), {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to reset progress");
@@ -98,13 +81,12 @@ export function useCreateResource() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: Omit<ClubResource, "id">) => {
-      const token = localStorage.getItem("access_token");
       const res = await fetch(getApiUrl("/api/admin/resources"), {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("Failed to create resource");
@@ -120,13 +102,12 @@ export function useUpdateResource() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...data }: ClubResource) => {
-      const token = localStorage.getItem("access_token");
       const res = await fetch(getApiUrl(`/api/admin/resources/${id}`), {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("Failed to update resource");
@@ -142,12 +123,9 @@ export function useDeleteResource() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const token = localStorage.getItem("access_token");
       const res = await fetch(getApiUrl(`/api/admin/resources/${id}`), {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to delete resource");
       return res.json();

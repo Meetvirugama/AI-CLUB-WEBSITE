@@ -4,15 +4,15 @@ import { X, Upload, Users, ArrowRight, Loader2, CalendarDays, Mic, UsersRound, S
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { getApiUrl } from '../../lib/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Helper: build auth headers from localStorage token (needed for cross-origin cookie issues)
 function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem('access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  return {};
 }
 
 interface EventModel {
-  id: number;
+  id: number | string;
   title: string;
   description: string;
   banner: string | null;
@@ -33,6 +33,9 @@ interface EventModel {
   status: 'upcoming' | 'registration_open' | 'registration_closed' | 'completed';
   winners?: string | null;
   winner_link?: string | null;
+  speaker?: string | null;
+  date_label?: string;
+  isArchived?: boolean;
 }
 
 interface FormFieldModel {
@@ -73,6 +76,13 @@ interface PastEventModel {
   sort_order?: number;
   winners?: string | null;
   winner_link?: string | null;
+  venue?: string;
+  event_type?: string;
+  event_start_date?: string;
+  event_date?: string;
+  isArchived?: boolean;
+  status?: string;
+  banner?: string | null;
 }
 
 export default function Events({ isHomepage = false }: { isHomepage?: boolean }) {
@@ -93,7 +103,7 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
   const [responses, setResponses] = useState<Record<string, any>>({});
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [registeredEventIds, setRegisteredEventIds] = useState<number[]>([]);
+  const [registeredEventIds, setRegisteredEventIds] = useState<(number | string)[]>([]);
 
   // Team Registration state
   const [teamName, setTeamName] = useState('');
@@ -123,15 +133,13 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
     }
   };
 
-  const fetchUserData = async () => {
-    try {
-      const authRes = await fetch(getApiUrl('/api/auth/me'), { credentials: 'include' });
-      if (authRes.ok) {
-        const authData = await authRes.json();
-        if (authData.authenticated && authData.user) {
-          setUserProfile(authData.user);
+  const { user: authUser } = useAuth();
 
-          // Fetch registrations
+  useEffect(() => {
+    setUserProfile(authUser);
+    if (authUser) {
+      const fetchRegs = async () => {
+        try {
           const regRes = await fetch(getApiUrl('/api/user/registrations'), { credentials: 'include' });
           if (regRes.ok) {
             const regData = await regRes.json();
@@ -139,12 +147,15 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
               setRegisteredEventIds(regData.registrations.map((r: any) => r.event_id));
             }
           }
+        } catch (e) {
+          console.error('Failed to fetch registrations', e);
         }
-      }
-    } catch (e) {
-      console.error('Failed to fetch user data', e);
+      };
+      fetchRegs();
+    } else {
+      setRegisteredEventIds([]);
     }
-  };
+  }, [authUser]);
 
   const fetchPastEvents = async () => {
     try {
@@ -162,7 +173,6 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
     // Fetch initial data
     fetchEvents();
     fetchPastEvents();
-    fetchUserData();
   }, []);
 
   const featured = events.find(ev => ev.status === 'registration_open') || events.find(ev => ev.status === 'upcoming');
@@ -224,24 +234,7 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
         setSubmitMessage(null);
 
         // Prepopulate default fields from backend profile
-        let profile: any = {};
-        try {
-          const authRes = await fetch(getApiUrl('/api/auth/me'), { credentials: 'include', headers: getAuthHeaders() });
-          if (authRes.ok) {
-            const authData = await authRes.json();
-            if (authData.authenticated && authData.user) {
-              profile = authData.user;
-              setUserProfile(authData.user);
-            } else {
-              setUserProfile(null);
-            }
-          } else {
-            setUserProfile(null);
-          }
-        } catch (e) {
-          console.error('Failed to retrieve authentication details:', e);
-          setUserProfile(null);
-        }
+        let profile: any = userProfile || {};
 
         try {
           const res = await fetch(getApiUrl(`/api/events/${selectedEvent.id}/form-schema`));
@@ -321,20 +314,6 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
 
     // Check if user is logged in
     let currentUser = userProfile;
-    if (!currentUser) {
-      try {
-        const authRes = await fetch(getApiUrl('/api/auth/me'), { credentials: 'include', headers: getAuthHeaders() });
-        if (authRes.ok) {
-          const authData = await authRes.json();
-          if (authData.authenticated && authData.user) {
-            currentUser = authData.user;
-            setUserProfile(authData.user);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to check auth during submission", err);
-      }
-    }
 
     if (!currentUser) {
       setSubmitMessage({ type: 'error', text: 'You must be logged in to register for events.' });
@@ -495,14 +474,25 @@ const archivedPastCards = pastEvents.map(p => ({
   winners: p.winners,
   winner_link: p.winner_link,
   venue: '',
-  event_type: '',
+  status: 'completed' as const,
   isArchived: true,
+  event_start_date: undefined as string | undefined,
+  event_end_date: undefined as string | undefined,
+  start_time: undefined as string | undefined,
+  end_time: undefined as string | undefined,
+  contact_email: '',
+  event_type: 'individual' as const,
+  min_team_size: null,
+  max_team_size: null,
+  registration_start: '',
+  registration_end: '',
 }));
 
 // Current database events
 const currentEventCards = events.map(ev => ({
   ...ev,
   isArchived: false,
+  date_label: undefined as string | undefined,
 }));
 
 // All events, including archived past events
@@ -1438,7 +1428,7 @@ const resultCount = displayedUpcomingEvents.length;
 >
   <AnimatePresence mode="popLayout">
     {displayedUpcomingEvents.map((card, i) => {
-      const eventImage = card.banner || card.image_url;
+      const eventImage = card.banner || (card as any).image_url;
 
       const isLive = card.status === 'registration_open';
       const isPast =

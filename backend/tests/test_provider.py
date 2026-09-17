@@ -17,7 +17,7 @@ Verifies:
 import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
-from chatbot_provider import (
+from chatbot.provider import (
     ProviderManager, KeyState, ChatCallResult,
     _RateLimitError, _ProviderError, _PayloadTooLargeError,
 )

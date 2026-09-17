@@ -19,6 +19,9 @@ import Navbar from "./components/club/Navbar.tsx";
 import Chatbot from "./chatbot/Chatbot.tsx";
 import BackgroundCanvas from "./components/club/BackgroundCanvas.tsx";
 import ScrollToTop from "./components/ScrollToTop.tsx";
+import AppErrorBoundary from "./components/AppErrorBoundary.tsx";
+import { AuthProvider } from "./contexts/AuthContext.tsx";
+import { useLocation } from "react-router-dom";
 
 // Lazy-load heavier pages to keep the initial bundle small
 const Admin = lazy(() => import("./pages/Admin.tsx"));
@@ -36,8 +39,6 @@ const Loader = () => (
     Loading…
   </div>
 );
-
-import { useLocation } from "react-router-dom";
 
 const HeaderNavbar = () => {
   const location = useLocation();
@@ -58,65 +59,69 @@ const GlobalChatbot = () => {
 };
 
 const App = () => (
-  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <BackgroundCanvas />
-          <ScrollToTop />
-          <HeaderNavbar />
-          <GlobalChatbot />
-          <Routes>
-            {/* ── Public routes — no login required ── */}
-            <Route path="/" element={<Index />} />
-            <Route path="/events" element={<EventsPage />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/team" element={<TeamPage />} />
-            <Route path="/achievements" element={<AchievementsPage />} />
-            <Route path="/news" element={<NewsPage />} />
-            <Route path="/resources" element={<ResourcesPage />} />
-            <Route path="/aura" element={<AuraPage />} />
-            <Route path="/weekly-veneza" element={<Suspense fallback={<Loader />}><WeeklyVenezaPage /></Suspense>} />
-            <Route path="/curriculum" element={<Suspense fallback={<Loader />}><CurriculumPage /></Suspense>} />
+  <AppErrorBoundary>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <BackgroundCanvas />
+              <ScrollToTop />
+              <HeaderNavbar />
+              <GlobalChatbot />
+              <Routes>
+                {/* ── Public routes — no login required ── */}
+                <Route path="/" element={<Index />} />
+                <Route path="/events" element={<EventsPage />} />
+                <Route path="/projects" element={<ProjectsPage />} />
+                <Route path="/team" element={<TeamPage />} />
+                <Route path="/achievements" element={<AchievementsPage />} />
+                <Route path="/news" element={<NewsPage />} />
+                <Route path="/resources" element={<ResourcesPage />} />
+                <Route path="/aura" element={<AuraPage />} />
+                <Route path="/weekly-veneza" element={<Suspense fallback={<Loader />}><WeeklyVenezaPage /></Suspense>} />
+                <Route path="/curriculum" element={<Suspense fallback={<Loader />}><CurriculumPage /></Suspense>} />
 
-            {/* ── Roadmap detail page ── */}
-            <Route path="/roadmaps/:slug" element={
-              <Suspense fallback={<Loader />}>
-                <RoadmapDetailPage />
-              </Suspense>
-            } />
+                {/* ── Roadmap detail page ── */}
+                <Route path="/roadmaps/:slug" element={
+                  <Suspense fallback={<Loader />}>
+                    <RoadmapDetailPage />
+                  </Suspense>
+                } />
 
-            {/* ── Event detail page ── */}
-            <Route path="/events/:id" element={
-              <Suspense fallback={<Loader />}>
-                <EventDetailPage />
-              </Suspense>
-            } />
+                {/* ── Event detail page ── */}
+                <Route path="/events/:id" element={
+                  <Suspense fallback={<Loader />}>
+                    <EventDetailPage />
+                  </Suspense>
+                } />
 
-            {/* ── My registrations (auth handled inside page) ── */}
-            <Route path="/my-registrations" element={
-              <Suspense fallback={<Loader />}>
-                <MyRegistrationsPage />
-              </Suspense>
-            } />
+                {/* ── My registrations (auth handled inside page) ── */}
+                <Route path="/my-registrations" element={
+                  <Suspense fallback={<Loader />}>
+                    <MyRegistrationsPage />
+                  </Suspense>
+                } />
 
-            {/* ── Protected admin route ── */}
-            <Route path="/admin" element={
-              <AuthBarrier>
-                <Suspense fallback={<Loader />}>
-                  <Admin />
-                </Suspense>
-              </AuthBarrier>
-            } />
+                {/* ── Protected admin route ── */}
+                <Route path="/admin" element={
+                  <AuthBarrier requireAdmin={true}>
+                    <Suspense fallback={<Loader />}>
+                      <Admin />
+                    </Suspense>
+                  </AuthBarrier>
+                } />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </GoogleOAuthProvider>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </GoogleOAuthProvider>
+  </AppErrorBoundary>
 );
 
 export default App;

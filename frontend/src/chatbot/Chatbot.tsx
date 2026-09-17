@@ -24,7 +24,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../lib/api';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -301,9 +301,7 @@ export default function Chatbot() {
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem('access_token');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const res = await fetch(getApiUrl('/api/club-chat'), {
         method: 'POST',

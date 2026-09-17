@@ -244,33 +244,23 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
       const headers = getAuthHeaders();
       const opts = { headers, credentials: 'include' as const };
 
-      const [ovRes, usRes, prRes, kyRes, acRes, caRes] = await Promise.all([
-        fetch(getApiUrl('/api/admin/chatbot/overview'), opts),
-        fetch(getApiUrl(`/api/admin/chatbot/usage?days=${days}`), opts),
-        fetch(getApiUrl(`/api/admin/chatbot/providers?days=${days}`), opts),
-        fetch(getApiUrl('/api/admin/chatbot/keys'), opts),
-        fetch(getApiUrl('/api/admin/chatbot/activity?limit=50'), opts),
-        fetch(getApiUrl(`/api/admin/chatbot/categories?days=${days}`), opts),
-      ]);
+      const res = await fetch(getApiUrl(`/api/admin/chatbot/dashboard?days=${days}&limit=50`), opts);
 
-      if (ovRes.status === 401 || ovRes.status === 403) {
+      if (res.status === 401 || res.status === 403) {
         setError('You do not have permission to view chatbot analytics.');
         setLoading(false);
         return;
       }
 
-      const [ov, us, pr, ky, ac, ca] = await Promise.all([
-        ovRes.json(), usRes.json(), prRes.json(),
-        kyRes.json(), acRes.json(), caRes.json(),
-      ]);
+      const data = await res.json();
 
-      setOverview(ov);
-      setDaily(us.data ?? []);
-      setProviders(pr.providers ?? []);
-      setModels(pr.models ?? []);
-      setKeys(ky.keys ?? []);
-      setActivity(ac.events ?? []);
-      setCategories(ca.categories ?? null);
+      setOverview(data.overview);
+      setDaily(data.usage.data ?? []);
+      setProviders(data.providers.providers ?? []);
+      setModels(data.providers.models ?? []);
+      setKeys(data.keys.keys ?? []);
+      setActivity(data.activity.events ?? []);
+      setCategories(data.categories.categories ?? null);
       setLastRefresh(new Date());
     } catch (e) {
       setError('Failed to load analytics data. Check your connection.');
@@ -284,9 +274,11 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
     fetchAll(period);
   }, [period]);
 
-  // Auto-refresh every 30 seconds
+  // Auto-refresh every 30 seconds, pause when tab is hidden
   useEffect(() => {
-    const interval = setInterval(() => fetchAll(period), 30_000);
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchAll(period);
+    }, 30_000);
     return () => clearInterval(interval);
   }, [fetchAll, period]);
 

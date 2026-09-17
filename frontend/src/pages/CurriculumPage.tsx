@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useCurriculumResources, useCurriculumProgress, useToggleProgress, useResetProgress } from "@/hooks/useCurriculum";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -33,11 +34,11 @@ const TYPE_DETAILS: Record<string, { icon: any; color: string; label: string; es
 
 export default function CurriculumPage() {
   const { data: resources = [], isLoading: loadingResources } = useCurriculumResources();
-  const token = localStorage.getItem("access_token");
-  const { data: progress = [], isLoading: loadingProgress } = useCurriculumProgress(token);
+  const { data: progress = [], isLoading: loadingProgress } = useCurriculumProgress();
   const toggleProgress = useToggleProgress();
   const resetProgress = useResetProgress();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
 
   const [openTopics, setOpenTopics] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -121,18 +122,8 @@ export default function CurriculumPage() {
   };
 
   const handleToggleResource = async (resourceId: number) => {
-    const currentToken = localStorage.getItem("access_token");
-    if (!currentToken) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to save your progress.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     try {
-      await toggleProgress.mutateAsync({ resourceId, token: currentToken });
+      await toggleProgress.mutateAsync({ resourceId });
       toast({
         title: progress.includes(resourceId) ? "Resource Unmarked" : "Resource Completed! 🎉",
         description: progress.includes(resourceId) 
@@ -149,11 +140,8 @@ export default function CurriculumPage() {
   };
 
   const handleResetProgress = async () => {
-    const currentToken = localStorage.getItem("access_token");
-    if (!currentToken) return;
-
     try {
-      await resetProgress.mutateAsync(currentToken);
+      await resetProgress.mutateAsync();
       setShowResetConfirm(false);
       toast({
         title: "Progress Reset",
@@ -311,7 +299,7 @@ export default function CurriculumPage() {
               ) : (
                 <button
                   onClick={() => setShowResetConfirm(true)}
-                  disabled={!token || progress.length === 0}
+                  disabled={!isAuthenticated || progress.length === 0}
                   className="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 hover:text-rose-600 hover:border-rose-200 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-40 disabled:hover:text-slate-400 disabled:hover:border-slate-200 disabled:bg-slate-50/50"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />

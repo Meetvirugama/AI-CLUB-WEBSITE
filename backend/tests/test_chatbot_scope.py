@@ -1,3 +1,22 @@
+
+def parse_sse_response(resp):
+    import json
+    data = {"text": "", "reply": "", "navigation_action": None, "sources": []}
+    for line in resp.text.splitlines():
+        if line.startswith("data: "):
+            try:
+                event_data = json.loads(line[6:])
+                if "text" in event_data:
+                    data["text"] += event_data["text"]
+                    data["reply"] += event_data["text"]
+                if "navigation_action" in event_data and event_data["navigation_action"]:
+                    data["navigation_action"] = event_data["navigation_action"]
+                if "sources" in event_data and event_data["sources"]:
+                    data["sources"].extend(event_data["sources"])
+            except json.JSONDecodeError:
+                pass
+    return data
+
 """
 tests/test_chatbot_scope.py
 ────────────────────────────
@@ -11,6 +30,12 @@ These tests verify that:
 """
 
 import pytest
+
+def make_mock_stream(text, result_obj):
+    async def _stream(*args, **kwargs):
+        yield text, None
+        yield None, result_obj
+    return _stream
 import pytest_asyncio
 from unittest.mock import AsyncMock, patch
 from tests.conftest import make_generate_mock
@@ -28,11 +53,11 @@ class TestGreetingShortCircuit:
     async def test_greeting_bypasses_llm(self, client, greeting, mocker):
         """Greeting messages must return without calling provider_manager.generate."""
         mock_generate = mocker.patch(
-            "chatbot_provider.provider_manager.generate", new_callable=AsyncMock
+            "chatbot.provider.provider_manager.generate_stream", new_callable=AsyncMock
         )
         resp = await client.post("/api/club-chat", json={"message": greeting})
         assert resp.status_code == 200
-        data = resp.json()
+        data = parse_sse_response(resp)
         assert "reply" in data
         assert len(data["reply"]) > 0
         # LLM must NOT have been called
@@ -43,7 +68,7 @@ class TestGreetingShortCircuit:
         """Greeting reply must mention AI Club DAU."""
         resp = await client.post("/api/club-chat", json={"message": "hello"})
         assert resp.status_code == 200
-        reply = resp.json()["reply"].lower()
+        reply = parse_sse_response(resp)["reply"].lower()
         assert "ai club" in reply or "neuralnode" in reply
 
     @pytest.mark.asyncio
@@ -51,7 +76,7 @@ class TestGreetingShortCircuit:
         """Thanks should get a positive acknowledgement."""
         resp = await client.post("/api/club-chat", json={"message": "thanks"})
         assert resp.status_code == 200
-        reply = resp.json()["reply"].lower()
+        reply = parse_sse_response(resp)["reply"].lower()
         assert any(w in reply for w in ["welcome", "happy", "anytime", "glad"])
 
 
@@ -69,13 +94,13 @@ class TestKnowledgeRouting:
     async def test_knowledge_question_hits_llm(self, client, question, mocker):
         """Knowledge questions must reach the LLM."""
         mock_generate = mocker.patch(
-            "chatbot_provider.provider_manager.generate",
+            "chatbot.provider.provider_manager.generate_stream",
             side_effect=make_generate_mock("The AI Club has many members."),
         )
         resp = await client.post("/api/club-chat", json={"message": question})
         assert resp.status_code == 200
         mock_generate.assert_called_once()
-        assert resp.json()["reply"] == "The AI Club has many members."
+        assert parse_sse_response(resp)["reply"] == "The AI Club has many members."
 
 
 class TestOutOfScope:
@@ -92,12 +117,12 @@ class TestOutOfScope:
         """LLM is called but must return boundary response for off-topic questions."""
         boundary_reply = "I'm best at answering questions about AI Club DAU!"
         mocker.patch(
-            "chatbot_provider.provider_manager.generate",
+            "chatbot.provider.provider_manager.generate_stream",
             side_effect=make_generate_mock(boundary_reply),
         )
         resp = await client.post("/api/club-chat", json={"message": question})
         assert resp.status_code == 200
-        assert "AI Club" in resp.json()["reply"] or "best at" in resp.json()["reply"]
+        assert "AI Club" in parse_sse_response(resp)["reply"] or "best at" in parse_sse_response(resp)["reply"]
 
 
 class TestUnknownInfo:
@@ -108,7 +133,7 @@ class TestUnknownInfo:
         """Unknown AI Club info should produce honest 'I don't have that' response."""
         no_info_reply = "I don't have that information right now. Try checking the website or asking on Discord!"
         mocker.patch(
-            "chatbot_provider.provider_manager.generate",
+            "chatbot.provider.provider_manager.generate_stream",
             side_effect=make_generate_mock(no_info_reply),
         )
         resp = await client.post(
@@ -116,7 +141,7 @@ class TestUnknownInfo:
             json={"message": "Who won the AI Club competition in 2035?"},
         )
         assert resp.status_code == 200
-        assert "don't have" in resp.json()["reply"].lower() or "discord" in resp.json()["reply"].lower()
+        assert "don't have" in parse_sse_response(resp)["reply"].lower() or "discord" in parse_sse_response(resp)["reply"].lower()
 
 
 class TestInputValidation:
@@ -125,12 +150,12 @@ class TestInputValidation:
     @pytest.mark.asyncio
     async def test_empty_message_rejected(self, client):
         resp = await client.post("/api/club-chat", json={"message": ""})
-        assert resp.status_code == 400
+        assert resp.status_code == 422
 
     @pytest.mark.asyncio
     async def test_too_long_message_rejected(self, client):
         resp = await client.post("/api/club-chat", json={"message": "x" * 1001})
-        assert resp.status_code == 400
+        assert resp.status_code == 422
 
     @pytest.mark.asyncio
     async def test_missing_message_field(self, client):
