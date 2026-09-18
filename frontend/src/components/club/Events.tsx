@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, Users, ArrowRight, Loader2, CalendarDays, Mic, UsersRound, Search, ExternalLink } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { getApiUrl } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -95,7 +95,7 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
   
   // Filter state (full-page only)
   const [categoryFilter, setCategoryFilter] = useState<string>('');
-  const [selectedEvent, setSelectedEvent] = useState<EventModel | null>(null);
+  const navigate = useNavigate();
   
   // Dynamic Form schema state
   const [formFields, setFormFields] = useState<FormFieldModel[]>([]);
@@ -104,6 +104,7 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
   const [userProfile, setUserProfile] = useState<any>(null);
   const [registeredEventIds, setRegisteredEventIds] = useState<(number | string)[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<EventModel | null>(null);
 
   // Team Registration state
   const [teamName, setTeamName] = useState('');
@@ -733,7 +734,7 @@ const resultCount = displayedUpcomingEvents.length;
                             </a>
                           ) : (
                             <button
-                              onClick={() => setSelectedEvent(ev)}
+                              onClick={() => navigate(`/events/${ev.id}`)}
                               style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(228,30%,93%)', background: 'hsl(230,25%,12%)', padding: '5px 14px', borderRadius: 2, border: '1px solid hsl(230,25%,12%)', cursor: 'pointer' }}
                             >
                               Register now
@@ -741,7 +742,7 @@ const resultCount = displayedUpcomingEvents.length;
                           )
                         )}
                         <button
-                          onClick={() => setSelectedEvent(ev)}
+                          onClick={() => navigate(`/events/${ev.id}`)}
                           style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(243,75%,59%)', background: 'transparent', padding: '4px 10px', border: '1px solid hsl(243,75%,75%)', borderRadius: 2, cursor: 'pointer' }}
                           onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'hsl(243,75%,97%)'}
                           onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
@@ -788,7 +789,7 @@ const resultCount = displayedUpcomingEvents.length;
                 {pastEvents.slice(0, 2).map((pe) => (
                   <div
                     key={pe.id}
-                    onClick={() => setSelectedEvent(pe as any)}
+                    onClick={() => navigate(`/events/${pe.id}`)}
                     className="glass-card relative overflow-hidden p-6 flex flex-col justify-between cursor-pointer group bg-white border border-slate-200 rounded-2xl hover:border-indigo-400 hover:shadow-xl transition-all"
                   >
                     <div>
@@ -1214,7 +1215,7 @@ const resultCount = displayedUpcomingEvents.length;
                   </a>
                 ) : (
                   <button
-                    onClick={() => setSelectedEvent(featured)}
+                    onClick={() => navigate(`/events/${featured.id}`)}
                     className="mt-4 px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/95 hover:scale-105 transition-all duration-300"
                   >
                     Register Now
@@ -1464,7 +1465,7 @@ const resultCount = displayedUpcomingEvents.length;
               ease: 'easeOut',
             },
           }}
-          onClick={() => setSelectedEvent(card)}
+          onClick={() => navigate(`/events/${card.id}`)}
           className="group relative overflow-hidden rounded-2xl cursor-pointer"
           style={{
             background:
@@ -1769,7 +1770,7 @@ const resultCount = displayedUpcomingEvents.length;
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedEvent(card);
+                      navigate(`/events/${card.id}`);
                     }}
                     className="group/button w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2"
                     style={{
