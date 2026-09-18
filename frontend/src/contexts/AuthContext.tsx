@@ -85,13 +85,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     setIsLoading(true);
     try {
+      // Best-effort — clear the HttpOnly cookie server-side
       await api.post('/api/auth/logout');
+    } catch (_) {
+      // Ignore backend errors — we still log out locally
+    } finally {
+      // Always clear local auth state
       setUser(null);
       setIsAuthenticated(false);
       setIsAdmin(false);
-      window.dispatchEvent(new Event('auth-change'));
-    } finally {
       setIsLoading(false);
+      window.dispatchEvent(new Event('auth-change'));
+      // Hard reload to home so Google One Tap resets and no stale state remains
+      window.location.href = '/';
     }
   };
 
