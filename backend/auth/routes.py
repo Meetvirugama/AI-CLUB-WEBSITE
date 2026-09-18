@@ -18,11 +18,12 @@ GET  /api/auth/me
 
 Security notes
 ──────────────
-• The JWT is stored in an HttpOnly, Secure (production), SameSite=Lax cookie.
-  This makes it inaccessible to JavaScript and immune to XSS attacks.
-• The `Secure` flag is set only in production (ENVIRONMENT=production).
-• Token theft via CSRF is mitigated by SameSite=Lax + server-side token
-  validation (audience, expiry, type checks in jwt_handler.py).
+• The JWT is stored in an HttpOnly cookie, so it is unreadable from JS.
+• Secure + SameSite are derived from ENVIRONMENT (see auth/config.py):
+  production uses Secure + SameSite=None because the frontend and API are
+  on different sites; development uses SameSite=Lax over plain http.
+• Because SameSite=None disables the browser's own CSRF protection, writes
+  are additionally guarded by the Origin check in security.py.
 • All validation errors surface as structured JSON with appropriate HTTP codes.
 """
 
@@ -44,10 +45,16 @@ from auth.schemas import (
     UserPublicResponse,
 )
 from auth.service import get_or_create_user
+from security import RateLimiter, client_ip
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+
+# Login is unauthenticated and triggers an outbound call to Google on every
+# hit, so it is throttled per client IP to stop it being used as an
+# amplification or credential-probing endpoint.
+_login_limiter = RateLimiter(max_requests=10, window_seconds=60)
 
 
 # ─── Helper: set auth cookie ──────────────────────────────────────────────────
@@ -58,8 +65,8 @@ def _set_auth_cookie(response: Response, token: str) -> None:
         key=settings.COOKIE_NAME,
         value=token,
         httponly=settings.COOKIE_HTTPONLY,
-        secure=settings.COOKIE_SECURE,
-        samesite=settings.COOKIE_SAMESITE,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
         max_age=settings.COOKIE_MAX_AGE,
         path="/",
     )
@@ -71,8 +78,8 @@ def _clear_auth_cookie(response: Response) -> None:
         key=settings.COOKIE_NAME,
         path="/",
         httponly=settings.COOKIE_HTTPONLY,
-        secure=settings.COOKIE_SECURE,
-        samesite=settings.COOKIE_SAMESITE,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
     )
 
 
@@ -103,6 +110,13 @@ async def google_auth(
     3. Issue a signed JWT and set it as an HttpOnly cookie.
     4. Return the user's public profile.
     """
+    # ── Step 0: Throttle ──────────────────────────────────────────────────────
+    if not _login_limiter.check(client_ip(request)):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many login attempts. Please wait a minute and try again.",
+        )
+
     # ── Step 1: Verify token with Google ──────────────────────────────────────
     try:
         google_user = verify_google_id_token(token_request.id_token)
@@ -110,7 +124,7 @@ async def google_auth(
         logger.warning("Google token verification failed: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(exc),
+            detail="Google sign-in could not be verified. Please try again.",
         )
     except RuntimeError as exc:
         logger.error("Google verification network error: %s", exc)
@@ -139,9 +153,10 @@ async def google_auth(
     access_token = create_access_token(user_id=db_user.id)
     _set_auth_cookie(response, access_token)
 
+    # Log the surrogate id only — email addresses are PII and logs are retained
+    # by the hosting platform well beyond the life of a session.
     logger.info(
-        "User %s (id=%d) %s.",
-        db_user.email,
+        "User id=%d %s.",
         db_user.id,
         "registered" if is_new else "logged in",
     )

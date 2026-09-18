@@ -136,7 +136,7 @@ async def register_for_event_endpoint(
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Failed to parse multipart form: {exc}",
+                detail="Could not read the submitted form data.",
             )
 
         raw_data_str = form_data.get("data", "{}")
@@ -162,7 +162,7 @@ async def register_for_event_endpoint(
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid JSON body: {exc}",
+                detail="Request body must be valid JSON.",
             )
         raw_uploads = {}
 
@@ -244,7 +244,7 @@ async def register_for_event_endpoint(
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Registration failed: {type(exc).__name__}: {exc}",
+            detail="Registration failed due to a server error. Please try again.",
         )
 
     return RegistrationSubmitResponse(
@@ -341,7 +341,7 @@ async def get_my_registrations(
         logger.exception("Failed to fetch registrations for user_id=%d: %s", current_user.id, exc)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Could not fetch your registrations: {type(exc).__name__}: {exc}",
+            detail="Could not load your registrations. Please try again.",
         )
 
 

@@ -76,21 +76,104 @@ def _safe_filename(original: str) -> str:
     name = Path(original).name                        # strip any directory part
     name = re.sub(r"[^\w\.\-]", "_", name)            # replace unsafe chars
     name = re.sub(r"_+", "_", name).strip("_")        # collapse underscores
+    name = re.sub(r"\.{2,}", ".", name)               # no '..' sequences
     return f"{uuid.uuid4().hex}_{name}"
 
 
-# ─── MIME sniffing (best-effort) ──────────────────────────────────────────────
+# ─── Extension allowlist ──────────────────────────────────────────────────────
+# Registration forms collect documents and images. Anything a browser might
+# execute or treat as active content is refused outright, regardless of the
+# MIME type the client claims.
+_ALLOWED_EXTENSIONS = {
+    ".pdf", ".png", ".jpg", ".jpeg", ".gif", ".webp",
+    ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+    ".txt", ".csv", ".zip",
+}
+
+# Extensions that are dangerous to store and serve back even when the declared
+# MIME type looks harmless.
+_BLOCKED_EXTENSIONS = {
+    ".html", ".htm", ".xhtml", ".svg", ".xml", ".js", ".mjs", ".jsx",
+    ".php", ".phtml", ".py", ".rb", ".pl", ".sh", ".bash", ".exe",
+    ".dll", ".so", ".jar", ".bat", ".cmd", ".com", ".scr", ".msi",
+    ".vbs", ".ps1", ".htaccess",
+}
+
+
+# ─── MIME sniffing ────────────────────────────────────────────────────────────
+# Magic-byte signatures for the formats we accept. python-magic is an optional
+# C-library binding that is NOT in requirements.txt, so relying on it meant the
+# sniffer always returned None in practice and validation silently fell back to
+# the client-supplied Content-Type header — which an attacker chooses freely.
+# These pure-Python checks always run.
+_MAGIC_SIGNATURES: tuple[tuple[bytes, str], ...] = (
+    (b"%PDF-",                       "application/pdf"),
+    (b"\x89PNG\r\n\x1a\n",          "image/png"),
+    (b"\xff\xd8\xff",                "image/jpeg"),
+    (b"GIF87a",                      "image/gif"),
+    (b"GIF89a",                      "image/gif"),
+    (b"\xd0\xcf\x11\xe0",            "application/vnd.ms-office"),  # legacy .doc/.xls/.ppt
+)
+
+# Content that must never be stored, whatever the extension says.
+_DANGEROUS_CONTENT_MARKERS = (
+    b"<!doctype html", b"<html", b"<script", b"<?php", b"<svg",
+)
+
 
 def _sniff_mime(header: bytes) -> Optional[str]:
     """
-    Attempt to determine MIME type from the first bytes of the file.
-    Returns None if python-magic is not installed (graceful degradation).
+    Determine the MIME type from the file's leading bytes.
+
+    Prefers python-magic when it happens to be installed, otherwise falls back
+    to the signature table above. Returns None for formats we cannot identify
+    (e.g. plain text, csv), which the caller treats as "unverified".
     """
     try:
         import magic  # type: ignore  # python-magic (optional dep)
         return magic.from_buffer(header, mime=True)
-    except ImportError:
-        return None
+    except Exception:
+        pass
+
+    lowered = header[:1024].lstrip().lower()
+    for marker in _DANGEROUS_CONTENT_MARKERS:
+        if lowered.startswith(marker):
+            return "text/html"
+
+    for signature, mime in _MAGIC_SIGNATURES:
+        if header.startswith(signature):
+            return mime
+
+    # ZIP container — also the envelope for .docx/.xlsx/.pptx.
+    if header.startswith(b"PK\x03\x04"):
+        return "application/zip"
+
+    return None
+
+
+def _check_extension(filename: str) -> str:
+    """Validate the filename's extension, returning it lowercased."""
+    ext = Path(filename or "").suffix.lower()
+
+    if not ext:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Files must have a file extension.",
+        )
+    if ext in _BLOCKED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=f"Files of type '{ext}' are not accepted.",
+        )
+    if ext not in _ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=(
+                f"Files of type '{ext}' are not accepted. Allowed: "
+                f"{', '.join(sorted(_ALLOWED_EXTENSIONS))}."
+            ),
+        )
+    return ext
 
 
 # ─── Public API ───────────────────────────────────────────────────────────────
@@ -121,32 +204,66 @@ async def validate_upload(
     allowed = {t.strip().lower() for t in allowed_types.split(",") if t.strip()}
     max_bytes = max_size_kb * 1024
 
-    # Read in chunks to enforce size limit without loading huge files fully
-    content = b""
-    async for chunk in upload:
-        content += chunk
-        if len(content) > max_bytes:
+    # Extension is checked before reading a single byte.
+    _check_extension(upload.filename or "")
+
+    # Read in chunks to enforce the size limit without loading huge files fully.
+    chunks: list[bytes] = []
+    total = 0
+    while True:
+        chunk = await upload.read(64 * 1024)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > max_bytes:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail=(
-                    f"File '{upload.filename}' exceeds the maximum allowed size "
-                    f"of {max_size_kb} KB ({max_size_kb / 1024:.1f} MB)."
+                    f"File exceeds the maximum allowed size of {max_size_kb} KB "
+                    f"({max_size_kb / 1024:.1f} MB)."
                 ),
             )
+        chunks.append(chunk)
+    content = b"".join(chunks)
 
-    # ── MIME validation ────────────────────────────────────────────────────────
+    if not content:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is empty.",
+        )
+
+    # ── MIME validation ───────────────────────────────────────────────────────
+    # The sniffed type wins over the declared one. A client controls its own
+    # Content-Type header, so trusting it lets an attacker store active content
+    # (HTML/SVG) under a benign label — which would then be served back to an
+    # admin from the same origin as a stored XSS.
     declared_mime = (upload.content_type or "").lower().split(";")[0].strip()
-    sniffed_mime  = _sniff_mime(content[:2048])
+    sniffed_mime  = _sniff_mime(content[:4096])
+
+    if sniffed_mime in ("text/html", "image/svg+xml", "application/x-dosexec"):
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="This file contains active content and cannot be uploaded.",
+        )
+
     effective_mime = sniffed_mime or declared_mime
 
     if allowed and effective_mime not in allowed:
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail=(
-                f"File type '{effective_mime}' is not allowed for this field. "
-                f"Allowed types: {', '.join(sorted(allowed))}"
-            ),
+        # Office formats are ZIP containers, so a .docx sniffs as
+        # application/zip. Accept when the declared type is allowed and the
+        # container shape is consistent with it.
+        container_ok = (
+            sniffed_mime in ("application/zip", "application/vnd.ms-office")
+            and declared_mime in allowed
         )
+        if not container_ok:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail=(
+                    f"File type '{effective_mime}' is not allowed for this field. "
+                    f"Allowed types: {', '.join(sorted(allowed))}"
+                ),
+            )
 
     return content
 
@@ -168,8 +285,24 @@ async def save_upload(
         A tuple of (public_url, local_file_path).
     """
     upload_dir = get_upload_dir()
-    target_dir = upload_dir / sub_folder if sub_folder else upload_dir
+
+    # sub_folder is caller-supplied (an event id today). Constrain it so it can
+    # never walk out of the upload root.
+    if sub_folder:
+        if not str(sub_folder).isalnum():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid upload destination.",
+            )
+        target_dir = upload_dir / str(sub_folder)
+    else:
+        target_dir = upload_dir
+
     target_dir.mkdir(parents=True, exist_ok=True)
+
+    # Defence in depth: validate_upload already ran this, but save_upload is a
+    # public function and must not depend on its caller having done so.
+    _check_extension(original_filename)
 
     safe_name = _safe_filename(original_filename)
     file_path = target_dir / safe_name
@@ -183,5 +316,5 @@ async def save_upload(
     rel_path   = f"/{sub_folder}/{safe_name}" if sub_folder else f"/{safe_name}"
     public_url = f"{base_url}{rel_path}"
 
-    logger.info("Saved upload: %s → %s", original_filename, file_path)
+    logger.info("Saved upload (%d bytes) to %s", len(content), safe_name)
     return public_url, str(file_path)

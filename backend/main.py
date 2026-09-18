@@ -20,21 +20,29 @@ from chatbot.provider import provider_manager
 # SQLAlchemy AsyncIO imports
 from sqlalchemy import Column, Integer, String, Text, DateTime, select
 
+# ── Browser security primitives ────────────────────────────────────────────
+from security import (
+    CSRFOriginMiddleware,
+    RateLimiter,
+    SecurityHeadersMiddleware,
+    client_ip,
+)
+
 # ── Shared DB (engine + session factory + Base) ────────────────────────────
-from db import Base, async_session, engine, get_db  # noqa: E402
+from db import Base, async_session, engine, get_db
 
 # ── Auth module ────────────────────────────────────────────────────────────
 from core.config import settings
 from core.middleware import RequestSizeLimitMiddleware
-from auth.models import User  # registers User table with Base
+from auth.models import User
 from auth.routes import router as auth_router
 
 # ── Events module ──────────────────────────────────────────────────────────
-from events.models import ClubEvent   # registers the table with Base
+from events.models import ClubEvent
 from events.routes import router as events_router
 
 # ── Forms module (Dynamic Event Form Builder) ──────────────────────────────
-from forms.models import FormTemplate, FormField   # registers tables with Base
+from forms.models import FormTemplate, FormField
 from forms.routes import router as forms_router
 
 # ── Registrations module ───────────────────────────────────────────────────
@@ -82,13 +90,13 @@ from weekly_veneza.models import WeeklyVenezaWeek, WeeklyVenezaResource, UserWee
 from weekly_veneza.routes import router as weekly_veneza_router
 
 # ── Chatbot Analytics module ───────────────────────────────────────────────
-from chatbot.analytics.models import ChatUsageEvent, ChatDailyMetric, ProviderKeyStats  # noqa: registers tables
+from chatbot.analytics.models import ChatUsageEvent, ChatDailyMetric, ProviderKeyStats
 from chatbot.analytics.routes import router as chatbot_analytics_router
 from chatbot.analytics.queries import log_chat_event
 
 # ── Chatbot RAG module ─────────────────────────────────────────────────────
 from chatbot.routes import router as chatbot_router
-from chatbot.rag.models import KnowledgeChunk  # noqa: registers table
+from chatbot.rag.models import KnowledgeChunk
 from chatbot.rag.routes import router as chatbot_rag_router
 from chatbot.rag.retriever import retrieve_relevant_chunks, format_rag_context
 
@@ -96,33 +104,24 @@ from chatbot.rag.retriever import retrieve_relevant_chunks, format_rag_context
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
-# --- RATE LIMITER STATE ---
-CHAT_RATE_LIMITS: Dict[str, Tuple[int, float]] = {}
-MAX_REQUESTS_PER_MINUTE = 10
-
 # ── Startup/Shutdown Lifespan ──────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Validate auth configuration early so we fail fast.
-    auth_settings.validate()
+    settings.validate_production()
 
-    # Load all LLM API keys into the provider pool.
     provider_manager.load_from_env()
 
-    # Auto-create all tables (idempotent).
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
     except Exception as e:
         logging.warning(f"Could not connect to database for table creation: {str(e)}")
 
-    # Start the keep-alive background task
     task = asyncio.create_task(keep_alive_task())
     yield
     task.cancel()
 
-# Disable interactive docs in production to avoid exposing the API schema publicly
-_is_production = os.getenv("ENVIRONMENT") == "production"
+_is_production = settings.IS_PRODUCTION
 app = FastAPI(
     title="AI Club DAU API",
     version="1.0.0",
@@ -132,37 +131,34 @@ app = FastAPI(
     openapi_url=None if _is_production else "/openapi.json",
 )
 
-# --- CORS SETUP ---
-# Set ALLOWED_ORIGINS in your environment as a comma-separated list of allowed origins.
-# In development without ALLOWED_ORIGINS set, only localhost origins are allowed.
-allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
-if allowed_origins_env:
-    origins = [orig.strip() for orig in allowed_origins_env.split(",") if orig.strip()]
-else:
-    origins = [
-        "http://localhost:5173",
-        "http://localhost:8080",
-        "http://localhost:3000",
-    ]
+# --- SECURITY MIDDLEWARE ---
+origins = settings.cors_origins
 
 # Size limit middleware (default 50MB max body)
 app.add_middleware(RequestSizeLimitMiddleware, max_upload_size=50 * 1024 * 1024)
 
-# Global CORS Configuration
+# Middleware runs in reverse registration order, so register the outermost
+# concern last: headers wrap CSRF wraps CORS.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
     max_age=600,
 )
+
+app.add_middleware(
+    CSRFOriginMiddleware,
+    allowed_origins=origins,
+    cookie_name=settings.COOKIE_NAME,
+)
+
+app.add_middleware(SecurityHeadersMiddleware, is_production=_is_production)
 
 # --- UPLOADS DIRECTORY SETUP ---
 uploads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "private_uploads")
 os.makedirs(uploads_dir, exist_ok=True)
-# Intentionally not mounting /uploads statically to protect files
-
 
 
 # ── Register routers ───────────────────────────────────────────────────────
@@ -203,15 +199,10 @@ async def get_club_stats(db=Depends(get_db)):
 
 # ── Startup ────────────────────────────────────────────────────────────────
 async def keep_alive_task():
-    """
-    Pings the /health endpoint every 14 minutes and 50 seconds to prevent
-    Render free tier from spinning down the instance.
-    Pings /health (not /docs) so the API schema is never exposed just for keep-alive.
-    """
     render_external_url = os.getenv("RENDER_EXTERNAL_URL", "https://ai-club-website-e9zk.onrender.com")
     url = f"{render_external_url}/health"
     while True:
-        await asyncio.sleep(890)  # 14 minutes and 50 seconds
+        await asyncio.sleep(890)
         try:
             async with httpx.AsyncClient() as client:
                 await client.get(url, timeout=10)
@@ -222,8 +213,6 @@ async def keep_alive_task():
             logging.error(f"Keep-alive ping failed: {e}")
 
 
-
-# Used only for local testing
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

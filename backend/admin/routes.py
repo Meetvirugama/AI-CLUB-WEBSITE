@@ -400,26 +400,39 @@ async def delete_registration_admin(
 # GET /api/admin/files/{filename}
 # ─────────────────────────────────────────────────────────────────────────────
 @router.get(
-    "/files/{filename:path}",
+    "/api/admin/files/{filename:path}",
     response_class=FileResponse,
     summary="Download uploaded file",
     description="Serve private uploaded files to admins only.",
 )
 async def get_private_file(filename: str, _: None = Depends(require_admin)):
     from forms.file_handler import get_upload_dir
-    upload_dir = get_upload_dir()
-    file_path = upload_dir / filename
+    upload_dir = get_upload_dir().resolve()
 
-    if not file_path.exists() or not file_path.is_file():
+    # Containment is checked BEFORE touching the filesystem. Doing the
+    # existence check first leaked whether arbitrary paths exist on the host
+    # (404 vs 403), and `str.startswith` was not a correct containment test:
+    # "/app/private_uploads_backup" has "/app/private_uploads" as a string
+    # prefix while living outside it. `relative_to` compares path components.
+    try:
+        resolved_path = (upload_dir / filename).resolve()
+        resolved_path.relative_to(upload_dir)
+    except (ValueError, OSError):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
 
-    # Prevent path traversal
-    try:
-        resolved_path = file_path.resolve()
-        resolved_upload_dir = upload_dir.resolve()
-        if not str(resolved_path).startswith(str(resolved_upload_dir)):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid path")
+    if not resolved_path.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
 
-    return FileResponse(path=file_path)
+    # Uploads are attacker-influenced bytes. Forcing a download with a generic
+    # content type stops the browser rendering one in this origin, which would
+    # otherwise be stored XSS against the admin viewing it.
+    return FileResponse(
+        path=resolved_path,
+        media_type="application/octet-stream",
+        filename=resolved_path.name,
+        headers={
+            "Content-Disposition": f'attachment; filename="{resolved_path.name}"',
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "default-src 'none'; sandbox",
+        },
+    )

@@ -235,6 +235,33 @@ async def _collect_chunks(session: AsyncSession) -> list[dict]:
     return chunks
 
 
+class RestrictedContentError(RuntimeError):
+    """Raised when a chunk outside the public allowlist reaches the indexer."""
+
+
+def _assert_public(chunk: dict) -> None:
+    """
+    Hard gate on everything written to the knowledge base.
+
+    `_PUBLIC_SOURCES` documented the intended boundary but nothing enforced it:
+    any future caller of `_upsert_chunks` could have written registration or
+    user rows into the table, and the retriever would then have served them to
+    the LLM as public context. The chatbot's entire privacy guarantee rests on
+    this table containing public data only, so the check belongs at the write
+    path rather than in a comment.
+    """
+    source_type = chunk.get("source_type")
+    if source_type not in _PUBLIC_SOURCES:
+        raise RestrictedContentError(
+            f"Refusing to index chunk from non-public source {source_type!r}. "
+            f"Allowed sources: {', '.join(_PUBLIC_SOURCES)}."
+        )
+    if chunk.get("visibility") != "public":
+        raise RestrictedContentError(
+            f"Refusing to index chunk with visibility {chunk.get('visibility')!r}."
+        )
+
+
 async def _upsert_chunks(session: AsyncSession, chunks: list[dict], *, commit: bool = True) -> int:
     """Upsert public chunks without relying on a partial/deferrable ON CONFLICT index.
 
@@ -243,6 +270,10 @@ async def _upsert_chunks(session: AsyncSession, chunks: list[dict], *, commit: b
     """
     if not chunks:
         return 0
+
+    # Validate the whole batch before writing any of it.
+    for chunk in chunks:
+        _assert_public(chunk)
 
     now = datetime.now(timezone.utc)
     upserted = 0

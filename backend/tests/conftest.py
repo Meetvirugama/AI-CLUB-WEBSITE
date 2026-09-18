@@ -71,8 +71,10 @@ def patch_db_context(mocker):
 @pytest.fixture(autouse=True)
 def clear_rate_limits():
     """Clear the rate limit dictionary before each test to avoid 429 errors."""
-    from chatbot.routes import CHAT_RATE_LIMITS, _STREAMING_CACHE
-    CHAT_RATE_LIMITS.clear()
+    from chatbot.routes import _chat_limiter, _STREAMING_CACHE
+    from auth.routes import _login_limiter
+    _chat_limiter._hits.clear()
+    _login_limiter._hits.clear()
     _STREAMING_CACHE.clear()
 
 
