@@ -10,6 +10,7 @@ import {
 import Navbar from '../components/club/Navbar';
 import Footer from '../components/club/Footer';
 import { getApiUrl } from '../lib/api';
+import { api } from '../lib/apiClient';
 import { useAuth } from '../contexts/AuthContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -179,31 +180,31 @@ export default function EventDetailPage() {
     if (authUser && id) {
       const fetchRegs = async () => {
         try {
-          const regRes = await fetch(getApiUrl('/api/user/registrations'), { credentials: 'include' });
-          if (regRes.ok) {
-            const regData = await regRes.json();
-            const myReg = (regData.registrations || []).find((r: any) => r.event_id === Number(id));
-            if (myReg) {
-              setIsRegistered(true);
-              setExistingRegistrationId(myReg.id);
-              // Pre-fill responses from existing registration
-              if (myReg.responses_flat) {
-                // responses_flat is { label: value } — we need field ids
-                // We'll re-fill after form fields load; store flat for now
-                (window as any).__existingFlat = myReg.responses_flat;
-              }
-              // Pre-fill team
-              if (myReg.team) {
-                setTeamName(myReg.team.team_name || '');
-                setTeamMembers(
-                  (myReg.team.members || []).map((m: any) => ({ name: m.member_name, email: m.member_email }))
-                );
-              }
-            } else {
-              setIsRegistered(false);
+          // Use shared api client so cookies are sent correctly cross-origin (same as auth/me)
+          const regData = await api.get<{ registrations: any[] }>('/api/user/registrations');
+          const myReg = (regData.registrations || []).find((r: any) => Number(r.event_id) === Number(id));
+          if (myReg) {
+            setIsRegistered(true);
+            setExistingRegistrationId(myReg.id);
+            // Pre-fill responses from existing registration
+            if (myReg.responses_flat) {
+              // responses_flat is { label: value } — we need field ids
+              // We'll re-fill after form fields load; store flat for now
+              (window as any).__existingFlat = myReg.responses_flat;
             }
+            // Pre-fill team
+            if (myReg.team) {
+              setTeamName(myReg.team.team_name || '');
+              setTeamMembers(
+                (myReg.team.members || []).map((m: any) => ({ name: m.member_name, email: m.member_email }))
+              );
+            }
+          } else {
+            setIsRegistered(false);
           }
-        } catch (_) {}
+        } catch (e) {
+          console.error('Failed to fetch user registrations', e);
+        }
       };
       fetchRegs();
     } else {
