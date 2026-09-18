@@ -7,6 +7,7 @@ export interface AuthUser {
   email: string;
   profile_image: string | null;
   is_admin: boolean;
+  student_id?: string | null;
 }
 
 export interface AuthContextType {

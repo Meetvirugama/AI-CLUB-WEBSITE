@@ -53,6 +53,7 @@ from registrations.validators import (
     check_team_size,
     validate_form_responses,
 )
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -346,3 +347,267 @@ def _build_detail(
         team           = team_resp,
         uploaded_files = file_resps,
     )
+
+
+# ─── Edit registration ────────────────────────────────────────────────────────
+
+async def update_registration(
+    session: AsyncSession,
+    event_id: int,
+    user_id: int,
+    data: RegistrationSubmitRequest,
+    uploaded_file_urls: Optional[dict] = None,
+) -> RegistrationDetail:
+    """
+    Replace all form responses (and team info, files) for an existing
+    registration while the registration window is still open.
+
+    Pipeline
+    ────────
+    1. Fetch the existing EventRegistration (404 if not found).
+    2. Check registration window is still open.
+    3. Re-validate event type ↔ team block match + team size.
+    4. For team events: check new team name uniqueness (skipping own team).
+    5. Validate + normalise new form responses.
+    6. Delete all old child rows (RegistrationResponse, UploadedFile on disk,
+       Team, TeamMembers) — keep the parent EventRegistration row.
+    7. Write fresh child rows.
+    8. Commit and return updated RegistrationDetail.
+    """
+    # ── 1. Find the existing registration ────────────────────────────────────
+    result = await session.execute(
+        select(EventRegistration).where(
+            EventRegistration.event_id == event_id,
+            EventRegistration.user_id  == user_id,
+        )
+    )
+    registration = result.scalars().first()
+    if registration is None:
+        raise RegistrationError(
+            "You do not have a registration for this event to edit.",
+            status_code=404,
+        )
+
+    # ── 2. Check window ───────────────────────────────────────────────────────
+    event = await check_event_exists(session, event_id)
+    check_registration_window(event)
+
+    # ── 3. Event type + team size ─────────────────────────────────────────────
+    check_event_type_match(event, data.team)
+    check_team_size(event, data.team)
+
+    # ── 4. Team name uniqueness (skip own team) ───────────────────────────────
+    if data.team:
+        from sqlalchemy import func  # noqa: PLC0415
+        existing_team_result = await session.execute(
+            select(Team).where(Team.registration_id == registration.id)
+        )
+        own_team = existing_team_result.scalars().first()
+        own_team_name = own_team.team_name.lower().strip() if own_team else None
+        new_team_name = data.team.team_name.lower().strip()
+
+        if new_team_name != own_team_name:
+            # Only check uniqueness if the name is actually changing
+            conflict = await session.execute(
+                select(Team).where(
+                    Team.event_id == event_id,
+                    func.lower(Team.team_name) == new_team_name,
+                )
+            )
+            if conflict.scalars().first() is not None:
+                raise RegistrationError(
+                    f"A team named '{data.team.team_name}' already exists for this event. "
+                    "Please choose a different name.",
+                    status_code=409,
+                )
+
+    # ── 5. Validate new form responses ────────────────────────────────────────
+    normalised_responses = await validate_form_responses(
+        session, event_id, data.responses
+    )
+
+    # ── 6. Delete old child rows ──────────────────────────────────────────────
+
+    # Delete old uploaded files (disk + DB)
+    old_files_result = await session.execute(
+        select(UploadedFile).where(UploadedFile.registration_id == registration.id)
+    )
+    for uf in old_files_result.scalars().all():
+        if uf.local_path:
+            try:
+                if os.path.exists(uf.local_path):
+                    os.remove(uf.local_path)
+            except Exception as exc:
+                logger.warning("Could not delete old upload file %s: %s", uf.local_path, exc)
+        await session.delete(uf)
+
+    # Delete old responses
+    old_resp_result = await session.execute(
+        select(RegistrationResponse).where(
+            RegistrationResponse.registration_id == registration.id
+        )
+    )
+    for rr in old_resp_result.scalars().all():
+        await session.delete(rr)
+
+    # Delete old team + members (cascade removes members automatically)
+    old_team_result = await session.execute(
+        select(Team).where(Team.registration_id == registration.id)
+    )
+    old_team = old_team_result.scalars().first()
+    if old_team:
+        await session.delete(old_team)
+
+    await session.flush()
+
+    # ── 7. Update parent row metadata ─────────────────────────────────────────
+    registration.team_name = data.team.team_name if data.team else None
+
+    # ── 7a. Insert new RegistrationResponse rows ──────────────────────────────
+    response_rows: List[RegistrationResponse] = []
+    for field_id_str, value in normalised_responses.items():
+        try:
+            field_id_int = int(field_id_str)
+        except (ValueError, TypeError):
+            continue
+
+        if isinstance(value, list):
+            stored_value = json.dumps(value)
+        else:
+            stored_value = str(value) if value is not None else None
+
+        row = RegistrationResponse(
+            registration_id = registration.id,
+            field_id        = field_id_int,
+            value           = stored_value,
+        )
+        session.add(row)
+        response_rows.append(row)
+
+    # ── 7b. Insert new Team + TeamMember rows ─────────────────────────────────
+    team_orm: Optional[Team] = None
+    team_member_orms: List[TeamMember] = []
+
+    if data.team:
+        team_orm = Team(
+            event_id        = event_id,
+            registration_id = registration.id,
+            leader_id       = user_id,
+            team_name       = data.team.team_name.strip(),
+        )
+        session.add(team_orm)
+        await session.flush()
+
+        for member in data.team.members:
+            tm = TeamMember(
+                team_id      = team_orm.id,
+                member_name  = member.member_name,
+                member_email = str(member.member_email),
+            )
+            session.add(tm)
+            team_member_orms.append(tm)
+
+    # ── 7c. Insert new UploadedFile rows ──────────────────────────────────────
+    file_rows: List[UploadedFile] = []
+    for field_id_str, (file_url, original_name, local_path) in (uploaded_file_urls or {}).items():
+        try:
+            field_id_int = int(field_id_str)
+        except (ValueError, TypeError):
+            continue
+
+        uf = UploadedFile(
+            registration_id = registration.id,
+            field_id        = field_id_int,
+            file_url        = file_url,
+            local_path      = local_path,
+            original_name   = original_name,
+        )
+        session.add(uf)
+        file_rows.append(uf)
+
+    # ── 8. Commit ─────────────────────────────────────────────────────────────
+    try:
+        await session.commit()
+    except sqlalchemy.exc.IntegrityError as exc:
+        await session.rollback()
+        logger.error("DB IntegrityError during registration update: %s", exc)
+        raise RegistrationError(
+            "Update failed due to a database integrity error.",
+            status_code=409,
+        ) from exc
+
+    await session.refresh(registration)
+    if team_orm:
+        await session.refresh(team_orm)
+
+    logger.info(
+        "Registration id=%d updated: event_id=%d user_id=%d",
+        registration.id, event_id, user_id,
+    )
+
+    return _build_detail(
+        registration   = registration,
+        responses      = response_rows,
+        team           = team_orm,
+        team_members   = team_member_orms,
+        uploaded_files = file_rows,
+    )
+
+
+# ─── Delete (withdraw) registration ──────────────────────────────────────────
+
+async def delete_registration(
+    session: AsyncSession,
+    event_id: int,
+    user_id: int,
+) -> None:
+    """
+    Withdraw (delete) a registration while registration is still open.
+
+    Deletes the EventRegistration row; FK ON DELETE CASCADE removes all
+    child rows (responses, uploaded files DB rows, team, team members).
+    Physical uploaded files on disk are also cleaned up.
+
+    Raises:
+        RegistrationError(404) if no registration found.
+        RegistrationError(400) if registration window is closed.
+    """
+    # ── Find the registration ─────────────────────────────────────────────────
+    result = await session.execute(
+        select(EventRegistration).where(
+            EventRegistration.event_id == event_id,
+            EventRegistration.user_id  == user_id,
+        )
+    )
+    registration = result.scalars().first()
+    if registration is None:
+        raise RegistrationError(
+            "No registration found for this event.",
+            status_code=404,
+        )
+
+    # ── Check window ──────────────────────────────────────────────────────────
+    event = await check_event_exists(session, event_id)
+    check_registration_window(event)
+
+    # ── Clean up uploaded files on disk ───────────────────────────────────────
+    old_files_result = await session.execute(
+        select(UploadedFile).where(UploadedFile.registration_id == registration.id)
+    )
+    for uf in old_files_result.scalars().all():
+        if uf.local_path:
+            try:
+                if os.path.exists(uf.local_path):
+                    os.remove(uf.local_path)
+            except Exception as exc:
+                logger.warning("Could not delete upload file %s: %s", uf.local_path, exc)
+
+    # ── Delete parent row (cascade handles the rest) ──────────────────────────
+    await session.delete(registration)
+    await session.commit()
+
+    logger.info(
+        "Registration withdrawn: event_id=%d user_id=%d",
+        event_id, user_id,
+    )
+

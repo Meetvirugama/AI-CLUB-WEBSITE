@@ -1628,7 +1628,7 @@ const Admin = () => {
 
               {/* CREATE EVENT TAB */}
               {activeTab === 'createEvent' && (
-                <CreateEventTab />
+                <CreateEventTab onSuccess={fetchEventsList} />
               )}
 
               {/* FORM BUILDER TAB */}

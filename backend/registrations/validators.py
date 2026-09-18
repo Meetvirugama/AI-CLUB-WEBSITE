@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import select
@@ -97,16 +97,20 @@ def check_registration_window(event) -> None:
     if reg_end.tzinfo is None:
         reg_end = reg_end.replace(tzinfo=timezone.utc)
 
+    ist_offset = timedelta(hours=5, minutes=30)
+    
     if now < reg_start:
+        reg_start_ist = reg_start + ist_offset
         raise RegistrationError(
             f"Registration has not opened yet. It opens on "
-            f"{reg_start.strftime('%d %b %Y at %H:%M UTC')}.",
+            f"{reg_start_ist.strftime('%d %b %Y at %H:%M IST')}.",
             status_code=400,
         )
 
     if now > reg_end:
+        reg_end_ist = reg_end + ist_offset
         raise RegistrationError(
-            f"Registration closed on {reg_end.strftime('%d %b %Y at %H:%M UTC')}.",
+            f"Registration closed on {reg_end_ist.strftime('%d %b %Y at %H:%M IST')}.",
             status_code=400,
         )
 
