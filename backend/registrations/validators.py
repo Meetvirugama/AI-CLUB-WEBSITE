@@ -261,6 +261,12 @@ async def validate_form_responses(
 
     errors: List[str] = []
     normalised = dict(responses)  # work on a copy
+    
+    # Reject unknown fields
+    valid_field_ids = {str(f.id) for f in fields}
+    for key in responses.keys():
+        if key not in valid_field_ids:
+            errors.append(f"Unknown form field submitted: '{key}'.")
 
     for field in fields:
         fid      = str(field.id)

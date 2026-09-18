@@ -18,7 +18,7 @@ from typing import Optional
 import jwt
 from fastapi import HTTPException, status
 
-from .config import settings
+from core.config import settings
 
 
 # ─── Token type constants ─────────────────────────────────────────────────────

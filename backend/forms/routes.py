@@ -436,7 +436,7 @@ async def submit_form(
         mime_list = field_config.file_allowed_types or "application/octet-stream"
 
         file_bytes = await validate_upload(upload_file, max_kb, mime_list)
-        public_url = await save_upload(
+        public_url, _ = await save_upload(
             file_bytes,
             upload_file.filename or "upload",
             sub_folder=str(event_id),

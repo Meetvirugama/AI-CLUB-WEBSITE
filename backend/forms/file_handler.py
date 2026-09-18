@@ -155,7 +155,7 @@ async def save_upload(
     content: bytes,
     original_filename: str,
     sub_folder: str = "",
-) -> str:
+) -> tuple[str, str]:
     """
     Save validated file bytes to the upload directory.
 
@@ -165,8 +165,7 @@ async def save_upload(
         sub_folder:        Optional sub-directory (e.g., str(event_id)).
 
     Returns:
-        A URL-style path string relative to the upload base URL.
-        Example: "/uploads/42/3fa8b1c2_resume.pdf"
+        A tuple of (public_url, local_file_path).
     """
     upload_dir = get_upload_dir()
     target_dir = upload_dir / sub_folder if sub_folder else upload_dir
@@ -185,4 +184,4 @@ async def save_upload(
     public_url = f"{base_url}{rel_path}"
 
     logger.info("Saved upload: %s → %s", original_filename, file_path)
-    return public_url
+    return public_url, str(file_path)

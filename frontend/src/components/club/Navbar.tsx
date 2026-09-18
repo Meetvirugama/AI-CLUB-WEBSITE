@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Menu, X, LogOut, Shield, ChevronDown, ClipboardList, User } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useGoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 import { getApiUrl } from '../../lib/api';
 import aiClubLogo from '@/assets/ai-club-logo.png';
 import FireworkLauncher, { type FireworkLauncherHandle } from './FireworkLauncher';
@@ -92,20 +92,7 @@ export default function Navbar() {
     fetchCounts();
   }, []);
 
-  // Google OAuth login — uses access token implicitly
-  const googleLogin = useGoogleLogin({
-    flow: 'implicit',
-    onSuccess: async (tokenResponse) => {
-      try {
-        await login(tokenResponse.access_token);
-      } catch (err) {
-        console.error('Login error:', err);
-      }
-    },
-    onError: (err) => {
-      console.error('Google login error:', err);
-    },
-  });
+  // We now use the <GoogleLogin /> component directly which returns an ID Token
 
   const handleLogout = async () => {
     await logout();
@@ -342,34 +329,20 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <button
-              onClick={() => googleLogin()}
-              disabled={authLoading}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                padding: '6px 14px',
-                background: 'white',
-                border: '1px solid hsl(228, 20%, 80%)',
-                borderRadius: '4px',
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '0.82rem',
-                fontWeight: 500,
-                color: 'hsl(230, 25%, 12%)',
-                cursor: authLoading ? 'wait' : 'pointer',
-                transition: 'border-color 0.15s, box-shadow 0.15s',
-                opacity: authLoading ? 0.7 : 1,
-              }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 6px rgba(0,0,0,0.1)'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.boxShadow = 'none'}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-              {authLoading ? 'Signing in…' : 'Sign in'}
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <GoogleLogin
+                onSuccess={async (credentialResponse) => {
+                  if (credentialResponse.credential) {
+                    try {
+                      await login(credentialResponse.credential);
+                    } catch (err) {
+                      console.error('Login error:', err);
+                    }
+                  }
+                }}
+                onError={() => console.error('Google login error')}
+              />
+            </div>
           )}
         </div>
         </div>
@@ -420,13 +393,21 @@ export default function Navbar() {
                   <LogOut size={14} /> Sign Out
                 </button>
               ) : (
-                <button
-                  onClick={() => { googleLogin(); setMobileOpen(false); }}
-                  disabled={authLoading}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'white', color: 'hsl(230,25%,12%)', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', border: '1px solid hsl(228, 20%, 80%)', borderRadius: 2, cursor: 'pointer' }}
-                >
-                  Sign in with Google
-                </button>
+                <div style={{ display: 'inline-flex' }}>
+                  <GoogleLogin
+                    onSuccess={async (credentialResponse) => {
+                      if (credentialResponse.credential) {
+                        try {
+                          await login(credentialResponse.credential);
+                          setMobileOpen(false);
+                        } catch (err) {
+                          console.error('Login error:', err);
+                        }
+                      }
+                    }}
+                    onError={() => console.error('Google login error')}
+                  />
+                </div>
               )}
             </div>
 

@@ -31,7 +31,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.config import settings
+from core.config import settings
 from auth.google_oauth import verify_google_id_token
 from auth.jwt_handler import create_access_token
 from auth.middleware import get_current_user

@@ -181,6 +181,7 @@ async def register_for_event_endpoint(
 
     # ── Process uploaded files (validate + save) ──────────────────────────────
     uploaded_file_urls: dict[str, tuple] = {}
+    saved_file_paths: list[str] = []
 
     if raw_uploads:
         file_fields = await _load_file_fields(db, event_id)
@@ -193,11 +194,12 @@ async def register_for_event_endpoint(
 
             try:
                 file_bytes = await validate_upload(upload, max_kb, mime_list)
-                public_url = await save_upload(
+                public_url, local_path = await save_upload(
                     file_bytes,
                     upload.filename or "upload",
                     sub_folder=str(event_id),
                 )
+                saved_file_paths.append(local_path)
             except HTTPException:
                 raise  # re-raise 413/415 as-is
             except Exception as exc:
@@ -207,9 +209,10 @@ async def register_for_event_endpoint(
                     detail=f"Failed to process uploaded file for field {field_id_str}.",
                 )
 
-            # Inject the URL into responses so the service can persist it
+            # The form responses table only needs the public URL.
             reg_data.responses[field_id_str] = public_url
-            uploaded_file_urls[field_id_str] = (public_url, upload.filename or "")
+            # The service needs the public_url, original filename, and local_path.
+            uploaded_file_urls[field_id_str] = (public_url, upload.filename or "", local_path)
 
     # ── Call service ──────────────────────────────────────────────────────────
     try:
@@ -220,9 +223,19 @@ async def register_for_event_endpoint(
             data               = reg_data,
             uploaded_file_urls = uploaded_file_urls,
         )
-    except RegistrationError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=exc.message)
     except Exception as exc:
+        # DB Transaction failed or validation failed. Clean up saved files.
+        import os
+        for path in saved_file_paths:
+            try:
+                if os.path.exists(path):
+                    os.remove(path)
+            except Exception as cleanup_exc:
+                logger.error(f"Failed to clean up file {path} after registration error: {cleanup_exc}")
+        
+        if isinstance(exc, RegistrationError):
+            raise HTTPException(status_code=exc.status_code, detail=exc.message)
+
         logger.exception(
             "Unexpected error during registration event_id=%d user_id=%d: %s",
             event_id, current_user.id, exc,
