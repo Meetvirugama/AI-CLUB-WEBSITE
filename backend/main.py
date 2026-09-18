@@ -104,7 +104,7 @@ MAX_REQUESTS_PER_MINUTE = 10
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Validate auth configuration early so we fail fast.
-    auth_settings.validate()
+    settings.validate_production()
 
     # Load all LLM API keys into the provider pool.
     provider_manager.load_from_env()
