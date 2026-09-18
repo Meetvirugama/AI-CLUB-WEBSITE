@@ -387,7 +387,7 @@ export default function Navbar() {
             <div style={{ marginTop: '1.25rem', display: 'flex', gap: 10 }}>
               {user ? (
                 <button
-                  onClick={() => { logout(); setMobileOpen(false); }}
+                  onClick={async () => { await logout(); }}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'transparent', color: 'hsl(0,70%,50%)', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', border: '1px solid hsl(228, 20%, 80%)', borderRadius: 2, cursor: 'pointer' }}
                 >
                   <LogOut size={14} /> Sign Out

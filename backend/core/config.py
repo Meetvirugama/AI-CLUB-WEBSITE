@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     COOKIE_NAME: str = "access_token"
     COOKIE_HTTPONLY: bool = True
     COOKIE_SECURE: bool = True
-    COOKIE_SAMESITE: str = "lax"  # Changed from none to lax
+    COOKIE_SAMESITE: str = "none"  # Must be 'none' for cross-origin Vercel→Render (requires Secure=True)
     
     # ── Database ──
     DATABASE_URL: str = ""

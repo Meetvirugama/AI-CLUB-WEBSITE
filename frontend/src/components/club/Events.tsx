@@ -135,7 +135,7 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
     }
   };
 
-  const { user: authUser } = useAuth();
+  const { user: authUser, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
     setUserProfile(authUser);
@@ -158,7 +158,7 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
     } else {
       setRegisteredEventIds([]);
     }
-  }, [authUser]);
+  }, [authUser?.id]);
 
   const fetchPastEvents = async () => {
     try {
@@ -720,7 +720,7 @@ const resultCount = displayedUpcomingEvents.length;
 
                       {/* Register button + View Details */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
-                        {ev.status === 'registration_open' && (
+                        {ev.status === 'registration_open' && !authLoading && (
                           registeredEventIds.includes(Number(ev.id)) ? (
                             <span style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(243,75%,59%)', padding: '4px 12px', border: '1px solid hsl(243,75%,80%)', borderRadius: 2 }}>
                               Registered ✓
@@ -1201,7 +1201,7 @@ const resultCount = displayedUpcomingEvents.length;
               <span className="text-xs font-mono text-primary tracking-widest uppercase">Next Up</span>
               <h3 className="font-display font-bold text-xl text-foreground mt-2">{featured.title}</h3>
               <p className="text-sm text-muted-foreground mt-2 max-w-md">{featured.description}</p>
-              {featured.status === 'registration_open' && (
+              {featured.status === 'registration_open' && !authLoading && (
                 registeredEventIds.includes(Number(featured.id)) ? (
                   <button disabled className="mt-4 px-4 py-2 text-xs font-semibold rounded-lg bg-primary/20 text-primary border border-primary/20 cursor-not-allowed">
                     Already Registered
@@ -1733,7 +1733,7 @@ const resultCount = displayedUpcomingEvents.length;
             )}
 
             {/* Register button */}
-            {card.status === 'registration_open' && !card.isArchived && (
+            {card.status === 'registration_open' && !card.isArchived && !authLoading && (
               <div className="mt-5">
                 {registeredEventIds.includes(Number(card.id)) ? (
                   <button

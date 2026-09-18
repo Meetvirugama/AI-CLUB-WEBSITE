@@ -143,6 +143,8 @@ else:
         "http://localhost:5173",
         "http://localhost:8080",
         "http://localhost:3000",
+        # Production: Vercel frontend (fallback if ALLOWED_ORIGINS not set in Render env)
+        "https://ai-club-website-lyart.vercel.app",
     ]
 
 # Size limit middleware (default 50MB max body)

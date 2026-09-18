@@ -210,7 +210,7 @@ export default function EventDetailPage() {
     } else {
       setIsRegistered(false);
     }
-  }, [authUser, id]);
+  }, [authUser?.id, id]);
 
   useEffect(() => {
     if (!id) return;
