@@ -26,6 +26,9 @@ Endpoints
   DELETE /api/admin/registrations/{registration_id}
       Hard-delete a registration and all cascade-linked rows.
 
+  PATCH /api/admin/registrations/{registration_id}
+      Update user_name, user_email, and/or team_name of a registration.
+
 Performance notes
 ─────────────────
   • Dashboard endpoint completes in ≤ 3 DB round-trips.
@@ -394,6 +397,85 @@ async def delete_registration_admin(
     return DeleteRegistrationResponse(
         message=f"Registration id={registration_id} and all related data deleted successfully."
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PATCH /api/admin/registrations/{registration_id}  — edit a registration
+# ─────────────────────────────────────────────────────────────────────────────
+
+from pydantic import BaseModel as _BaseModel
+
+class AdminRegistrationPatchRequest(_BaseModel):
+    user_name: Optional[str] = None
+    user_email: Optional[str] = None
+    team_name: Optional[str] = None
+
+
+@router.patch(
+    "/api/admin/registrations/{registration_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Edit a registration (admin)",
+    description=(
+        "Admin can patch user_name, user_email, and/or team_name of a registration. "
+        "Only the provided fields are updated."
+    ),
+)
+async def patch_registration_admin(
+    registration_id: int,
+    body: AdminRegistrationPatchRequest,
+    admin=Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy import select, update
+    from registrations.models import EventRegistration
+    from auth.models import User
+
+    # Fetch the registration
+    result = await db.execute(
+        select(EventRegistration).where(EventRegistration.id == registration_id)
+    )
+    reg = result.scalar_one_or_none()
+    if not reg:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Registration not found.")
+
+    before_state = {"registration_id": registration_id, "team_name": reg.team_name}
+
+    # Update team_name on the registration row
+    if body.team_name is not None:
+        reg.team_name = body.team_name or None
+    await db.flush()
+
+    # Update user name/email if provided
+    if body.user_name is not None or body.user_email is not None:
+        user_result = await db.execute(select(User).where(User.id == reg.user_id))
+        user = user_result.scalar_one_or_none()
+        if user:
+            if body.user_name is not None:
+                user.name = body.user_name
+            if body.user_email is not None:
+                user.email = body.user_email
+
+    await db.commit()
+
+    after_state = {
+        "registration_id": registration_id,
+        "user_name": body.user_name,
+        "user_email": body.user_email,
+        "team_name": body.team_name,
+    }
+
+    await log_audit_action(
+        session=db,
+        admin_id=admin.id,
+        admin_email=admin.email,
+        action="EDIT_REGISTRATION",
+        entity_type="EventRegistration",
+        entity_id=str(registration_id),
+        before_state=before_state,
+        after_state=after_state,
+    )
+
+    return {"message": f"Registration id={registration_id} updated successfully."}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
