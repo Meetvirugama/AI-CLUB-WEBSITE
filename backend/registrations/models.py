@@ -31,7 +31,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from sqlalchemy import (
     Boolean, Column, ForeignKey, Integer, String,
-    Text, DateTime, UniqueConstraint,
+    Text, DateTime, UniqueConstraint, Index, text
 )
 from db import Base
 
@@ -54,8 +54,8 @@ class EventRegistration(Base):
     )
 
     id            = Column(Integer, primary_key=True, index=True)
-    event_id      = Column(Integer, nullable=False, index=True)
-    user_id       = Column(Integer, nullable=False, index=True)
+    event_id      = Column(Integer, ForeignKey("club_events.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id       = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     team_name     = Column(String(255), nullable=True)   # NULL for individual events
     registered_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
@@ -72,7 +72,7 @@ class RegistrationResponse(Base):
 
     id              = Column(Integer, primary_key=True, index=True)
     registration_id = Column(Integer, ForeignKey("event_registrations.id", ondelete="CASCADE"), nullable=False, index=True)
-    field_id        = Column(Integer, nullable=False, index=True)   # FK to form_fields.id
+    field_id        = Column(Integer, ForeignKey("form_fields.id", ondelete="CASCADE"), nullable=False, index=True)
     value           = Column(Text, nullable=True)                   # NULL for unanswered optional fields
 
     def __repr__(self) -> str:
@@ -87,13 +87,13 @@ class Team(Base):
     __tablename__ = "teams"
 
     __table_args__ = (
-        UniqueConstraint("event_id", "team_name", name="uq_team_event_name"),
+        Index("uq_team_event_name", "event_id", text("lower(team_name)"), unique=True),
     )
 
     id              = Column(Integer, primary_key=True, index=True)
-    event_id        = Column(Integer, nullable=False, index=True)
+    event_id        = Column(Integer, ForeignKey("club_events.id", ondelete="CASCADE"), nullable=False, index=True)
     registration_id = Column(Integer, ForeignKey("event_registrations.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
-    leader_id       = Column(Integer, nullable=False, index=True)   # user_id of team leader
+    leader_id       = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)   # user_id of team leader
     team_name       = Column(String(255), nullable=False)
 
     def __repr__(self) -> str:
@@ -119,14 +119,16 @@ class TeamMember(Base):
 class UploadedFile(Base):
     """
     Tracks files uploaded as part of a registration form submission.
-    The physical file is stored on disk; only the public URL is stored here.
+    The physical file is stored on disk. Both the public URL and the 
+    local file path are stored here to allow for physical cleanup upon deletion.
     """
     __tablename__ = "uploaded_files"
 
     id              = Column(Integer, primary_key=True, index=True)
     registration_id = Column(Integer, ForeignKey("event_registrations.id", ondelete="CASCADE"), nullable=False, index=True)
-    field_id        = Column(Integer, nullable=False, index=True)   # FK to form_fields.id
+    field_id        = Column(Integer, ForeignKey("form_fields.id", ondelete="CASCADE"), nullable=False, index=True)
     file_url        = Column(String(500), nullable=False)
+    local_path      = Column(String(500), nullable=True)            # absolute or relative path on disk for cleanup
     original_name   = Column(String(255), nullable=True)            # original filename for display
     uploaded_at     = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
 

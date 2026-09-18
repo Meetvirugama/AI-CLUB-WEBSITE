@@ -436,6 +436,23 @@ async def delete_registration(
     reg = result.scalars().first()
     if reg is None:
         return False
+        
+    # Find all uploaded files for this registration to delete them physically
+    from registrations.models import UploadedFile
+    import os
+    import logging
+    
+    file_result = await session.execute(
+        select(UploadedFile).where(UploadedFile.registration_id == registration_id)
+    )
+    files_to_delete = file_result.scalars().all()
+    
+    for uf in files_to_delete:
+        if uf.local_path and os.path.exists(uf.local_path):
+            try:
+                os.remove(uf.local_path)
+            except Exception as e:
+                logging.getLogger(__name__).error(f"Failed to delete physical file {uf.local_path}: {e}")
 
     await session.delete(reg)
     await session.commit()

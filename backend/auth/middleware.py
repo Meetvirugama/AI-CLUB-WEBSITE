@@ -36,19 +36,11 @@ logger = logging.getLogger(__name__)
 
 def _extract_token(
     access_token: Optional[str] = Cookie(default=None),
-    authorization: Optional[str] = Header(default=None),
 ) -> Optional[str]:
     """
-    Pull the JWT from either the HttpOnly cookie or the Authorization header.
-    Cookie takes precedence (set by the server on login).
+    Pull the JWT from the HttpOnly cookie.
     """
-    if access_token:
-        return access_token
-
-    if authorization and authorization.startswith("Bearer "):
-        return authorization.split(" ", 1)[1]
-
-    return None
+    return access_token
 
 
 # ─── Public dependencies ──────────────────────────────────────────────────────
@@ -112,5 +104,7 @@ async def get_optional_user(
 
         async with async_session() as session:
             return await get_user_by_id(session, user_id)
-    except Exception:
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).error(f"Failed to fetch user from DB in auth middleware: {exc}")
         return None

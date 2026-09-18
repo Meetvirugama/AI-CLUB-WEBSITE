@@ -24,7 +24,8 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, select
 from db import Base, async_session, engine, get_db  # noqa: E402
 
 # ── Auth module ────────────────────────────────────────────────────────────
-from auth.config import settings as auth_settings
+from core.config import settings
+from core.middleware import RequestSizeLimitMiddleware
 from auth.models import User  # registers User table with Base
 from auth.routes import router as auth_router
 
@@ -144,6 +145,10 @@ else:
         "http://localhost:3000",
     ]
 
+# Size limit middleware (default 50MB max body)
+app.add_middleware(RequestSizeLimitMiddleware, max_upload_size=50 * 1024 * 1024)
+
+# Global CORS Configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

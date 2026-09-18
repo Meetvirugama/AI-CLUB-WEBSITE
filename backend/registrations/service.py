@@ -25,6 +25,7 @@ from typing import List, Optional, Tuple
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+import sqlalchemy.exc
 
 from registrations.models import (
     EventRegistration,
@@ -164,7 +165,7 @@ async def register_for_event(
 
     # ── Step 6: UploadedFile rows ─────────────────────────────────────────────
     file_rows: List[UploadedFile] = []
-    for field_id_str, (file_url, original_name) in (uploaded_file_urls or {}).items():
+    for field_id_str, (file_url, original_name, local_path) in (uploaded_file_urls or {}).items():
         try:
             field_id_int = int(field_id_str)
         except (ValueError, TypeError):
@@ -174,13 +175,23 @@ async def register_for_event(
             registration_id = registration.id,
             field_id        = field_id_int,
             file_url        = file_url,
+            local_path      = local_path,
             original_name   = original_name,
         )
         session.add(uf)
         file_rows.append(uf)
 
     # ── Commit everything ─────────────────────────────────────────────────────
-    await session.commit()
+    try:
+        await session.commit()
+    except sqlalchemy.exc.IntegrityError as exc:
+        await session.rollback()
+        logger.error(f"DB IntegrityError during registration (duplicate?): {exc}")
+        raise RegistrationError(
+            "Registration failed due to a database integrity error. You or your team may have already registered.",
+            status_code=409,
+        ) from exc
+
     await session.refresh(registration)
     if team_orm:
         await session.refresh(team_orm)
