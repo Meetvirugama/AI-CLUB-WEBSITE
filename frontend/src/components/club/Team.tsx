@@ -234,7 +234,7 @@ function TeamMemberCard({ member, projects, achievements }: TeamMemberCardProps)
 
           {/* BACK SIDE */}
           <div 
-            className="absolute inset-0 w-full h-full flex flex-col justify-between p-4 bg-slate-950 text-white border-r border-b border-slate-900 text-left"
+            className="absolute inset-0 w-full h-full flex flex-col justify-between p-4 bg-slate-950 text-white border-r border-b border-slate-900 text-left selection:bg-indigo-500/30 selection:text-white"
             style={{ 
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',

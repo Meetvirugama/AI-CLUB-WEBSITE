@@ -86,7 +86,7 @@ export default function Hero() {
             className="border-l-4 border-orange-500 pl-6 space-y-4"
           >
             <h1 className="font-serif font-extrabold text-4xl sm:text-6xl lg:text-7xl text-slate-900 leading-[1.08] tracking-tight">
-              One Assistant for <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500">Everything at DAU.</span>
+              One Assistant for <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500">Everything at </span>DAU.
             </h1>
 
             <p className="font-sans text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl">
