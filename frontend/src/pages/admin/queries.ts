@@ -52,16 +52,22 @@ export const useAdminEvents = () => {
   });
 };
 
+interface RegistrationsResponse {
+  registrations: any[];
+  total: number;
+  total_pages: number;
+}
+
 export const useAdminRegistrations = (eventId: number | '', search: string, page: number, limit: number = 20) => {
-  return useQuery({
+  return useQuery<RegistrationsResponse>({
     queryKey: ['admin', 'registrations', eventId, search, page, limit],
-    queryFn: async () => {
+    queryFn: async (): Promise<RegistrationsResponse> => {
       if (!eventId) return { registrations: [], total: 0, total_pages: 1 };
       const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
-      return api.get(`/api/admin/events/${eventId}/registrations?limit=${limit}&page=${page}${searchParam}`);
+      return api.get(`/api/admin/events/${eventId}/registrations?limit=${limit}&page=${page}${searchParam}`) as Promise<RegistrationsResponse>;
     },
     enabled: !!eventId,
-    placeholderData: (prev: any) => prev,
+    placeholderData: (prev) => prev,
   });
 };
 

@@ -423,15 +423,34 @@ export default function EventDetailPage() {
 
       {/* ── Hero banner image ───────────────────────────────────────────────── */}
       {bannerSrc && (
-        <div style={{ width: '100%', maxHeight: 420, overflow: 'hidden', position: 'relative' }}>
+        <div style={{ width: '100%', height: 420, overflow: 'hidden', position: 'relative', background: '#0a0c1e', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          {/* Blurred background layer */}
+          <div style={{
+            position: 'absolute', inset: -30,
+            backgroundImage: `url(${bannerSrc})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(25px)',
+            opacity: 0.6
+          }} />
+          {/* Main image */}
           <img
             src={bannerSrc}
             alt={event.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
+            style={{ 
+              position: 'relative',
+              maxWidth: '90%', 
+              maxHeight: '90%',
+              objectFit: 'contain',
+              borderRadius: 12,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
+            }}
           />
+          {/* Gradient overlay */}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'linear-gradient(to bottom, rgba(10,12,30,0.10) 0%, rgba(10,12,30,0.65) 100%)',
+            background: 'linear-gradient(to bottom, rgba(10,12,30,0.0) 0%, rgba(10,12,30,0.5) 100%)',
+            pointerEvents: 'none'
           }} />
         </div>
       )}

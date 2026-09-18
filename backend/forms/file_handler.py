@@ -122,9 +122,13 @@ async def validate_upload(
     max_bytes = max_size_kb * 1024
 
     # Read in chunks to enforce size limit without loading huge files fully
-    content = b""
-    async for chunk in upload:
-        content += chunk
+    content = bytearray()
+    chunk_size = 1024 * 1024  # 1MB chunks
+    while True:
+        chunk = await upload.read(chunk_size)
+        if not chunk:
+            break
+        content.extend(chunk)
         if len(content) > max_bytes:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
@@ -133,6 +137,7 @@ async def validate_upload(
                     f"of {max_size_kb} KB ({max_size_kb / 1024:.1f} MB)."
                 ),
             )
+    content = bytes(content)
 
     # ── MIME validation ────────────────────────────────────────────────────────
     declared_mime = (upload.content_type or "").lower().split(";")[0].strip()
