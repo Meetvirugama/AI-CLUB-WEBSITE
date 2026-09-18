@@ -45,6 +45,7 @@ from registrations.models import (
 from registrations.routes import router as registrations_router
 
 # ── Admin Dashboard module ─────────────────────────────────────────────────
+from admin.models import AuditLog
 from admin.routes import router as admin_router
 
 # ── Members, Projects, Resources, Roadmaps ─────────────────────────────────
