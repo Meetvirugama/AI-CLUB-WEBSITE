@@ -172,14 +172,13 @@ export default function EventDetailPage() {
     <div style={{ background: 'hsl(228,30%,93%)', minHeight: '100vh' }}>
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '5rem 2rem 4rem' }}>
         {/* Back link */}
-        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
+        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} className="mb-8">
           <Link
             to="/events"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.82rem', color: 'hsl(230,15%,45%)', textDecoration: 'none', marginBottom: '2rem' }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(243,75%,59%)'}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230,15%,45%)'}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-transparent border border-border/50 text-[10px] font-mono tracking-widest uppercase text-muted-foreground hover:text-foreground hover:border-primary/30 hover:from-primary/15 transition-all duration-300 group"
           >
-            <ArrowLeft size={14} /> All Events
+            <ArrowLeft size={11} className="group-hover:-translate-x-1 transition-transform duration-300 text-primary" />
+            <span>All Events</span>
           </Link>
         </motion.div>
 

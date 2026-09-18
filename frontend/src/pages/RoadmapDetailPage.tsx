@@ -438,22 +438,10 @@ export default function RoadmapDetail() {
             x: 0,
           }}
           onClick={() => navigate("/#roadmaps")}
-          className="
-            mb-12
-            flex
-            items-center
-            gap-2
-            font-mono
-            text-[10px]
-            uppercase
-            tracking-[0.1em]
-            text-muted-foreground
-            transition-colors
-            hover:text-foreground
-          "
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-transparent border border-border/50 text-[10px] font-mono tracking-widest uppercase text-muted-foreground hover:text-foreground hover:border-primary/30 hover:from-primary/15 transition-all duration-300 group mb-12"
         >
-          <ArrowLeft size={13} />
-          All Roadmaps
+          <ArrowLeft size={11} className="group-hover:-translate-x-1 transition-transform duration-300 text-primary" />
+          <span>All Roadmaps</span>
         </motion.button>
 
         {/* Hero */}
@@ -567,13 +555,11 @@ export default function RoadmapDetail() {
               </div>
 
               <button
-                onClick={() =>
-                  navigate("/#roadmaps")
-                }
-                className="btn-secondary"
+                onClick={() => navigate("/#roadmaps")}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-transparent border border-border/50 text-[10px] font-mono tracking-widest uppercase text-muted-foreground hover:text-foreground hover:border-primary/30 hover:from-primary/15 transition-all duration-300 group mt-4 sm:mt-0"
               >
-                <ArrowLeft size={13} />
-                All Roadmaps
+                <ArrowLeft size={11} className="group-hover:-translate-x-1 transition-transform duration-300 text-primary" />
+                <span>All Roadmaps</span>
               </button>
             </div>
           </div>

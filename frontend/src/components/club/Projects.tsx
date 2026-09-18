@@ -3,6 +3,17 @@ import { ExternalLink, Search, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getApiUrl } from '../../lib/api';
 
+const formatProjectText = (text: string) => {
+  if (!text) return '';
+  return text
+    .replace(/([.,\s]*)(\b\d+\))/g, (match, prefix, numStr, offset) => {
+      if (offset === 0) return numStr;
+      return `\n\n${numStr}`;
+    })
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
 export interface Project {
   id: number;
   title: string;
@@ -177,14 +188,15 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
                       marginTop: '0.75rem',
                       marginBottom: '0.25rem',
                       letterSpacing: '-0.01em',
+                      whiteSpace: 'pre-line',
                     }}
                   >
-                    {p.title}
+                    {formatProjectText(p.title)}
                   </h4>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'hsl(230,15%,50%)', marginBottom: '0.6rem' }}>
                     by {p.author}{p.contributors ? ` • Contributors: ${p.contributors}` : ''}
                   </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: 'hsl(230,15%,38%)', lineHeight: 1.6, marginBottom: '1rem' }}>{p.description}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: 'hsl(230,15%,38%)', lineHeight: 1.6, marginBottom: '1rem', whiteSpace: 'pre-line' }}>{formatProjectText(p.description)}</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '1rem' }}>
                     {p.tags.slice(0, 4).map((tag) => (
                       <span key={tag} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.62rem', padding: '2px 7px', border: '1px solid hsl(228,20%,78%)', borderRadius: 2, color: 'hsl(230,15%,45%)' }}>
@@ -361,12 +373,13 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
                       marginTop: '0.75rem',
                       marginBottom: '0.25rem',
                       letterSpacing: '-0.01em',
+                      whiteSpace: 'pre-line',
                     }}
                   >
-                    {p.title}
+                    {formatProjectText(p.title)}
                   </h4>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'hsl(230,15%,50%)', marginBottom: '0.6rem' }}>by {p.author}</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: 'hsl(230,15%,38%)', lineHeight: 1.6, marginBottom: '1rem' }}>{p.description}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: 'hsl(230,15%,38%)', lineHeight: 1.6, marginBottom: '1rem', whiteSpace: 'pre-line' }}>{formatProjectText(p.description)}</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '1rem' }}>
                     {p.tags.slice(0, 4).map((tag) => (
                       <span key={tag} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.62rem', padding: '2px 7px', border: '1px solid hsl(228,20%,78%)', borderRadius: 2, color: 'hsl(230,15%,45%)' }}>
