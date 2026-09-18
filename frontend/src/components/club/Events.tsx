@@ -4,6 +4,7 @@ import { X, Upload, Users, ArrowRight, Loader2, CalendarDays, Mic, UsersRound, S
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { getApiUrl } from '../../lib/api';
+import { api } from '../../lib/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
 
 // Helper: build auth headers from localStorage token (needed for cross-origin cookie issues)
@@ -141,12 +142,10 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
     if (authUser) {
       const fetchRegs = async () => {
         try {
-          const regRes = await fetch(getApiUrl('/api/user/registrations'), { credentials: 'include' });
-          if (regRes.ok) {
-            const regData = await regRes.json();
-            if (regData.registrations) {
-              setRegisteredEventIds(regData.registrations.map((r: any) => r.event_id));
-            }
+          // Use the shared api client so cookies are sent correctly (same as auth/me)
+          const regData = await api.get<{ registrations: any[] }>('/api/user/registrations');
+          if (regData.registrations) {
+            setRegisteredEventIds(regData.registrations.map((r: any) => r.event_id));
           }
         } catch (e) {
           console.error('Failed to fetch registrations', e);
