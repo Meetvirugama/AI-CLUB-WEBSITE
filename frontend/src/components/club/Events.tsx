@@ -145,7 +145,10 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
           // Use the shared api client so cookies are sent correctly (same as auth/me)
           const regData = await api.get<{ registrations: any[] }>('/api/user/registrations');
           if (regData.registrations) {
-            setRegisteredEventIds(regData.registrations.map((r: any) => r.event_id));
+            // Normalize to numbers to avoid type-mismatch with ev.id (number | string)
+            const ids = regData.registrations.map((r: any) => Number(r.event_id));
+            console.log('[Events] Registered event IDs:', ids);
+            setRegisteredEventIds(ids);
           }
         } catch (e) {
           console.error('Failed to fetch registrations', e);
@@ -718,7 +721,7 @@ const resultCount = displayedUpcomingEvents.length;
                       {/* Register button + View Details */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
                         {ev.status === 'registration_open' && (
-                          registeredEventIds.includes(ev.id) ? (
+                          registeredEventIds.includes(Number(ev.id)) ? (
                             <span style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(243,75%,59%)', padding: '4px 12px', border: '1px solid hsl(243,75%,80%)', borderRadius: 2 }}>
                               Registered ✓
                             </span>
@@ -1199,7 +1202,7 @@ const resultCount = displayedUpcomingEvents.length;
               <h3 className="font-display font-bold text-xl text-foreground mt-2">{featured.title}</h3>
               <p className="text-sm text-muted-foreground mt-2 max-w-md">{featured.description}</p>
               {featured.status === 'registration_open' && (
-                registeredEventIds.includes(featured.id) ? (
+                registeredEventIds.includes(Number(featured.id)) ? (
                   <button disabled className="mt-4 px-4 py-2 text-xs font-semibold rounded-lg bg-primary/20 text-primary border border-primary/20 cursor-not-allowed">
                     Already Registered
                   </button>
@@ -1732,7 +1735,7 @@ const resultCount = displayedUpcomingEvents.length;
             {/* Register button */}
             {card.status === 'registration_open' && !card.isArchived && (
               <div className="mt-5">
-                {registeredEventIds.includes(card.id) ? (
+                {registeredEventIds.includes(Number(card.id)) ? (
                   <button
                     disabled
                     className="w-full py-2.5 rounded-xl text-xs font-semibold"
