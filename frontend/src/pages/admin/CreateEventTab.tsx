@@ -5,7 +5,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getApiUrl, getAuthHeaders } from '../../lib/api';
 import { parseLocalDate, parseLocalDateTime } from '../../lib/utils';
 
-export default function CreateEventTab() {
+interface CreateEventTabProps {
+  onSuccess?: () => void;
+}
+
+export default function CreateEventTab({ onSuccess }: CreateEventTabProps) {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [eventMessage, setEventMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -97,6 +101,7 @@ export default function CreateEventTab() {
       });
       queryClient.invalidateQueries({ queryKey: ['admin', 'events'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'dashboardMetrics'] });
+      if (onSuccess) onSuccess();
     } catch (err: any) {
       setEventMessage({ type: 'error', text: err.message || 'Error creating event' });
     } finally {

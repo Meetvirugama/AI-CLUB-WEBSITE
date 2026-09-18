@@ -59,6 +59,8 @@ from registrations.schemas import (
 from registrations.service import (
     get_user_registrations,
     register_for_event,
+    update_registration,
+    delete_registration,
 )
 from registrations.validators import RegistrationError
 from sqlalchemy import select
@@ -342,3 +344,160 @@ async def get_my_registrations(
             detail=f"Could not fetch your registrations: {type(exc).__name__}: {exc}",
         )
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PUT /api/events/{event_id}/registration  — edit my registration
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.put(
+    "/api/events/{event_id}/registration",
+    response_model=RegistrationSubmitResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Edit my registration",
+    description=(
+        "Authenticated users can update their registration while the "
+        "registration window is still open. "
+        "All existing form responses and team info are replaced atomically. "
+        "Accepts the same multipart/form-data or application/json body as POST."
+    ),
+)
+async def update_registration_endpoint(
+    event_id: int,
+    request: Request,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # ── Parse body: multipart OR JSON (same as POST) ──────────────────────────
+    content_type = request.headers.get("content-type", "")
+
+    if "multipart/form-data" in content_type:
+        try:
+            form_data = await request.form()
+        except Exception as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Failed to parse multipart form: {exc}")
+
+        raw_data_str = form_data.get("data", "{}")
+        try:
+            payload_dict = json.loads(raw_data_str)
+        except (json.JSONDecodeError, TypeError):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="The 'data' form field must be valid JSON.")
+
+        from fastapi import UploadFile  # noqa: PLC0415
+        raw_uploads: dict[str, UploadFile] = {}
+        for key, value in form_data.multi_items():
+            if isinstance(value, UploadFile):
+                raw_uploads[key] = value
+
+    elif "application/json" in content_type or not content_type:
+        try:
+            payload_dict = await request.json()
+        except Exception as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Invalid JSON body: {exc}")
+        raw_uploads = {}
+    else:
+        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                            detail="Content-Type must be application/json or multipart/form-data.")
+
+    try:
+        reg_data = RegistrationSubmitRequest(**payload_dict)
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail={"message": "Request validation failed.", "errors": str(exc)})
+
+    # ── Process uploaded files ────────────────────────────────────────────────
+    uploaded_file_urls: dict[str, tuple] = {}
+    saved_file_paths: list[str] = []
+
+    if raw_uploads:
+        file_fields = await _load_file_fields(db, event_id)
+
+        for field_id_str, upload in raw_uploads.items():
+            field_config = file_fields.get(field_id_str)
+            max_kb    = (field_config.file_max_size_kb   if field_config else 5120)
+            mime_list = (field_config.file_allowed_types if field_config else "application/octet-stream")
+
+            try:
+                file_bytes = await validate_upload(upload, max_kb, mime_list)
+                public_url, local_path = await save_upload(
+                    file_bytes,
+                    upload.filename or "upload",
+                    sub_folder=str(event_id),
+                )
+                saved_file_paths.append(local_path)
+            except HTTPException:
+                raise
+            except Exception as exc:
+                logger.exception("File upload failed for field %s: %s", field_id_str, exc)
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                    detail=f"Failed to process uploaded file for field {field_id_str}.")
+
+            reg_data.responses[field_id_str] = public_url
+            uploaded_file_urls[field_id_str] = (public_url, upload.filename or "", local_path)
+
+    # ── Call service ──────────────────────────────────────────────────────────
+    try:
+        detail = await update_registration(
+            session            = db,
+            event_id           = event_id,
+            user_id            = current_user.id,
+            data               = reg_data,
+            uploaded_file_urls = uploaded_file_urls,
+        )
+    except Exception as exc:
+        import os as _os
+        for path in saved_file_paths:
+            try:
+                if _os.path.exists(path):
+                    _os.remove(path)
+            except Exception as cleanup_exc:
+                logger.error("Failed to clean up file %s: %s", path, cleanup_exc)
+
+        if isinstance(exc, RegistrationError):
+            raise HTTPException(status_code=exc.status_code, detail=exc.message)
+
+        logger.exception("Unexpected error updating registration event_id=%d user_id=%d: %s",
+                         event_id, current_user.id, exc)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Update failed: {type(exc).__name__}: {exc}")
+
+    return RegistrationSubmitResponse(
+        message      = "Registration updated successfully!",
+        registration = detail,
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DELETE /api/events/{event_id}/registration  — withdraw my registration
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.delete(
+    "/api/events/{event_id}/registration",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Withdraw my registration",
+    description=(
+        "Authenticated users can withdraw their registration while the "
+        "registration window is still open. "
+        "This permanently removes all form responses, team data, and uploaded files."
+    ),
+)
+async def delete_registration_endpoint(
+    event_id: int,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        await delete_registration(
+            session  = db,
+            event_id = event_id,
+            user_id  = current_user.id,
+        )
+    except RegistrationError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message)
+    except Exception as exc:
+        logger.exception("Unexpected error withdrawing registration event_id=%d user_id=%d: %s",
+                         event_id, current_user.id, exc)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Could not withdraw registration: {type(exc).__name__}: {exc}")
