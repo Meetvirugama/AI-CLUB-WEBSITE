@@ -289,41 +289,49 @@ const Admin = () => {
 
   return (
     <>
-      <Navbar />
-      <div className="min-h-screen bg-background text-foreground flex">
+      <div className="min-h-screen bg-[#0a0f1e] text-slate-100 flex" style={{ fontFamily: "'Inter', sans-serif" }}>
 
         {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-        <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#0c1222] border-r border-border/50 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:flex`}>
+        <aside className={`fixed inset-y-0 left-0 z-40 w-60 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:flex`}
+          style={{ background: 'linear-gradient(180deg, #0d1426 0%, #0a0f1e 100%)', borderRight: '1px solid rgba(99,102,241,0.12)' }}
+        >
           {/* Logo */}
-          <div className="p-5 border-b border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center">
-                <LayoutDashboard size={16} className="text-primary" />
-              </div>
-              <div>
-                <p className="text-xs font-extrabold text-foreground tracking-tight font-display">Admin Console</p>
-                <p className="text-[10px] text-muted-foreground font-mono">AI Club Dashboard</p>
-              </div>
+          <div className="px-5 py-5 flex items-center gap-3" style={{ borderBottom: '1px solid rgba(99,102,241,0.1)' }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', boxShadow: '0 0 20px rgba(99,102,241,0.4)' }}
+            >
+              <LayoutDashboard size={17} className="text-white" />
+            </div>
+            <div>
+              <p className="text-[13px] font-bold text-white tracking-tight">Admin Console</p>
+              <p className="text-[10px] text-slate-500 font-mono mt-0.5">AI Club · DA-IICT</p>
             </div>
           </div>
 
           {/* Nav */}
-          <nav className="flex-1 overflow-y-auto py-3 custom-scrollbar">
+          <nav className="flex-1 overflow-y-auto py-4 px-2 custom-scrollbar">
             {sections.map(section => (
-              <div key={section} className="mb-2">
-                <p className="text-[9px] uppercase font-black tracking-widest text-muted-foreground/40 px-4 py-2 font-mono">{section}</p>
+              <div key={section} className="mb-1">
+                <p className="text-[9px] uppercase font-bold tracking-widest text-slate-600 px-3 py-2 font-mono">{section}</p>
                 {NAV_ITEMS.filter(i => i.section === section).map(item => (
                   <button
                     key={item.id}
                     onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
-                    className={`w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium transition-all group ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-[12px] font-medium rounded-lg mb-0.5 transition-all duration-150 group ${
                       activeTab === item.id
-                        ? 'bg-primary/15 text-primary border-r-2 border-primary'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                        ? 'text-white'
+                        : 'text-slate-500 hover:text-slate-200 hover:bg-white/5'
                     }`}
+                    style={activeTab === item.id ? {
+                      background: 'linear-gradient(90deg, rgba(99,102,241,0.25) 0%, rgba(99,102,241,0.08) 100%)',
+                      borderLeft: '2px solid #6366f1',
+                    } : {}}
                   >
-                    <span className={`shrink-0 ${activeTab === item.id ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`}>{item.icon}</span>
+                    <span className={activeTab === item.id ? 'text-indigo-400' : 'text-slate-600 group-hover:text-slate-300'}>{item.icon}</span>
                     {item.label}
+                    {activeTab === item.id && (
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" style={{ boxShadow: '0 0 6px #6366f1' }} />
+                    )}
                   </button>
                 ))}
               </div>
@@ -331,34 +339,70 @@ const Admin = () => {
           </nav>
 
           {/* User footer */}
-          <div className="p-4 border-t border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[10px] font-extrabold text-primary">
+          <div className="p-3 mx-2 mb-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+              >
                 {user?.name?.slice(0, 1).toUpperCase() || 'A'}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-foreground truncate">{user?.name || 'Administrator'}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{user?.email || ''}</p>
+                <p className="text-xs font-semibold text-slate-200 truncate">{user?.name || 'Administrator'}</p>
+                <p className="text-[10px] text-slate-500 truncate">{user?.email || ''}</p>
               </div>
-              <button onClick={() => navigate('/')} title="Back to Site" className="p-1 text-muted-foreground hover:text-foreground">
-                <LogOut size={14} />
+              <button onClick={() => navigate('/')} title="Back to Site"
+                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/10 transition-colors"
+              >
+                <LogOut size={13} />
               </button>
             </div>
           </div>
         </aside>
 
         {/* Sidebar backdrop (mobile) */}
-        {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+        {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
         {/* ── Main content ────────────────────────────────────────────────── */}
-        <main className="flex-1 min-w-0 flex flex-col">
-          {/* Mobile topbar */}
-          <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-border/50 bg-[#0c1222]">
-            <button onClick={() => setSidebarOpen(true)} className="p-2 text-muted-foreground hover:text-foreground">
-              <LayoutDashboard size={20} />
+        <main className="flex-1 min-w-0 flex flex-col bg-[#080d1a]">
+          {/* Top header bar */}
+          <div className="flex items-center justify-between px-6 py-3 shrink-0"
+            style={{ background: 'rgba(13,20,38,0.9)', borderBottom: '1px solid rgba(99,102,241,0.1)', backdropFilter: 'blur(12px)' }}
+          >
+            {/* Mobile menu button */}
+            <button onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/10 transition-colors mr-3"
+            >
+              <LayoutDashboard size={18} />
             </button>
-            <p className="text-xs font-bold text-foreground font-mono">Admin Console</p>
-            <div className="w-8" />
+
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-[11px] text-slate-500 font-mono hidden sm:block">Admin</span>
+              <span className="text-slate-600 hidden sm:block">/</span>
+              <span className="text-[12px] font-semibold text-slate-200 truncate capitalize">
+                {NAV_ITEMS.find(n => n.id === activeTab)?.label ?? 'Dashboard'}
+              </span>
+            </div>
+
+            {/* Right side user badge */}
+            <div className="flex items-center gap-2 ml-auto">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg"
+                style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}
+              >
+                <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                  style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+                >
+                  {user?.name?.slice(0, 1).toUpperCase() || 'A'}
+                </div>
+                <span className="text-[11px] font-medium text-slate-300 max-w-[120px] truncate">{user?.name}</span>
+              </div>
+              <button onClick={() => navigate('/')}
+                className="p-2 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/10 transition-colors"
+                title="Back to website"
+              >
+                <LogOut size={15} />
+              </button>
+            </div>
           </div>
 
           {/* Tab content */}
@@ -575,15 +619,29 @@ const Admin = () => {
       <AnimatePresence>
         {toast.isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            initial={{ opacity: 0, y: 60, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-md max-w-sm ${
-              toast.type === 'success' ? 'bg-accent/15 border-accent/30 text-accent'
-              : toast.type === 'error' ? 'bg-destructive/15 border-destructive/30 text-destructive'
-              : 'bg-primary/15 border-primary/30 text-primary'
+            exit={{ opacity: 0, y: 20, scale: 0.92 }}
+            className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl max-w-sm ${
+              toast.type === 'success'
+                ? 'bg-emerald-950/90 border-emerald-500/30 text-emerald-300'
+                : toast.type === 'error'
+                ? 'bg-rose-950/90 border-rose-500/30 text-rose-300'
+                : 'bg-indigo-950/90 border-indigo-500/30 text-indigo-300'
             }`}
+            style={{ backdropFilter: 'blur(16px)' }}
           >
+            <span className={`w-2 h-2 rounded-full shrink-0 ${
+              toast.type === 'success' ? 'bg-emerald-400' : toast.type === 'error' ? 'bg-rose-400' : 'bg-indigo-400'
+            }`} />
+            <span className="text-[12px] font-medium flex-1">{toast.message}</span>
+            <button
+              onClick={() => setToast(prev => ({ ...prev, isOpen: false }))}
+              className="text-current/40 hover:text-current/80 transition-colors text-sm ml-1"
+            >✕</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
             <span className="text-xs font-medium">{toast.message}</span>
             <button onClick={() => setToast(prev => ({ ...prev, isOpen: false }))} className="text-muted-foreground hover:text-foreground text-xs ml-2">✕</button>
           </motion.div>
@@ -772,7 +830,7 @@ const Admin = () => {
           </div>
         )}
       </AnimatePresence>
-      <Footer />
+      </>
     </>
   );
 };

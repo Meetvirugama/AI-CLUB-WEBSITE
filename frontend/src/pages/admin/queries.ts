@@ -4,10 +4,13 @@ import { api } from '../../lib/apiClient';
 
 export interface RecentRegistration {
   id: number;
-  user_name: string;
+  event_id: number;
   event_title: string;
-  created_at: string;
-  payment_status: string;
+  user_id: number;
+  user_name: string;
+  user_email: string;
+  team_name?: string | null;
+  registered_at: string;   // ISO 8601 — backend field name
 }
 
 export interface StatusBreakdown {
