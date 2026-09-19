@@ -30,6 +30,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const checkAuth = async () => {
+    // If we just logged out, don't re-authenticate
+    if (sessionStorage.getItem('logged_out') === 'true') {
+      sessionStorage.removeItem('logged_out');
+      setUser(null);
+      setIsAuthenticated(false);
+      setIsAdmin(false);
+      setIsLoading(false);
+      return;
+    }
     try {
       const data = await api.get<{ authenticated: boolean; user: AuthUser }>('/api/auth/me', { cache: 'no-store' });
       if (data.authenticated && data.user) {
@@ -91,6 +100,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     setIsLoading(true);
+    // Set flag BEFORE the async call so it survives even if the call fails
+    sessionStorage.setItem('logged_out', 'true');
     try {
       // Best-effort — clear the HttpOnly cookie server-side
       await api.post('/api/auth/logout');
@@ -103,7 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAdmin(false);
       setIsLoading(false);
       googleLogout();
-      // Hard reload to home so Google One Tap resets and no stale state remains
+      // Hard reload to home — sessionStorage flag prevents auto re-login
       window.location.href = '/';
     }
   };
