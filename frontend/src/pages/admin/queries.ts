@@ -30,18 +30,63 @@ export interface AdminEvent {
   id: number;
   title: string;
   date?: string;
+  event_start_date?: string;
+  event_end_date?: string;
+  event_date?: string;
+  venue?: string;
+  event_type?: string;
+  category?: string;
+  status?: string;
+  registration_link?: string | null;
   [key: string]: unknown;
 }
 
-export const useDashboardStats = () => {
-  return useQuery<DashboardMetrics>({
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+
+export const useDashboardStats = () =>
+  useQuery<DashboardMetrics>({
     queryKey: ['admin', 'dashboardMetrics'],
     queryFn: () => api.get('/api/admin/dashboard') as Promise<DashboardMetrics>,
+    staleTime: 30_000,
   });
-};
 
-export const useSupabaseCounts = () => {
-  return useQuery({
+// ─── Events ───────────────────────────────────────────────────────────────────
+
+export const useAdminEvents = () =>
+  useQuery<AdminEvent[]>({
+    queryKey: ['admin', 'events'],
+    // API returns { events: [...], total: N } — extract the array
+    queryFn: async () => {
+      const data: any = await api.get('/api/events?limit=100');
+      return (data?.events ?? data) as AdminEvent[];
+    },
+    staleTime: 30_000,
+  });
+
+// ─── Registrations ────────────────────────────────────────────────────────────
+
+interface RegistrationsResponse {
+  registrations: any[];
+  total: number;
+  total_pages: number;
+}
+
+export const useAdminRegistrations = (eventId: number | '', search: string, page: number, limit: number = 20) =>
+  useQuery<RegistrationsResponse>({
+    queryKey: ['admin', 'registrations', eventId, search, page, limit],
+    queryFn: async (): Promise<RegistrationsResponse> => {
+      if (!eventId) return { registrations: [], total: 0, total_pages: 1 };
+      const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
+      return api.get(`/api/admin/events/${eventId}/registrations?limit=${limit}&page=${page}${searchParam}`) as Promise<RegistrationsResponse>;
+    },
+    enabled: !!eventId,
+    placeholderData: (prev) => prev,
+  });
+
+// ─── Supabase Counts (sidebar/dashboard stats) ────────────────────────────────
+
+export const useSupabaseCounts = () =>
+  useQuery({
     queryKey: ['admin', 'supabaseCounts'],
     queryFn: async () => {
       const [memRes, projRes, pastRes] = await Promise.all([
@@ -67,40 +112,202 @@ export const useSupabaseCounts = () => {
         pastCount = pastData.length || 0;
       }
 
-      return {
-        members: memberCount,
-        projects: projCount,
-        pastEvents: pastCount,
-      };
+      return { members: memberCount, projects: projCount, pastEvents: pastCount };
     },
+    staleTime: 60_000,
   });
-};
 
-export const useAdminEvents = () => {
-  return useQuery<AdminEvent[]>({
-    queryKey: ['admin', 'events'],
-    queryFn: () => api.get('/api/events?limit=100') as Promise<AdminEvent[]>,
-  });
-};
+// ─── Members ──────────────────────────────────────────────────────────────────
 
-interface RegistrationsResponse {
-  registrations: any[];
-  total: number;
-  total_pages: number;
+export interface MemberRecord {
+  id: number;
+  name: string;
+  role: string;
+  photo?: string;
+  description?: string;
+  github?: string;
+  linkedin?: string;
+  order_no?: number;
 }
 
-export const useAdminRegistrations = (eventId: number | '', search: string, page: number, limit: number = 20) => {
-  return useQuery<RegistrationsResponse>({
-    queryKey: ['admin', 'registrations', eventId, search, page, limit],
-    queryFn: async (): Promise<RegistrationsResponse> => {
-      if (!eventId) return { registrations: [], total: 0, total_pages: 1 };
-      const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
-      return api.get(`/api/admin/events/${eventId}/registrations?limit=${limit}&page=${page}${searchParam}`) as Promise<RegistrationsResponse>;
+export const useAdminMembers = () =>
+  useQuery<MemberRecord[]>({
+    queryKey: ['admin', 'members'],
+    queryFn: async () => {
+      const res = await fetch(getApiUrl('/api/members'));
+      if (!res.ok) throw new Error('Failed to fetch members');
+      return res.json();
     },
-    enabled: !!eventId,
-    placeholderData: (prev) => prev,
+    staleTime: 30_000,
   });
-};
+
+// ─── Projects ─────────────────────────────────────────────────────────────────
+
+export interface ProjectRecord {
+  id: number;
+  title: string;
+  author?: string;
+  author_id?: number | null;
+  description?: string;
+  tags: string[];
+  github_link?: string;
+  contributors?: string;
+}
+
+export const useAdminProjects = () =>
+  useQuery<ProjectRecord[]>({
+    queryKey: ['admin', 'projects'],
+    queryFn: async () => {
+      const res = await fetch(getApiUrl('/api/projects'));
+      if (!res.ok) throw new Error('Failed to fetch projects');
+      const data = await res.json();
+      return (data || []).map((p: any) => {
+        let tagsList: string[] = [];
+        if (p.tags) {
+          try {
+            tagsList = JSON.parse(p.tags);
+            if (!Array.isArray(tagsList)) tagsList = [String(tagsList)];
+          } catch {
+            tagsList = p.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+          }
+        }
+        return { ...p, tags: tagsList };
+      });
+    },
+    staleTime: 30_000,
+  });
+
+// ─── Achievements ─────────────────────────────────────────────────────────────
+
+export interface AchievementRecord {
+  id: number;
+  title: string;
+  student: string;
+  description: string;
+  category: string;
+  icon: string;
+  image_url?: string;
+  created_at?: string;
+}
+
+export const useAdminAchievements = () =>
+  useQuery<AchievementRecord[]>({
+    queryKey: ['admin', 'achievements'],
+    queryFn: async () => {
+      const res = await fetch(getApiUrl('/api/achievements'));
+      if (!res.ok) throw new Error('Failed to fetch achievements');
+      return res.json();
+    },
+    staleTime: 30_000,
+  });
+
+// ─── News ─────────────────────────────────────────────────────────────────────
+
+export interface NewsRecord {
+  id: number;
+  title?: string;
+  description?: string;
+  link?: string;
+  sources?: string;
+  image_url?: string;
+}
+
+export const useAdminNews = () =>
+  useQuery<NewsRecord[]>({
+    queryKey: ['admin', 'news'],
+    queryFn: async () => {
+      const res = await fetch(getApiUrl('/api/news'));
+      if (!res.ok) throw new Error('Failed to fetch news');
+      return res.json();
+    },
+    staleTime: 30_000,
+  });
+
+// ─── Resources ────────────────────────────────────────────────────────────────
+
+export interface ResourceRecord {
+  id: number;
+  title: string;
+  description?: string;
+  resource_type: string;
+  url?: string;
+  group_name?: string;
+  order_no?: number;
+}
+
+export const useAdminResources = () =>
+  useQuery<ResourceRecord[]>({
+    queryKey: ['admin', 'resources'],
+    queryFn: async () => {
+      const res = await fetch(getApiUrl('/api/resources'));
+      if (!res.ok) throw new Error('Failed to fetch resources');
+      return res.json();
+    },
+    staleTime: 30_000,
+  });
+
+// ─── Past Events ──────────────────────────────────────────────────────────────
+
+export interface PastEventRecord {
+  id: number;
+  title?: string;
+  description?: string;
+  category?: string;
+  date_label?: string;
+  image_url?: string;
+  speaker?: string;
+  participants?: number | null;
+  sort_order?: number;
+  winners?: string;
+  winner_link?: string;
+}
+
+export const useAdminPastEvents = () =>
+  useQuery<PastEventRecord[]>({
+    queryKey: ['admin', 'pastEvents'],
+    queryFn: async () => {
+      const res = await fetch(getApiUrl('/api/past-events'));
+      if (!res.ok) throw new Error('Failed to fetch past events');
+      return res.json();
+    },
+    staleTime: 30_000,
+  });
+
+// ─── Weekly Veneza ────────────────────────────────────────────────────────────
+
+export interface WeeklyResource {
+  id: number;
+  week_id: number;
+  title: string;
+  description?: string;
+  resource_type: string;
+  url: string;
+  est_minutes?: number;
+  order_no?: number;
+}
+
+export interface WeekRecord {
+  id: number;
+  week_number: number;
+  title: string;
+  description?: string;
+  target_date?: string;
+  is_current: boolean;
+  status?: string;
+  order_no?: number;
+  resources?: WeeklyResource[];
+}
+
+export const useAdminWeeklyVeneza = () =>
+  useQuery<WeekRecord[]>({
+    queryKey: ['admin', 'weeklyVeneza'],
+    queryFn: async () => {
+      const res = await fetch(getApiUrl('/api/weekly-veneza'));
+      if (!res.ok) throw new Error('Failed to fetch Weekly Veneza');
+      return res.json();
+    },
+    staleTime: 30_000,
+  });
 
 // ─── Chatbot Analytics Types ──────────────────────────────────────────────────
 
@@ -371,4 +578,3 @@ export const useAnalyticsSessionTimeline = (sessionId: string | null) =>
     queryFn:  () => api.get(`/api/analytics/sessions/${sessionId}`) as Promise<SessionTimeline>,
     enabled:  !!sessionId,
   });
-
