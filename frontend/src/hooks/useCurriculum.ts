@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getApiUrl } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type ClubResource = {
   id: number;
@@ -23,8 +24,10 @@ export function useCurriculumResources() {
 }
 
 export function useCurriculumProgress() {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: ["curriculumProgress"],
+    enabled: isAuthenticated,   // ← only fetch when logged in
     queryFn: async (): Promise<number[]> => {
       const res = await fetch(getApiUrl("/api/resources/progress"), {
         credentials: "include",
