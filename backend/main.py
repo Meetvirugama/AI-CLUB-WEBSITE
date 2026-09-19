@@ -53,6 +53,7 @@ from registrations.models import (
 from registrations.routes import router as registrations_router
 
 # ── Admin Dashboard module ─────────────────────────────────────────────────
+from admin.models import AuditLog
 from admin.routes import router as admin_router
 
 # ── Members, Projects, Resources, Roadmaps ─────────────────────────────────
@@ -98,6 +99,12 @@ from chatbot.analytics.queries import log_chat_event
 from chatbot.routes import router as chatbot_router
 from chatbot.rag.models import KnowledgeChunk
 from chatbot.rag.routes import router as chatbot_rag_router
+
+# ── First-party Analytics module ───────────────────────────────────────────
+from analytics.models import (  # noqa: registers tables
+    AnalyticsVisitor, AnalyticsSession, AnalyticsEvent, AnalyticsDaily,
+)
+from analytics.routes import router as analytics_router
 from chatbot.rag.retriever import retrieve_relevant_chunks, format_rag_context
 
 
@@ -107,6 +114,7 @@ logging.basicConfig(level=logging.INFO)
 # ── Startup/Shutdown Lifespan ──────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Validate auth configuration early so we fail fast.
     settings.validate_production()
 
     provider_manager.load_from_env()
@@ -179,6 +187,7 @@ app.include_router(weekly_veneza_router)
 app.include_router(chatbot_analytics_router)
 app.include_router(chatbot_rag_router)
 app.include_router(chatbot_router)
+app.include_router(analytics_router)
 
 # ── Stats Endpoint (Navbar) ────────────────────────────────────────────────
 from sqlalchemy.future import select

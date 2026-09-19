@@ -40,10 +40,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthenticated(false);
         setIsAdmin(false);
       }
-    } catch (error) {
-      setUser(null);
-      setIsAuthenticated(false);
-      setIsAdmin(false);
+    } catch (error: any) {
+      // Only clear auth on a genuine 401 (not authenticated)
+      // Network errors (status 0) or server errors (5xx) during Render cold-starts
+      // should NOT log the user out — just leave state as-is
+      if (error?.status === 401 || error?.status === 403) {
+        setUser(null);
+        setIsAuthenticated(false);
+        setIsAdmin(false);
+      }
+      // For network errors (status 0) or other errors, keep previous state
+      // isLoading will still be set to false in finally
     } finally {
       setIsLoading(false);
     }
@@ -85,13 +92,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     setIsLoading(true);
     try {
+      // Best-effort — clear the HttpOnly cookie server-side
       await api.post('/api/auth/logout');
+    } catch (_) {
+      // Ignore backend errors — we still log out locally
+    } finally {
+      // Always clear local auth state
       setUser(null);
       setIsAuthenticated(false);
       setIsAdmin(false);
-      window.dispatchEvent(new Event('auth-change'));
-    } finally {
       setIsLoading(false);
+      window.dispatchEvent(new Event('auth-change'));
+      // Hard reload to home so Google One Tap resets and no stale state remains
+      window.location.href = '/';
     }
   };
 

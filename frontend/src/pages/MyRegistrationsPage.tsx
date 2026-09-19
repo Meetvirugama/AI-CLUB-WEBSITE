@@ -90,7 +90,7 @@ function RegistrationCard({ reg }: { reg: Registration }) {
                       <div key={label} style={{ background: 'white', borderRadius: 6, padding: '10px 12px', border: '1px solid hsl(228,20%,88%)' }}>
                         <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 600, color: 'hsl(230,15%,50%)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</p>
                         <p style={{ margin: '3px 0 0', fontSize: '0.85rem', color: 'hsl(230,25%,12%)', fontFamily: 'Inter, sans-serif' }}>
-                          {Array.isArray(value) ? value.join(', ') : String(value) || '—'}
+                          {Array.isArray(value) ? value.join(', ') : String(value).replace(/^(\d+)\.0$/, '$1') || '—'}
                         </p>
                       </div>
                     ))}

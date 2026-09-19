@@ -10,6 +10,7 @@ import {
 import Navbar from '../components/club/Navbar';
 import Footer from '../components/club/Footer';
 import { getApiUrl } from '../lib/api';
+import { api } from '../lib/apiClient';
 import { useAuth } from '../contexts/AuthContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -179,37 +180,37 @@ export default function EventDetailPage() {
     if (authUser && id) {
       const fetchRegs = async () => {
         try {
-          const regRes = await fetch(getApiUrl('/api/user/registrations'), { credentials: 'include' });
-          if (regRes.ok) {
-            const regData = await regRes.json();
-            const myReg = (regData.registrations || []).find((r: any) => r.event_id === Number(id));
-            if (myReg) {
-              setIsRegistered(true);
-              setExistingRegistrationId(myReg.id);
-              // Pre-fill responses from existing registration
-              if (myReg.responses_flat) {
-                // responses_flat is { label: value } — we need field ids
-                // We'll re-fill after form fields load; store flat for now
-                (window as any).__existingFlat = myReg.responses_flat;
-              }
-              // Pre-fill team
-              if (myReg.team) {
-                setTeamName(myReg.team.team_name || '');
-                setTeamMembers(
-                  (myReg.team.members || []).map((m: any) => ({ name: m.member_name, email: m.member_email }))
-                );
-              }
-            } else {
-              setIsRegistered(false);
+          // Use shared api client so cookies are sent correctly cross-origin (same as auth/me)
+          const regData = await api.get<{ registrations: any[] }>('/api/user/registrations');
+          const myReg = (regData.registrations || []).find((r: any) => Number(r.event_id) === Number(id));
+          if (myReg) {
+            setIsRegistered(true);
+            setExistingRegistrationId(myReg.id);
+            // Pre-fill responses from existing registration
+            if (myReg.responses_flat) {
+              // responses_flat is { label: value } — we need field ids
+              // We'll re-fill after form fields load; store flat for now
+              (window as any).__existingFlat = myReg.responses_flat;
             }
+            // Pre-fill team
+            if (myReg.team) {
+              setTeamName(myReg.team.team_name || '');
+              setTeamMembers(
+                (myReg.team.members || []).map((m: any) => ({ name: m.member_name, email: m.member_email }))
+              );
+            }
+          } else {
+            setIsRegistered(false);
           }
-        } catch (_) {}
+        } catch (e) {
+          console.error('Failed to fetch user registrations', e);
+        }
       };
       fetchRegs();
     } else {
       setIsRegistered(false);
     }
-  }, [authUser, id]);
+  }, [authUser?.id, id]);
 
   useEffect(() => {
     if (!id) return;
@@ -232,15 +233,12 @@ export default function EventDetailPage() {
             // Pre-fill from existing registration responses if available,
             // otherwise fall back to user profile fields
             fields.forEach(f => {
-              const ll = f.label.toLowerCase();
               if (existingFlat[f.label] !== undefined) {
-                init[f.id] = existingFlat[f.label];
-              } else if (ll.includes('name') && authUser?.name) {
-                init[f.id] = authUser.name;
-              } else if (ll.includes('email') && authUser?.email) {
-                init[f.id] = authUser.email;
-              } else if ((ll.includes('student') || ll.includes('id')) && authUser?.student_id) {
-                init[f.id] = authUser.student_id;
+                let val = existingFlat[f.label];
+                if (typeof val === 'string') {
+                  val = val.replace(/^(\d+)\.0$/, '$1');
+                }
+                init[f.id] = val;
               } else {
                 init[f.id] = f.field_type === 'checkbox' ? [] : '';
               }
@@ -422,15 +420,34 @@ export default function EventDetailPage() {
 
       {/* ── Hero banner image ───────────────────────────────────────────────── */}
       {bannerSrc && (
-        <div style={{ width: '100%', maxHeight: 420, overflow: 'hidden', position: 'relative' }}>
+        <div style={{ width: '100%', height: 420, overflow: 'hidden', position: 'relative', background: '#0a0c1e', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          {/* Blurred background layer */}
+          <div style={{
+            position: 'absolute', inset: -30,
+            backgroundImage: `url(${bannerSrc})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(25px)',
+            opacity: 0.6
+          }} />
+          {/* Main image */}
           <img
             src={bannerSrc}
             alt={event.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
+            style={{ 
+              position: 'relative',
+              maxWidth: '90%', 
+              maxHeight: '90%',
+              objectFit: 'contain',
+              borderRadius: 12,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
+            }}
           />
+          {/* Gradient overlay */}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'linear-gradient(to bottom, rgba(10,12,30,0.10) 0%, rgba(10,12,30,0.65) 100%)',
+            background: 'linear-gradient(to bottom, rgba(10,12,30,0.0) 0%, rgba(10,12,30,0.5) 100%)',
+            pointerEvents: 'none'
           }} />
         </div>
       )}
@@ -788,7 +805,7 @@ export default function EventDetailPage() {
 
                 ) : (
                   /* ── Register form (new registration OR edit mode) ───── */
-                  <form onSubmit={isEditMode ? handleUpdate : handleSubmit} style={{ padding: '1.75rem 2rem' }}>
+                  <form onSubmit={isEditMode ? handleUpdate : handleSubmit} style={{ padding: '1.75rem 2rem' }} autoComplete="off">
 
                     {/* Edit mode top bar */}
                     {isEditMode && (
@@ -866,11 +883,11 @@ export default function EventDetailPage() {
                               ))}
                             </div>
                           ) : field.field_type === 'textarea' ? (
-                            <textarea required={field.required} placeholder={field.placeholder} value={responses[field.id] || ''} onChange={e => handleInputChange(field.id, e.target.value)} rows={3}
+                            <textarea required={field.required} placeholder={field.placeholder} value={responses[field.id] || ''} onChange={e => handleInputChange(field.id, e.target.value)} rows={3} autoComplete="off"
                               style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
                           ) : (
                             <input type={field.field_type === 'number' ? 'number' : field.field_type === 'email' ? 'email' : field.field_type === 'phone' ? 'tel' : 'text'}
-                              required={field.required} placeholder={field.placeholder} value={responses[field.id] || ''} onChange={e => handleInputChange(field.id, e.target.value)}
+                              required={field.required} placeholder={field.placeholder} value={responses[field.id] || ''} onChange={e => handleInputChange(field.id, e.target.value)} autoComplete="off"
                               style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' }} />
                           )}
                         </div>
@@ -882,14 +899,14 @@ export default function EventDetailPage() {
                           <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', fontWeight: 700, color: 'hsl(243,75%,40%)', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: 6 }}>
                             <Users size={15} /> Team Details ({event.min_team_size}–{event.max_team_size} members total)
                           </h3>
-                          <input type="text" placeholder="Team name *" value={teamName} onChange={e => setTeamName(e.target.value)} required
+                          <input type="text" placeholder="Team name *" value={teamName} onChange={e => setTeamName(e.target.value)} required autoComplete="off"
                             style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', marginBottom: '0.85rem', boxSizing: 'border-box' }} />
                           {teamMembers.map((m, i) => (
                             <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                              <input type="text" placeholder={`Member ${i + 1} name`} value={m.name}
+                              <input type="text" placeholder={`Member ${i + 1} name`} value={m.name} autoComplete="off"
                                 onChange={e => setTeamMembers(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
                                 style={{ flex: 1, padding: '8px 10px', borderRadius: 7, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem' }} />
-                              <input type="email" placeholder={`Member ${i + 1} email`} value={m.email}
+                              <input type="email" placeholder={`Member ${i + 1} email`} value={m.email} autoComplete="off"
                                 onChange={e => setTeamMembers(prev => prev.map((x, j) => j === i ? { ...x, email: e.target.value } : x))}
                                 style={{ flex: 1, padding: '8px 10px', borderRadius: 7, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem' }} />
                               {teamMembers.length > 1 && (

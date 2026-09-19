@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Loader2, Download, Eye, Trash2, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Loader2, Download, Eye, Trash2, ChevronLeft,
+  ChevronRight as ChevronRightIcon, Search, X,
+  Pencil, Check, Users, User, Mail, Calendar,
+  FileText, AlertTriangle
+} from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdminRegistrations } from './queries';
 import { getApiUrl, getAuthHeaders } from '../../lib/api';
@@ -14,6 +19,148 @@ interface RegistrationsTabProps {
   showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
 }
 
+// ── Inline Edit Modal ─────────────────────────────────────────────────────────
+function EditModal({
+  reg,
+  onClose,
+  onSave,
+  showToast,
+}: {
+  reg: any;
+  onClose: () => void;
+  onSave: () => void;
+  showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
+}) {
+  const [name, setName] = useState(reg.user_name || '');
+  const [email, setEmail] = useState(reg.user_email || '');
+  const [teamName, setTeamName] = useState(reg.team_name || '');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(getApiUrl(`/api/admin/registrations/${reg.id}`), {
+        method: 'PATCH',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ user_name: name, user_email: email, team_name: teamName || null }),
+      });
+      if (res.ok) {
+        showToast('Registration updated successfully.', 'success');
+        onSave();
+        onClose();
+      } else {
+        const err = await res.json();
+        showToast('Update failed: ' + (err.detail || 'Unknown error'), 'error');
+      }
+    } catch (e: any) {
+      showToast('Error: ' + e.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 16 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 16 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+        className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-indigo-50">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+              <Pencil size={14} className="text-indigo-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-800 text-sm">Edit Registration</h3>
+              <p className="text-xs text-slate-500">ID #{reg.id}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">Full Name</label>
+            <div className="relative">
+              <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                placeholder="Full name"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">Email Address</label>
+            <div className="relative">
+              <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                placeholder="Email address"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              Team Name <span className="text-slate-400">(optional)</span>
+            </label>
+            <div className="relative">
+              <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                placeholder="Leave blank for individual"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex gap-3 px-6 pb-5">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function RegistrationsTab({
   events,
   selectedEventId,
@@ -26,6 +173,7 @@ export default function RegistrationsTab({
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [editingReg, setEditingReg] = useState<any | null>(null);
   const limit = 50;
 
   const { data, isLoading } = useAdminRegistrations(selectedEventId, searchQuery, page, limit);
@@ -36,7 +184,13 @@ export default function RegistrationsTab({
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSearchQuery(searchInput);
-    setPage(1); // Reset to page 1 on new search
+    setPage(1);
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearchQuery('');
+    setPage(1);
   };
 
   const handleExportCSV = async () => {
@@ -44,13 +198,16 @@ export default function RegistrationsTab({
     const ev = events.find(e => e.id === selectedEventId);
     const title = ev ? ev.title : `event_${selectedEventId}`;
     try {
-      const res = await fetch(getApiUrl(`/api/admin/events/${selectedEventId}/export`), { headers: getAuthHeaders(), credentials: 'include' });
+      const res = await fetch(getApiUrl(`/api/admin/events/${selectedEventId}/export`), {
+        headers: getAuthHeaders(),
+        credentials: 'include'
+      });
       if (!res.ok) throw new Error('Export failed');
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${title.toLowerCase().replace(/\\s+/g, '_')}_registrations.csv`;
+      a.download = `${title.toLowerCase().replace(/\s+/g, '_')}_registrations.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -60,19 +217,19 @@ export default function RegistrationsTab({
     }
   };
 
-  const handleDeleteRegistration = (regId: number) => {
+  const handleDeleteRegistration = (reg: any) => {
     openConfirm(
       'Delete Registration',
-      'Are you sure you want to delete this registration? All responses, teams, and files will be permanently deleted.',
+      `Are you sure you want to permanently delete the registration for "${reg.user_name}"? This cannot be undone.`,
       async () => {
         try {
-          const res = await fetch(getApiUrl(`/api/admin/registrations/${regId}`), {
+          const res = await fetch(getApiUrl(`/api/admin/registrations/${reg.id}`), {
             method: 'DELETE',
             headers: getAuthHeaders(),
             credentials: 'include'
           });
           if (res.ok) {
-            showToast('Registration deleted successfully.', 'success');
+            showToast('Registration deleted.', 'success');
             queryClient.invalidateQueries({ queryKey: ['admin', 'registrations'] });
             queryClient.invalidateQueries({ queryKey: ['admin', 'dashboardMetrics'] });
           } else {
@@ -86,135 +243,299 @@ export default function RegistrationsTab({
     );
   };
 
+  const selectedEvent = events.find(e => e.id === selectedEventId);
+
   return (
-    <motion.div key="reg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col h-full space-y-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
-        <h2 className="text-xl font-bold font-display">Registrations</h2>
-        
-        <div className="flex items-center gap-3 flex-wrap">
-          <select
-            value={selectedEventId}
-            onChange={(e) => {
-              setSelectedEventId(Number(e.target.value));
-              setPage(1);
-            }}
-            className="bg-secondary border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none"
-          >
-            <option value="" disabled>Select Event...</option>
-            {events.map(ev => (
-              <option key={ev.id} value={ev.id}>{ev.title}</option>
-            ))}
-          </select>
+    <>
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {editingReg && (
+          <EditModal
+            reg={editingReg}
+            onClose={() => setEditingReg(null)}
+            onSave={() => queryClient.invalidateQueries({ queryKey: ['admin', 'registrations'] })}
+            showToast={showToast}
+          />
+        )}
+      </AnimatePresence>
 
-          <form onSubmit={handleSearchSubmit} className="flex gap-2">
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search by name, email, phone..."
-              className="bg-secondary border border-border rounded-lg px-3 py-1.5 text-xs text-foreground outline-none w-56"
-            />
-            <button type="submit" className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors">Search</button>
-          </form>
+      <motion.div
+        key="reg"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        className="flex flex-col h-full space-y-5"
+      >
+        {/* ── Top Controls ── */}
+        <div className="flex flex-col gap-4 shrink-0">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold font-display text-slate-800">Registration Management</h2>
+              <p className="text-xs text-slate-500 mt-0.5">View, edit, and manage event registrations</p>
+            </div>
 
-          {selectedEventId && (
-            <button
-              onClick={handleExportCSV}
-              className="flex items-center gap-1 px-3 py-1.5 bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold rounded-lg hover:bg-green-500 hover:text-white transition-all"
-            >
-              <Download size={14} />
-              Export CSV
-            </button>
-          )}
-        </div>
-      </div>
-      
-      {events.find(e => e.id === selectedEventId)?.registration_link ? (
-        <div className="bg-secondary/20 p-8 rounded-xl text-center border border-border mt-4 shrink-0">
-          <p className="text-muted-foreground text-sm">
-            This event uses an external registration link: <a href={events.find(e => e.id === selectedEventId)?.registration_link!} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{events.find(e => e.id === selectedEventId)?.registration_link}</a>
-          </p>
-          <p className="text-xs text-muted-foreground mt-2">
-            Internal registrations are disabled. To re-enable them, edit the event and remove the external link.
-          </p>
-        </div>
-      ) : isLoading ? (
-        <div className="flex justify-center items-center py-12 flex-1"><Loader2 className="animate-spin text-primary" /></div>
-      ) : registrations.length === 0 ? (
-        <div className="flex flex-col items-center justify-center flex-1 py-12 text-center">
-          <p className="text-muted-foreground">No registrations found for this event.</p>
-          {searchQuery && (
-            <button onClick={() => { setSearchInput(''); setSearchQuery(''); setPage(1); }} className="mt-3 text-xs text-primary hover:underline">
-              Clear Search
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="flex flex-col flex-1 min-h-0 border border-border/30 rounded-xl bg-[#090d16]/40 shadow-inner overflow-hidden">
-          <div className="flex-1 overflow-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 bg-[#0c1222] z-10 border-b border-border/80 shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
-                <tr className="text-muted-foreground text-xs uppercase tracking-wider">
-                  <th className="p-3.5 font-semibold">Date</th>
-                  <th className="p-3.5 font-semibold">Name</th>
-                  <th className="p-3.5 font-semibold">Email</th>
-                  <th className="p-3.5 font-semibold">Team Name</th>
-                  <th className="p-3.5 font-semibold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm divide-y divide-border/20">
-                {registrations.map((reg: any) => (
-                  <tr key={reg.id} className="hover:bg-white/5 transition-colors">
-                    <td className="p-3.5 whitespace-nowrap text-xs text-muted-foreground">{new Date(reg.registered_at).toLocaleDateString()}</td>
-                    <td className="p-3.5 font-medium text-foreground">{reg.user_name}</td>
-                    <td className="p-3.5 text-muted-foreground text-xs">{reg.user_email}</td>
-                    <td className="p-3.5 font-mono text-xs text-foreground/80">{reg.team_name || 'Individual'}</td>
-                    <td className="p-3.5 text-right">
-                      <button
-                        onClick={() => fetchRegistrationDetail(reg.id)}
-                        className="p-1.5 text-muted-foreground hover:text-primary rounded-lg hover:bg-primary/10 transition-colors mr-1.5"
-                        title="View Details"
-                      >
-                        <Eye size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteRegistration(reg.id)}
-                        className="p-1.5 text-muted-foreground hover:text-destructive rounded-lg hover:bg-destructive/10 transition-colors"
-                        title="Delete Registration"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </td>
-                  </tr>
+            {selectedEventId && (
+              <button
+                onClick={handleExportCSV}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold rounded-xl hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all"
+              >
+                <Download size={14} />
+                Export CSV
+              </button>
+            )}
+          </div>
+
+          {/* Filter Row */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Event Selector */}
+            <div className="relative flex-1 min-w-0">
+              <select
+                value={selectedEventId}
+                onChange={(e) => {
+                  setSelectedEventId(Number(e.target.value));
+                  setPage(1);
+                  setSearchInput('');
+                  setSearchQuery('');
+                }}
+                className="w-full appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all cursor-pointer pr-10 truncate shadow-sm"
+              >
+                <option value="" disabled>— Select an event —</option>
+                {events.map(ev => (
+                  <option key={ev.id} value={ev.id}>{ev.title}</option>
                 ))}
-              </tbody>
-            </table>
+              </select>
+              <ChevronRightIcon size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 rotate-90 pointer-events-none" />
+            </div>
+
+            {/* Search */}
+            <form onSubmit={handleSearchSubmit} className="flex gap-2">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Search by name, email…"
+                  className="bg-white border border-slate-200 rounded-xl pl-9 pr-8 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 w-52 transition-all shadow-sm"
+                />
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition-all shadow-sm"
+              >
+                Search
+              </button>
+            </form>
           </div>
-          
-          {/* Pagination Controls */}
-          <div className="bg-[#0c1222] border-t border-border/50 p-3 flex items-center justify-between shrink-0">
-             <div className="text-xs text-muted-foreground">
-               Showing page {page} of {totalPages} ({total} total)
-             </div>
-             <div className="flex gap-2">
-               <button 
-                 disabled={page === 1}
-                 onClick={() => setPage(p => Math.max(1, p - 1))}
-                 className="p-1.5 rounded-lg bg-secondary/50 text-foreground disabled:opacity-30 disabled:cursor-not-allowed hover:bg-secondary transition-colors"
-               >
-                 <ChevronLeft size={16} />
-               </button>
-               <button 
-                 disabled={page >= totalPages}
-                 onClick={() => setPage(p => p + 1)}
-                 className="p-1.5 rounded-lg bg-secondary/50 text-foreground disabled:opacity-30 disabled:cursor-not-allowed hover:bg-secondary transition-colors"
-               >
-                 <ChevronRightIcon size={16} />
-               </button>
-             </div>
-          </div>
+
+          {/* Stats bar */}
+          {selectedEventId && !isLoading && (
+            <div className="flex items-center gap-4 text-xs text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" />
+                <strong className="text-slate-700">{total}</strong> total registrations
+              </span>
+              {searchQuery && (
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
+                  Filtered by &ldquo;<strong className="text-slate-700">{searchQuery}</strong>&rdquo;
+                  <button onClick={handleClearSearch} className="text-indigo-600 hover:underline ml-1">Clear</button>
+                </span>
+              )}
+            </div>
+          )}
         </div>
-      )}
-    </motion.div>
+
+        {/* ── Content ── */}
+        {selectedEvent?.registration_link ? (
+          <div className="flex flex-col items-center justify-center flex-1 py-16 text-center bg-amber-50 border border-amber-200 rounded-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center mb-4">
+              <AlertTriangle size={22} className="text-amber-600" />
+            </div>
+            <p className="text-sm font-medium text-slate-700 mb-1">External Registration Link</p>
+            <p className="text-xs text-slate-500 max-w-xs">
+              This event uses an external form. Internal registrations are disabled.
+            </p>
+            <a
+              href={selectedEvent.registration_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 text-xs text-indigo-600 hover:underline"
+            >
+              {selectedEvent.registration_link}
+            </a>
+          </div>
+        ) : !selectedEventId ? (
+          <div className="flex flex-col items-center justify-center flex-1 py-16 text-center bg-slate-50 border border-dashed border-slate-300 rounded-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4">
+              <FileText size={22} className="text-indigo-400" />
+            </div>
+            <p className="text-sm font-medium text-slate-700">Select an Event</p>
+            <p className="text-xs text-slate-500 mt-1">Choose an event above to view its registrations.</p>
+          </div>
+        ) : isLoading ? (
+          <div className="flex justify-center items-center py-16 flex-1">
+            <Loader2 className="animate-spin text-indigo-500" size={28} />
+          </div>
+        ) : registrations.length === 0 ? (
+          <div className="flex flex-col items-center justify-center flex-1 py-16 text-center bg-slate-50 border border-slate-200 rounded-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+              <Users size={22} className="text-slate-400" />
+            </div>
+            <p className="text-sm font-medium text-slate-700">No registrations found</p>
+            {searchQuery && (
+              <button onClick={handleClearSearch} className="mt-3 text-xs text-indigo-600 hover:underline">
+                Clear search
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col flex-1 min-h-0 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+            {/* Table */}
+            <div className="flex-1 overflow-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200">
+                  <tr className="text-slate-500 text-[11px] uppercase tracking-widest">
+                    <th className="px-5 py-3.5 font-semibold w-10">#</th>
+                    <th className="px-5 py-3.5 font-semibold">
+                      <span className="flex items-center gap-1.5"><Calendar size={11} />Date</span>
+                    </th>
+                    <th className="px-5 py-3.5 font-semibold">
+                      <span className="flex items-center gap-1.5"><User size={11} />Name</span>
+                    </th>
+                    <th className="px-5 py-3.5 font-semibold">
+                      <span className="flex items-center gap-1.5"><Mail size={11} />Email</span>
+                    </th>
+                    <th className="px-5 py-3.5 font-semibold">
+                      <span className="flex items-center gap-1.5"><Users size={11} />Team</span>
+                    </th>
+                    <th className="px-5 py-3.5 font-semibold text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {registrations.map((reg: any, idx: number) => (
+                    <motion.tr
+                      key={reg.id}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.03 }}
+                      className="hover:bg-indigo-50/40 transition-colors"
+                    >
+                      {/* Index */}
+                      <td className="px-5 py-3.5 text-xs text-slate-400 font-mono">
+                        {(page - 1) * limit + idx + 1}
+                      </td>
+
+                      {/* Date */}
+                      <td className="px-5 py-3.5 whitespace-nowrap text-xs text-slate-500">
+                        {reg.registered_at
+                          ? new Date(reg.registered_at).toLocaleDateString('en-IN', {
+                              day: 'numeric', month: 'short', year: 'numeric'
+                            })
+                          : '—'}
+                      </td>
+
+                      {/* Name */}
+                      <td className="px-5 py-3.5">
+                        <span className="font-semibold text-sm text-slate-800">{reg.user_name || '—'}</span>
+                      </td>
+
+                      {/* Email */}
+                      <td className="px-5 py-3.5 text-xs text-slate-600">
+                        {reg.user_email || '—'}
+                      </td>
+
+                      {/* Team badge */}
+                      <td className="px-5 py-3.5">
+                        {reg.team_name ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-medium">
+                            <Users size={10} />
+                            {reg.team_name}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-500 text-xs">
+                            <User size={10} />
+                            Individual
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center justify-center gap-1.5">
+                          {/* View */}
+                          <button
+                            onClick={() => fetchRegistrationDetail(reg.id)}
+                            title="View Details"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 text-xs font-medium transition-all"
+                          >
+                            <Eye size={13} />
+                            View
+                          </button>
+
+                          {/* Edit */}
+                          <button
+                            onClick={() => setEditingReg(reg)}
+                            title="Edit Registration"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-medium transition-all"
+                          >
+                            <Pencil size={13} />
+                            Edit
+                          </button>
+
+                          {/* Delete */}
+                          <button
+                            onClick={() => handleDeleteRegistration(reg)}
+                            title="Delete Registration"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-medium transition-all"
+                          >
+                            <Trash2 size={13} />
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="bg-slate-50 border-t border-slate-200 px-5 py-3 flex items-center justify-between shrink-0">
+              <p className="text-xs text-slate-500">
+                Page <strong className="text-slate-700">{page}</strong> of{' '}
+                <strong className="text-slate-700">{totalPages}</strong>
+                <span className="text-slate-400"> · {total} total</span>
+              </p>
+              <div className="flex gap-2">
+                <button
+                  disabled={page === 1}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 transition-colors"
+                >
+                  <ChevronLeft size={13} /> Prev
+                </button>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage(p => p + 1)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 transition-colors"
+                >
+                  Next <ChevronRightIcon size={13} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </motion.div>
+    </>
   );
 }

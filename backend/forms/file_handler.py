@@ -207,15 +207,15 @@ async def validate_upload(
     # Extension is checked before reading a single byte.
     _check_extension(upload.filename or "")
 
-    # Read in chunks to enforce the size limit without loading huge files fully.
-    chunks: list[bytes] = []
-    total = 0
+    # Read in chunks to enforce size limit without loading huge files fully
+    content = bytearray()
+    chunk_size = 1024 * 1024  # 1MB chunks
     while True:
-        chunk = await upload.read(64 * 1024)
+        chunk = await upload.read(chunk_size)
         if not chunk:
             break
-        total += len(chunk)
-        if total > max_bytes:
+        content.extend(chunk)
+        if len(content) > max_bytes:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail=(
@@ -223,8 +223,7 @@ async def validate_upload(
                     f"({max_size_kb / 1024:.1f} MB)."
                 ),
             )
-        chunks.append(chunk)
-    content = b"".join(chunks)
+    content = bytes(content)
 
     if not content:
         raise HTTPException(

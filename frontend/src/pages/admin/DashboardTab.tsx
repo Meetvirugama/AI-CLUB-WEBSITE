@@ -2,11 +2,11 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useDashboardStats, useAdminEvents } from './queries';
+import { useDashboardStats, useAdminEvents, RecentRegistration } from './queries';
 import { Plus, ChevronRight } from 'lucide-react';
 
 interface DashboardTabProps {
-  setActiveTab: React.Dispatch<React.SetStateAction<'dashboard' | 'registrations' | 'createEvent' | 'formBuilder' | 'manageEvents' | 'manageMembers' | 'manageProjects' | 'pastEvents' | 'manageAchievements' | 'manageNews' | 'manageResources' | 'manageWeeklyVeneza' | 'chatbotAnalytics'>>;
+  setActiveTab: React.Dispatch<React.SetStateAction<'dashboard' | 'registrations' | 'createEvent' | 'formBuilder' | 'manageEvents' | 'manageMembers' | 'manageProjects' | 'pastEvents' | 'manageAchievements' | 'manageNews' | 'manageResources' | 'manageWeeklyVeneza' | 'chatbotAnalytics' | 'analytics'>>;
   setSelectedEventId: (id: number) => void;
   setBuilderEventId: (id: number) => void;
 }
@@ -45,7 +45,7 @@ export default function DashboardTab({ setActiveTab, setSelectedEventId, setBuil
             </div>
           ) : (
             <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1.5 custom-scrollbar">
-              {metrics.recent_registrations.map((reg: any) => (
+              {metrics.recent_registrations.map((reg: RecentRegistration) => (
                 <div key={reg.id} className="flex items-center justify-between bg-secondary/20 p-4 rounded-xl border border-border/40 hover:border-primary/20 transition-all group">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center font-display text-xs font-extrabold text-primary border border-primary/10 group-hover:scale-105 transition-transform duration-300">
@@ -107,6 +107,13 @@ export default function DashboardTab({ setActiveTab, setSelectedEventId, setBuil
                 className="w-full flex items-center justify-between p-3 bg-secondary/35 border border-border hover:border-primary/30 rounded-xl text-left text-xs text-foreground transition-all"
               >
                 <span>Manage Live Events</span>
+                <ChevronRight size={14} className="text-primary" />
+              </button>
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className="w-full flex items-center justify-between p-3 bg-primary/10 border border-primary/20 hover:border-primary/40 rounded-xl text-left text-xs text-primary font-semibold transition-all"
+              >
+                <span>View Analytics Dashboard</span>
                 <ChevronRight size={14} className="text-primary" />
               </button>
             </div>

@@ -73,13 +73,18 @@ def _set_auth_cookie(response: Response, token: str) -> None:
 
 
 def _clear_auth_cookie(response: Response) -> None:
-    """Remove the JWT cookie by setting it with max_age=0."""
-    response.delete_cookie(
+    """Remove the JWT cookie by overwriting it with an immediately-expired value.
+    Must match all original cookie attributes exactly so browsers clear it.
+    """
+    response.set_cookie(
         key=settings.COOKIE_NAME,
-        path="/",
+        value="",
         httponly=settings.COOKIE_HTTPONLY,
         secure=settings.cookie_secure,
         samesite=settings.cookie_samesite,
+        max_age=0,
+        expires=0,
+        path="/",
     )
 
 

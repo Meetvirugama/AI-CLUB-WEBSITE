@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     COOKIE_NAME: str = "access_token"
     COOKIE_HTTPONLY: bool = True
     COOKIE_SECURE: bool = True
-    COOKIE_SAMESITE: str = "lax"
+    COOKIE_SAMESITE: str = "lax"  # Overridden dynamically by cookie_samesite property
     
     # ── Database ──
     DATABASE_URL: str = ""

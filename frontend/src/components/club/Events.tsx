@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, Users, ArrowRight, Loader2, CalendarDays, Mic, UsersRound, Search, ExternalLink } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../lib/api';
+import { api } from '../../lib/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
 
 // Auth travels in the HttpOnly session cookie (credentials: 'include'), so no
@@ -135,19 +136,20 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
     }
   };
 
-  const { user: authUser } = useAuth();
+  const { user: authUser, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
     setUserProfile(authUser);
     if (authUser) {
       const fetchRegs = async () => {
         try {
-          const regRes = await fetch(getApiUrl('/api/user/registrations'), { credentials: 'include' });
-          if (regRes.ok) {
-            const regData = await regRes.json();
-            if (regData.registrations) {
-              setRegisteredEventIds(regData.registrations.map((r: any) => r.event_id));
-            }
+          // Use the shared api client so cookies are sent correctly (same as auth/me)
+          const regData = await api.get<{ registrations: any[] }>('/api/user/registrations');
+          if (regData.registrations) {
+            // Normalize to numbers to avoid type-mismatch with ev.id (number | string)
+            const ids = regData.registrations.map((r: any) => Number(r.event_id));
+            console.log('[Events] Registered event IDs:', ids);
+            setRegisteredEventIds(ids);
           }
         } catch (e) {
           console.error('Failed to fetch registrations', e);
@@ -157,7 +159,7 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
     } else {
       setRegisteredEventIds([]);
     }
-  }, [authUser]);
+  }, [authUser?.id]);
 
   const fetchPastEvents = async () => {
     try {
@@ -719,8 +721,8 @@ const resultCount = displayedUpcomingEvents.length;
 
                       {/* Register button + View Details */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
-                        {ev.status === 'registration_open' && (
-                          registeredEventIds.includes(ev.id) ? (
+                        {ev.status === 'registration_open' && !authLoading && (
+                          registeredEventIds.includes(Number(ev.id)) ? (
                             <span style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(243,75%,59%)', padding: '4px 12px', border: '1px solid hsl(243,75%,80%)', borderRadius: 2 }}>
                               Registered ✓
                             </span>
@@ -1200,8 +1202,8 @@ const resultCount = displayedUpcomingEvents.length;
               <span className="text-xs font-mono text-primary tracking-widest uppercase">Next Up</span>
               <h3 className="font-display font-bold text-xl text-foreground mt-2">{featured.title}</h3>
               <p className="text-sm text-muted-foreground mt-2 max-w-md">{featured.description}</p>
-              {featured.status === 'registration_open' && (
-                registeredEventIds.includes(featured.id) ? (
+              {featured.status === 'registration_open' && !authLoading && (
+                registeredEventIds.includes(Number(featured.id)) ? (
                   <button disabled className="mt-4 px-4 py-2 text-xs font-semibold rounded-lg bg-primary/20 text-primary border border-primary/20 cursor-not-allowed">
                     Already Registered
                   </button>
@@ -1732,9 +1734,9 @@ const resultCount = displayedUpcomingEvents.length;
             )}
 
             {/* Register button */}
-            {card.status === 'registration_open' && !card.isArchived && (
+            {card.status === 'registration_open' && !card.isArchived && !authLoading && (
               <div className="mt-5">
-                {registeredEventIds.includes(card.id) ? (
+                {registeredEventIds.includes(Number(card.id)) ? (
                   <button
                     disabled
                     className="w-full py-2.5 rounded-xl text-xs font-semibold"

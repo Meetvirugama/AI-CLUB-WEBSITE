@@ -22,6 +22,8 @@ import ScrollToTop from "./components/ScrollToTop.tsx";
 import AppErrorBoundary from "./components/AppErrorBoundary.tsx";
 import { AuthProvider } from "./contexts/AuthContext.tsx";
 import { useLocation } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { startSession, trackPageView } from "./lib/analytics";
 
 // Lazy-load heavier pages to keep the initial bundle small
 const Admin = lazy(() => import("./pages/Admin.tsx"));
@@ -58,6 +60,22 @@ const GlobalChatbot = () => {
   return <Chatbot />;
 };
 
+// Tracks page views on every route change and starts the session on mount.
+const RouteTracker = () => {
+  const location = useLocation();
+  const mounted  = useRef(false);
+
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      startSession();
+    }
+    trackPageView(location.pathname);
+  }, [location.pathname]);
+
+  return null;
+};
+
 const App = () => (
   <AppErrorBoundary>
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
@@ -67,6 +85,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <RouteTracker />
               <BackgroundCanvas />
               <ScrollToTop />
               <HeaderNavbar />
