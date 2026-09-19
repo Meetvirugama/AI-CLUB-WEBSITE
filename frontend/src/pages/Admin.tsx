@@ -8,7 +8,7 @@ import { Loader2, Download, Trash2, Calendar, Users, Award, Newspaper, Clipboard
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
-import { useDashboardStats, useSupabaseCounts } from './admin/queries';
+import { useDashboardStats, useEntityCounts } from './admin/queries';
 import DashboardTab from './admin/DashboardTab';
 import RegistrationsTab from './admin/RegistrationsTab';
 import CreateEventTab from './admin/CreateEventTab';
@@ -165,7 +165,7 @@ const Admin = () => {
   const queryClient = useQueryClient();
   
   const fetchDashboardMetrics = () => queryClient.invalidateQueries({ queryKey: ['admin', 'dashboardMetrics'] });
-  const fetchSupabaseCounts = () => queryClient.invalidateQueries({ queryKey: ['admin', 'supabaseCounts'] });
+  const fetchEntityCounts = () => queryClient.invalidateQueries({ queryKey: ['admin', 'entityCounts'] });
 
   const [loadingEvents, setLoadingEvents] = useState(false);
 
@@ -192,7 +192,7 @@ const Admin = () => {
     winners: '',
     winner_link: ''
   });
-  const { data: supabaseCounts = { members: 0, projects: 0, pastEvents: 0 } } = useSupabaseCounts();
+  const { data: entityCounts = { members: 0, projects: 0, pastEvents: 0 } } = useEntityCounts();
 
   // Modals / Editor States for Members
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
@@ -1099,10 +1099,6 @@ const Admin = () => {
         }
       } catch (_) {}
 
-      if (!membersData || membersData.length === 0) {
-        // Removed Supabase fallback
-      }
-
       const sorted = [...(membersData || [])].sort((a, b) => {
         const orderA = a.order_no || 0;
         const orderB = b.order_no || 0;
@@ -1448,7 +1444,7 @@ const Admin = () => {
   useEffect(() => {
     if (activeTab === 'dashboard') {
       fetchDashboardMetrics();
-      fetchSupabaseCounts();
+      fetchEntityCounts();
     } else if (activeTab === 'formBuilder' && builderEventId) {
       fetchFormFields(builderEventId);
     } else if (activeTab === 'manageEvents') {
@@ -1585,9 +1581,9 @@ const Admin = () => {
                 { label: 'Registrations', val: metrics?.total_registrations ?? '—', icon: <Users size={16} />, iconColor: 'text-emerald-600', loading: loadingMetrics },
                 { label: 'Active Events', val: metrics?.active_events ?? '—', icon: <Award size={16} />, iconColor: 'text-amber-600', loading: loadingMetrics },
                 { label: 'Upcoming', val: metrics?.upcoming_events ?? '—', icon: <Clipboard size={16} />, iconColor: 'text-pink-600', loading: loadingMetrics },
-                { label: 'Past Events', val: supabaseCounts.pastEvents, icon: <Archive size={16} />, iconColor: 'text-orange-600', loading: false },
-                { label: 'Members', val: supabaseCounts.members, icon: <Users size={16} />, iconColor: 'text-teal-600', loading: false },
-                { label: 'Projects', val: supabaseCounts.projects, icon: <Settings size={16} />, iconColor: 'text-indigo-600', loading: false },
+                { label: 'Past Events', val: entityCounts.pastEvents, icon: <Archive size={16} />, iconColor: 'text-orange-600', loading: false },
+                { label: 'Members', val: entityCounts.members, icon: <Users size={16} />, iconColor: 'text-teal-600', loading: false },
+                { label: 'Projects', val: entityCounts.projects, icon: <Settings size={16} />, iconColor: 'text-indigo-600', loading: false },
               ].map((card, i) => (
                 <div 
                   key={i} 

@@ -82,7 +82,7 @@ async def retrieve_relevant_chunks(
                 if float(r.rank) >= _MIN_RANK
             ]
             if chunks:
-                logger.debug(f"[RAG] FTS returned {len(chunks)} chunks for query: {query!r}")
+                logger.debug("[RAG] FTS returned %d chunks", len(chunks))
                 return chunks
 
         # ── Fallback: ILIKE keyword search ─────────────────────────────────
@@ -107,7 +107,7 @@ async def retrieve_relevant_chunks(
         result2 = await session.execute(like_sql, params)
         rows2 = result2.fetchall()
         if rows2:
-            logger.debug(f"[RAG] ILIKE fallback returned {len(rows2)} chunks for query: {query!r}")
+            logger.debug("[RAG] ILIKE fallback returned %d chunks", len(rows2))
             return [
                 {"title": r.title, "content": r.content, "url": r.url or "",
                  "source_type": r.source_type, "rank": 1.0}

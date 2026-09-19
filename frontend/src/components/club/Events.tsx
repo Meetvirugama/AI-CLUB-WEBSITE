@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, Users, ArrowRight, Loader2, CalendarDays, Mic, UsersRound, Search, ExternalLink } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
 import { getApiUrl } from '../../lib/api';
 import { api } from '../../lib/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Helper: build auth headers from localStorage token (needed for cross-origin cookie issues)
+// Auth travels in the HttpOnly session cookie (credentials: 'include'), so no
+// Authorization header is built here. Never move the token into localStorage:
+// that would make it readable by any injected script.
 function getAuthHeaders(): Record<string, string> {
   return {};
 }

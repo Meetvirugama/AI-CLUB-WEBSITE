@@ -37,8 +37,8 @@ async def require_admin(
     """
     if not current_user.is_admin:
         logger.warning(
-            "Admin access denied for user email=%r",
-            current_user.email,
+            "Admin access denied for user id=%s",
+            current_user.id,
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

@@ -68,3 +68,6 @@ backend/uploads/*
 *.csv
 task.md
 test_db.py
+
+# Python virtualenv created for local test runs
+backend/.venv/

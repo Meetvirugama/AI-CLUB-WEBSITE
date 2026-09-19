@@ -23,13 +23,18 @@ Errors
 Both are re-raised as HTTP 401 by the calling route.
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Optional
+
+import httpx
 
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
 from core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -46,19 +51,53 @@ def verify_google_id_token(raw_token: str) -> GoogleUserInfo:
     """
     Verify the Google ID-Token and extract user claims.
     """
-    if len(raw_token.split(".")) != 3:
-        raise ValueError("Invalid Google ID-Token format. Expected a JWT.")
+    if len(raw_token.split(".")) == 3:
+        # ── ID-Token (JWT) ────────────────────────────────────────────────────
+        try:
+            idinfo: dict = id_token.verify_oauth2_token(
+                raw_token,
+                google_requests.Request(),
+                settings.GOOGLE_CLIENT_ID,
+            )
+        except ValueError as exc:
+            raise ValueError(f"Invalid Google ID-Token: {exc}") from exc
+        except Exception as exc:
+            raise RuntimeError(f"Could not reach Google's verification endpoint: {exc}") from exc
+    else:
+        # ── OAuth2 Access Token ───────────────────────────────────────────────
+        if not settings.GOOGLE_CLIENT_ID:
+            raise ValueError("Google authentication is not configured on this server.")
 
-    try:
-        idinfo: dict = id_token.verify_oauth2_token(
-            raw_token,
-            google_requests.Request(),
-            settings.GOOGLE_CLIENT_ID,
-        )
-    except ValueError as exc:
-        raise ValueError(f"Invalid Google ID-Token: {exc}") from exc
-    except Exception as exc:
-        raise RuntimeError(f"Could not reach Google's verification endpoint: {exc}") from exc
+        try:
+            resp = httpx.get(
+                "https://oauth2.googleapis.com/tokeninfo",
+                params={"access_token": raw_token},
+                timeout=10,
+            )
+        except Exception as exc:
+            raise RuntimeError(f"Could not reach Google's tokeninfo endpoint: {exc}") from exc
+
+        if resp.status_code != 200:
+            raise ValueError("Invalid Google access token.")
+
+        tokeninfo: dict = resp.json()
+
+        audience = tokeninfo.get("aud") or tokeninfo.get("azp")
+        if audience != settings.GOOGLE_CLIENT_ID:
+            logger.warning(
+                "Rejected Google access token issued to a foreign OAuth client."
+            )
+            raise ValueError("This access token was not issued for this application.")
+
+        if not tokeninfo.get("sub"):
+            raise ValueError("Google access token did not identify a user.")
+        if not tokeninfo.get("email"):
+            raise ValueError("Google access token does not grant email access.")
+
+        idinfo = tokeninfo
+        idinfo["email_verified"] = str(
+            tokeninfo.get("email_verified", "false")
+        ).lower() == "true"
 
     # Extra safety: ensure email is verified by Google
     if not idinfo.get("email_verified", False):

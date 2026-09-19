@@ -40,9 +40,9 @@ export const useDashboardStats = () => {
   });
 };
 
-export const useSupabaseCounts = () => {
+export const useEntityCounts = () => {
   return useQuery({
-    queryKey: ['admin', 'supabaseCounts'],
+    queryKey: ['admin', 'entityCounts'],
     queryFn: async () => {
       const [memRes, projRes, pastRes] = await Promise.all([
         fetch(getApiUrl('/api/members')).catch(() => null),
