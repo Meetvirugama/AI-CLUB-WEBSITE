@@ -35,7 +35,8 @@ function ManageNewsSection({ showToast, openConfirm }: Props) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const url = editing ? getApiUrl(`/api/news/${editing.id}`) : getApiUrl('/api/news');
+      // Backend routes: POST /api/admin/news  |  PUT /api/admin/news/{id}
+      const url = editing ? getApiUrl(`/api/admin/news/${editing.id}`) : getApiUrl('/api/admin/news');
       const method = editing ? 'PUT' : 'POST';
       const res = await fetch(url, {
         method, headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
@@ -50,7 +51,8 @@ function ManageNewsSection({ showToast, openConfirm }: Props) {
   };
 
   const handleDelete = (id: number) => openConfirm('Delete News', 'This will permanently delete this news item.', async () => {
-    const res = await fetch(getApiUrl(`/api/news/${id}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
+    // Backend: DELETE /api/admin/news/{id}
+    const res = await fetch(getApiUrl(`/api/admin/news/${id}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
     if (res.ok) { showToast('Deleted.', 'success'); qc.invalidateQueries({ queryKey: ['admin', 'news'] }); }
     else showToast('Delete failed.', 'error');
   }, true);
@@ -174,7 +176,8 @@ function ManageResourcesSection({ showToast, openConfirm }: Props) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const url = editing ? getApiUrl(`/api/resources/${editing.id}`) : getApiUrl('/api/resources');
+      // Backend routes: POST /api/admin/resources  |  PUT /api/admin/resources/{id}
+      const url = editing ? getApiUrl(`/api/admin/resources/${editing.id}`) : getApiUrl('/api/admin/resources');
       const method = editing ? 'PUT' : 'POST';
       const res = await fetch(url, {
         method, headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
@@ -189,7 +192,8 @@ function ManageResourcesSection({ showToast, openConfirm }: Props) {
   };
 
   const handleDelete = (id: number) => openConfirm('Delete Resource', 'This will permanently delete this resource.', async () => {
-    const res = await fetch(getApiUrl(`/api/resources/${id}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
+    // Backend: DELETE /api/admin/resources/{id}
+    const res = await fetch(getApiUrl(`/api/admin/resources/${id}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
     if (res.ok) { showToast('Deleted.', 'success'); qc.invalidateQueries({ queryKey: ['admin', 'resources'] }); }
     else showToast('Delete failed.', 'error');
   }, true);

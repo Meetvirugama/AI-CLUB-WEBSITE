@@ -15,9 +15,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  Loader2, Calendar, Users, Award, Newspaper, Clipboard, Edit, FileText,
+  Loader2, Calendar, Users, Newspaper, Clipboard, Edit, FileText,
   Archive, Plus, ArrowUp, ArrowDown, LayoutDashboard, LogOut,
-  Bot, BarChart2, BookOpen, Trash2, Clock, X,
+  Bot, BarChart2, Clock, Trash2,
 } from 'lucide-react';
 
 import Navbar from '@/components/club/Navbar';
@@ -366,7 +366,7 @@ const Admin = () => {
             <AnimatePresence mode="wait">
               {activeTab === 'dashboard' && (
                 <DashboardTab
-                  setActiveTab={setActiveTab as React.Dispatch<React.SetStateAction<any>>}
+                  setActiveTab={setActiveTab}
                   setSelectedEventId={setSelectedEventId}
                   setBuilderEventId={setBuilderEventId}
                 />

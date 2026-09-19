@@ -47,7 +47,8 @@ function PastEventsSection({ showToast, openConfirm }: Props) {
     setSubmitting(true);
     try {
       const body = { ...form, participants: form.participants ? Number(form.participants) : null, sort_order: Number(form.sort_order) };
-      const url = editing ? getApiUrl(`/api/past-events/${editing.id}`) : getApiUrl('/api/past-events');
+      // Backend routes: POST /api/admin/past-events  |  PUT /api/admin/past-events/{id}
+      const url = editing ? getApiUrl(`/api/admin/past-events/${editing.id}`) : getApiUrl('/api/admin/past-events');
       const method = editing ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }, body: JSON.stringify(body), credentials: 'include' });
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.detail || 'Request failed'); }
@@ -60,7 +61,8 @@ function PastEventsSection({ showToast, openConfirm }: Props) {
   };
 
   const handleDelete = (id: number) => openConfirm('Delete Past Event', 'This will permanently delete this past event.', async () => {
-    const res = await fetch(getApiUrl(`/api/past-events/${id}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
+    // Backend: DELETE /api/admin/past-events/{id}
+    const res = await fetch(getApiUrl(`/api/admin/past-events/${id}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
     if (res.ok) { showToast('Past event deleted.', 'success'); qc.invalidateQueries({ queryKey: ['admin', 'pastEvents'] }); }
     else showToast('Delete failed.', 'error');
   }, true);
@@ -200,7 +202,8 @@ function AchievementsSection({ showToast, openConfirm }: Props) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const url = editing ? getApiUrl(`/api/achievements/${editing.id}`) : getApiUrl('/api/achievements');
+      // Backend routes: POST /api/admin/achievements  |  PUT /api/admin/achievements/{id}
+      const url = editing ? getApiUrl(`/api/admin/achievements/${editing.id}`) : getApiUrl('/api/admin/achievements');
       const method = editing ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }, body: JSON.stringify(form), credentials: 'include' });
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.detail || 'Request failed'); }
@@ -212,7 +215,8 @@ function AchievementsSection({ showToast, openConfirm }: Props) {
   };
 
   const handleDelete = (id: number) => openConfirm('Delete Achievement', 'This will permanently delete this achievement.', async () => {
-    const res = await fetch(getApiUrl(`/api/achievements/${id}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
+    // Backend: DELETE /api/admin/achievements/{id}
+    const res = await fetch(getApiUrl(`/api/admin/achievements/${id}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
     if (res.ok) { showToast('Achievement deleted.', 'success'); qc.invalidateQueries({ queryKey: ['admin', 'achievements'] }); }
     else showToast('Delete failed.', 'error');
   }, true);

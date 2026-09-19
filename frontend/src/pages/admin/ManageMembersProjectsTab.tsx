@@ -66,7 +66,10 @@ function ManageMembers({ showToast, openConfirm }: Props) {
     setSubmitting(true);
     try {
       const body = { ...form, order_no: Number(form.order_no) };
-      const url = modal.editing ? getApiUrl(`/api/members/${modal.editing.id}`) : getApiUrl('/api/members');
+      // Backend routes: POST /api/members/admin  |  PUT /api/members/admin/{id}
+      const url = modal.editing
+        ? getApiUrl(`/api/members/admin/${modal.editing.id}`)
+        : getApiUrl('/api/members/admin');
       const method = modal.editing ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }, body: JSON.stringify(body), credentials: 'include' });
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.detail || 'Request failed'); }
@@ -79,7 +82,8 @@ function ManageMembers({ showToast, openConfirm }: Props) {
   };
 
   const handleDelete = (id: number) => openConfirm('Delete Member', 'This will permanently delete the member.', async () => {
-    const res = await fetch(getApiUrl(`/api/members/${id}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
+    // Backend: DELETE /api/members/admin/{id}
+    const res = await fetch(getApiUrl(`/api/members/admin/${id}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
     if (res.ok) { showToast('Member deleted.', 'success'); qc.invalidateQueries({ queryKey: ['admin', 'members'] }); qc.invalidateQueries({ queryKey: ['admin', 'supabaseCounts'] }); }
     else showToast('Delete failed.', 'error');
   }, true);
@@ -233,9 +237,17 @@ function ManageProjects({ showToast, openConfirm }: Props) {
     e.preventDefault();
     setSubmitting(true);
     try {
+      // Tags stored as JSON string in DB: backend expects JSON.stringify(array)
       const tagsArr = form.tags.split(',').map(t => t.trim()).filter(Boolean);
-      const body = { ...form, tags: tagsArr, author_id: form.author_id ? Number(form.author_id) : null };
-      const url = modal.editing ? getApiUrl(`/api/projects/${modal.editing.id}`) : getApiUrl('/api/projects');
+      const body = {
+        ...form,
+        tags: JSON.stringify(tagsArr),
+        author_id: form.author_id ? Number(form.author_id) : null,
+      };
+      // Backend routes: POST /api/admin/projects  |  PUT /api/admin/projects/{id}
+      const url = modal.editing
+        ? getApiUrl(`/api/admin/projects/${modal.editing.id}`)
+        : getApiUrl('/api/admin/projects');
       const method = modal.editing ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }, body: JSON.stringify(body), credentials: 'include' });
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.detail || 'Request failed'); }
@@ -248,7 +260,8 @@ function ManageProjects({ showToast, openConfirm }: Props) {
   };
 
   const handleDelete = (id: number) => openConfirm('Delete Project', 'This will permanently delete the project.', async () => {
-    const res = await fetch(getApiUrl(`/api/projects/${id}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
+    // Backend: DELETE /api/admin/projects/{id}
+    const res = await fetch(getApiUrl(`/api/admin/projects/${id}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
     if (res.ok) { showToast('Project deleted.', 'success'); qc.invalidateQueries({ queryKey: ['admin', 'projects'] }); qc.invalidateQueries({ queryKey: ['admin', 'supabaseCounts'] }); }
     else showToast('Delete failed.', 'error');
   }, true);

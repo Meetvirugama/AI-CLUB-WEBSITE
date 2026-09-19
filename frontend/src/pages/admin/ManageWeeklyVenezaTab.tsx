@@ -63,7 +63,10 @@ export default function ManageWeeklyVenezaTab({ showToast, openConfirm }: Props)
     e.preventDefault();
     setWeekSubmitting(true);
     try {
-      const url = editingWeek ? getApiUrl(`/api/weekly-veneza/${editingWeek.id}`) : getApiUrl('/api/weekly-veneza');
+      // Backend: POST /api/admin/weekly-veneza/weeks  |  PUT /api/admin/weekly-veneza/weeks/{id}
+      const url = editingWeek
+        ? getApiUrl(`/api/admin/weekly-veneza/weeks/${editingWeek.id}`)
+        : getApiUrl('/api/admin/weekly-veneza/weeks');
       const method = editingWeek ? 'PUT' : 'POST';
       const body = { ...weekForm, target_date: weekForm.target_date || null };
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }, body: JSON.stringify(body), credentials: 'include' });
@@ -76,13 +79,15 @@ export default function ManageWeeklyVenezaTab({ showToast, openConfirm }: Props)
   };
 
   const handleDeleteWeek = (id: number) => openConfirm('Delete Week', 'This will permanently delete the week and all its resources.', async () => {
-    const res = await fetch(getApiUrl(`/api/weekly-veneza/${id}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
+    // Backend: DELETE /api/admin/weekly-veneza/weeks/{id}
+    const res = await fetch(getApiUrl(`/api/admin/weekly-veneza/weeks/${id}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
     if (res.ok) { showToast('Week deleted.', 'success'); qc.invalidateQueries({ queryKey: ['admin', 'weeklyVeneza'] }); }
     else showToast('Delete failed.', 'error');
   }, true);
 
   const handleSetCurrentWeek = async (week: WeekRecord) => {
-    const res = await fetch(getApiUrl(`/api/weekly-veneza/${week.id}`), {
+    // Backend: PUT /api/admin/weekly-veneza/weeks/{id}
+    const res = await fetch(getApiUrl(`/api/admin/weekly-veneza/weeks/${week.id}`), {
       method: 'PUT', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ ...week, is_current: true }), credentials: 'include',
     });
@@ -95,7 +100,10 @@ export default function ManageWeeklyVenezaTab({ showToast, openConfirm }: Props)
     if (!resForm.week_id) { showToast('Please select a week.', 'error'); return; }
     setResSubmitting(true);
     try {
-      const url = editingRes ? getApiUrl(`/api/weekly-veneza/resources/${editingRes.id}`) : getApiUrl('/api/weekly-veneza/resources');
+      // Backend: POST /api/admin/weekly-veneza/resources  |  PUT /api/admin/weekly-veneza/resources/{id}
+      const url = editingRes
+        ? getApiUrl(`/api/admin/weekly-veneza/resources/${editingRes.id}`)
+        : getApiUrl('/api/admin/weekly-veneza/resources');
       const method = editingRes ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }, body: JSON.stringify({ ...resForm, est_minutes: Number(resForm.est_minutes), order_no: Number(resForm.order_no) }), credentials: 'include' });
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.detail || 'Request failed'); }
@@ -107,7 +115,8 @@ export default function ManageWeeklyVenezaTab({ showToast, openConfirm }: Props)
   };
 
   const handleDeleteRes = (resId: number) => openConfirm('Delete Resource', 'This will permanently delete this resource from the week.', async () => {
-    const res = await fetch(getApiUrl(`/api/weekly-veneza/resources/${resId}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
+    // Backend: DELETE /api/admin/weekly-veneza/resources/{id}
+    const res = await fetch(getApiUrl(`/api/admin/weekly-veneza/resources/${resId}`), { method: 'DELETE', headers: getAuthHeaders(), credentials: 'include' });
     if (res.ok) { showToast('Resource deleted.', 'success'); qc.invalidateQueries({ queryKey: ['admin', 'weeklyVeneza'] }); }
     else showToast('Delete failed.', 'error');
   }, true);
