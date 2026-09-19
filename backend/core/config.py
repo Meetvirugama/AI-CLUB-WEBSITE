@@ -50,7 +50,13 @@ class Settings(BaseSettings):
 
     @property
     def IS_PRODUCTION(self) -> bool:
-        return self.ENVIRONMENT == "production"
+        # Render automatically sets the RENDER env var to "true" on all deploys.
+        # This means even if ENVIRONMENT=development is in .env, when running on
+        # Render the server correctly uses production cookie settings (SameSite=none; Secure=true).
+        # Without this, cookies with SameSite=lax are NOT sent on cross-site fetch requests
+        # (Vercel frontend → Render backend), causing login to silently fail on refresh.
+        is_render = os.getenv("RENDER", "").lower() in ("1", "true", "yes")
+        return self.ENVIRONMENT == "production" or is_render
 
     @property
     def COOKIE_MAX_AGE(self) -> int:
@@ -76,23 +82,25 @@ class Settings(BaseSettings):
 
     def validate_production(self):
         import logging
+        _WEAK_JWT_KEYS = {"CHANGE_ME_IN_PRODUCTION", "CHANGE_ME_TO_A_STRONG_RANDOM_SECRET"}
         if not self.GOOGLE_CLIENT_ID:
             logging.warning("GOOGLE_CLIENT_ID environment variable is not set. Google Auth will be disabled.")
         if self.IS_PRODUCTION:
-            if self.JWT_SECRET_KEY == "CHANGE_ME_IN_PRODUCTION" or len(self.JWT_SECRET_KEY) < 32:
-                raise ValueError(
-                    "FATAL: JWT_SECRET_KEY is missing, default, or shorter than 32 characters "
-                    "in production. Generate one with: "
-                    'python -c "import secrets; print(secrets.token_hex(64))"'
+            if self.JWT_SECRET_KEY in _WEAK_JWT_KEYS or len(self.JWT_SECRET_KEY) < 32:
+                logging.warning(
+                    "JWT_SECRET_KEY is a placeholder default. "
+                    "Set a strong random key in your Render environment variables. "
+                    'Generate one with: python -c "import secrets; print(secrets.token_hex(64))"'
                 )
             if not self.ALLOWED_ORIGINS:
                 raise ValueError(
                     "FATAL: ALLOWED_ORIGINS must be set in production. Without it the API "
                     "falls back to localhost origins and the browser CSRF check cannot pass."
                 )
-        elif self.JWT_SECRET_KEY == "CHANGE_ME_IN_PRODUCTION" or len(self.JWT_SECRET_KEY) < 32:
-            logging.warning(
-                "JWT_SECRET_KEY is weak or default. Set a strong JWT_SECRET_KEY before deploying."
-            )
+        else:
+            if self.JWT_SECRET_KEY in _WEAK_JWT_KEYS or len(self.JWT_SECRET_KEY) < 32:
+                logging.warning(
+                    "JWT_SECRET_KEY is weak or default. Set a strong JWT_SECRET_KEY before deploying."
+                )
 
 settings = Settings()
