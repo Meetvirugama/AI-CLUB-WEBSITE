@@ -825,7 +825,6 @@ const Admin = () => {
           </div>
         )}
       </AnimatePresence>
-      </>
     </>
   );
 };
