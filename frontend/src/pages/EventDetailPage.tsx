@@ -395,8 +395,7 @@ export default function EventDetailPage() {
 
   // ── Error ──────────────────────────────────────────────────────────────────
   if (error || !event) return (
-    <div style={{ background: 'hsl(228,28%,95%)', minHeight: '100vh' }}>
-      <Navbar />
+    <div style={{ background: 'hsl(228,28%,95%)', minHeight: '100vh', paddingTop: '56px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', gap: 16, fontFamily: 'Inter, sans-serif' }}>
         <AlertCircle size={40} style={{ color: 'hsl(0,70%,50%)' }} />
         <h2 style={{ color: 'hsl(230,25%,12%)', fontFamily: 'Playfair Display, Georgia, serif' }}>Event not found</h2>
@@ -415,8 +414,7 @@ export default function EventDetailPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div style={{ background: 'hsl(228,28%,95%)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Navbar />
+    <div style={{ background: 'hsl(228,28%,95%)', minHeight: '100vh', display: 'flex', flexDirection: 'column', paddingTop: '56px' }}>
 
       {/* ── Hero banner image ───────────────────────────────────────────────── */}
       {bannerSrc && (
@@ -452,7 +450,7 @@ export default function EventDetailPage() {
         </div>
       )}
 
-      <main style={{ flex: 1, maxWidth: 960, margin: '0 auto', width: '100%', padding: '2.5rem 1.5rem 4rem' }}>
+      <main style={{ flex: 1, maxWidth: 960, margin: '0 auto', width: '100%', padding: '2.5rem 1.5rem 6rem' }}>
 
         {/* ── Back button ──────────────────────────────────────────────────── */}
         <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
