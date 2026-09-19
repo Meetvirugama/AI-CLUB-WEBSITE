@@ -88,19 +88,17 @@ function ManageMembers({ showToast, openConfirm }: Props) {
     else showToast('Delete failed.', 'error');
   }, true);
 
-  const inp = 'w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors';
+  const inp = 'w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 transition-colors';
 
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-bold font-display text-foreground">Manage Core Members</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{members.length} member{members.length !== 1 ? 's' : ''}</p>
+          <h2 className="text-xl font-bold font-display text-slate-900">Manage Core Members</h2>
+          <p className="text-xs text-slate-500 mt-0.5">{members.length} member{members.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search…" className="pl-7 pr-3 py-1.5 border border-border rounded-lg text-xs bg-background text-foreground outline-none focus:border-primary w-36" />
           </div>
           <button onClick={startAdd} className="px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/95 transition-colors whitespace-nowrap">
@@ -114,7 +112,7 @@ function ManageMembers({ showToast, openConfirm }: Props) {
       ) : filtered.length === 0 ? (
         <p className="text-slate-500 text-center py-12">{search ? 'No members match your search.' : 'No core members found. Click "Add New Member" to add one.'}</p>
       ) : (
-        <div className="max-h-[500px] overflow-y-auto overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-sm custom-scrollbar">
+        <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead className="sticky top-0 bg-slate-100 z-10 border-b border-slate-200">
               <tr className="text-slate-700 text-xs uppercase tracking-wider font-semibold">
@@ -157,9 +155,9 @@ function ManageMembers({ showToast, openConfirm }: Props) {
       {modal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={modal.close} />
-          <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto text-left">
-            <h3 className="font-display font-extrabold text-foreground text-lg mb-2">{modal.editing ? 'Edit Member' : 'Add New Member'}</h3>
-            <p className="text-xs text-muted-foreground mb-6">Configure details for the core AI Club member.</p>
+          <div className="relative w-full max-w-lg rounded-2xl bg-white border border-slate-200 p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto text-left">
+            <h3 className="font-display font-extrabold text-slate-900 text-lg mb-2">{modal.editing ? 'Edit Member' : 'Add New Member'}</h3>
+            <p className="text-xs text-slate-500 mb-6">Configure details for the core AI Club member.</p>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-muted-foreground mb-1">Name</label>
@@ -196,8 +194,8 @@ function ManageMembers({ showToast, openConfirm }: Props) {
                 <textarea rows={3} value={form.description} onChange={e => setForm({...form, description: e.target.value})} className={inp + ' resize-none'} placeholder="Brief description…" />
               </div>
               <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={modal.close} className="px-4 py-2 text-xs font-semibold rounded-lg bg-secondary text-foreground hover:bg-secondary/80">Cancel</button>
-                <button type="submit" disabled={submitting} className="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/95 flex items-center gap-1.5">
+                <button type="button" onClick={modal.close} className="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">Cancel</button>
+                <button type="submit" disabled={submitting} className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-1.5">
                   {submitting && <Loader2 size={12} className="animate-spin" />}
                   {submitting ? 'Saving…' : 'Save Member'}
                 </button>
@@ -282,7 +280,7 @@ function ManageProjects({ showToast, openConfirm }: Props) {
       ) : projects.length === 0 ? (
         <p className="text-muted-foreground text-center py-12">No projects found. Click "Add New Project" to add one.</p>
       ) : (
-        <div className="max-h-[500px] overflow-y-auto overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-sm custom-scrollbar">
+        <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead className="sticky top-0 bg-slate-50 z-10 border-b border-slate-200">
               <tr className="text-slate-600 text-xs uppercase tracking-wider font-semibold">
@@ -316,9 +314,9 @@ function ManageProjects({ showToast, openConfirm }: Props) {
       {modal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={modal.close} />
-          <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto text-left">
-            <h3 className="font-display font-extrabold text-foreground text-lg mb-2">{modal.editing ? 'Edit Project' : 'Add New Project'}</h3>
-            <p className="text-xs text-muted-foreground mb-6">Configure details for the student-made AI Club project.</p>
+          <div className="relative w-full max-w-lg rounded-2xl bg-white border border-slate-200 p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto text-left">
+            <h3 className="font-display font-extrabold text-slate-900 text-lg mb-2">{modal.editing ? 'Edit Project' : 'Add New Project'}</h3>
+            <p className="text-xs text-slate-500 mb-6">Configure details for the student-made AI Club project.</p>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-muted-foreground mb-1">Project Title</label>
@@ -354,8 +352,8 @@ function ManageProjects({ showToast, openConfirm }: Props) {
                 <textarea rows={4} value={form.description} onChange={e => setForm({...form, description: e.target.value})} className={inp + ' resize-none'} placeholder="What does the project do, tech stack, metrics…" />
               </div>
               <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={modal.close} className="px-4 py-2 text-xs font-semibold rounded-lg bg-secondary text-foreground hover:bg-secondary/80">Cancel</button>
-                <button type="submit" disabled={submitting} className="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/95 flex items-center gap-1.5">
+                <button type="button" onClick={modal.close} className="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">Cancel</button>
+                <button type="submit" disabled={submitting} className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-1.5">
                   {submitting && <Loader2 size={12} className="animate-spin" />}
                   {submitting ? 'Saving…' : 'Save Project'}
                 </button>
