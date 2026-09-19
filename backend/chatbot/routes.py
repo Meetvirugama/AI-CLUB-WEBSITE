@@ -15,6 +15,7 @@ from auth.middleware import get_optional_user
 from chatbot.provider import provider_manager
 from chatbot.analytics.queries import log_chat_event
 from chatbot.rag.retriever import retrieve_relevant_chunks, format_rag_context
+from security import RateLimiter, client_ip
 from chatbot.context import build_chatbot_context_filtered, CLUB_STATIC_INFO, _get_greeting_reply, _get_navigation_reply, NAVIGATION_ALLOWLIST, _get_faq_reply
 
 router = APIRouter()
@@ -36,11 +37,27 @@ class CacheEntry:
 
 _STREAMING_CACHE: Dict[str, CacheEntry] = {}
 
-def _get_cache_key(user_message: str, history: List['ChatMessage']) -> str:
+# Entries live for 24h, so without a ceiling a client sending unique messages
+# could grow this dict until the process runs out of memory.
+_MAX_CACHE_ENTRIES = 500
+
+
+def _get_cache_key(user_message: str, history: List['ChatMessage'], is_admin: bool) -> str:
+    """
+    Cache key for a chatbot answer.
+
+    `is_admin` is part of the key even though every answer is currently built
+    from public data only. Responses are shared across users, so if the context
+    builder ever becomes permission-aware, keying on the message alone would
+    serve one user's answer to another. Partitioning now makes that failure
+    mode impossible rather than latent.
+    """
     key_str = user_message.lower().strip() + "|"
     for h in history:
         key_str += f"{h.role}:{h.content}|"
+    key_str += f"admin={is_admin}"
     return hashlib.sha256(key_str.encode()).hexdigest()
+
 
 def _clean_cache():
     now = time.time()
@@ -48,9 +65,17 @@ def _clean_cache():
     for k in expired:
         del _STREAMING_CACHE[k]
 
+    # Evict the soonest-to-expire entries once over the ceiling.
+    if len(_STREAMING_CACHE) > _MAX_CACHE_ENTRIES:
+        overflow = len(_STREAMING_CACHE) - _MAX_CACHE_ENTRIES
+        for k in sorted(_STREAMING_CACHE, key=lambda k: _STREAMING_CACHE[k].expires_at)[:overflow]:
+            del _STREAMING_CACHE[k]
+
 # --- RATE LIMITING ---
-CHAT_RATE_LIMITS: Dict[str, Tuple[int, float]] = {}
+# Each chat request can cost an upstream LLM call, so this is a spend control
+# as much as an abuse control.
 MAX_REQUESTS_PER_MINUTE = 20
+_chat_limiter = RateLimiter(max_requests=MAX_REQUESTS_PER_MINUTE, window_seconds=60)
 
 # --- DATA MODELS ---
 class ChatMessage(BaseModel):
@@ -148,25 +173,10 @@ async def club_chat(
     current_user=Depends(get_optional_user),
 ):
     # ── Rate Limiting ──────────────────────────────────────────────────────
-    client_ip = http_request.client.host if http_request.client else "unknown"
-    now = time.time()
-
-    # Clean up old rate-limit records periodically
-    if len(CHAT_RATE_LIMITS) > 1000:
-        keys_to_delete = [k for k, v in CHAT_RATE_LIMITS.items() if now - v[1] > 60]
-        for k in keys_to_delete:
-            del CHAT_RATE_LIMITS[k]
-
-    count, start_time = CHAT_RATE_LIMITS.get(client_ip, (0, now))
-    if now - start_time > 60:
-        count = 1
-        start_time = now
-    else:
-        count += 1
-
-    CHAT_RATE_LIMITS[client_ip] = (count, start_time)
-
-    if count > MAX_REQUESTS_PER_MINUTE:
+    # client_ip() reads X-Forwarded-For when TRUST_PROXY is set. Without that,
+    # every request behind Render/Vercel reports the proxy's address and the
+    # whole site shares one bucket — a single user could lock out everyone.
+    if not _chat_limiter.check(client_ip(http_request)):
         raise HTTPException(
             status_code=429,
             detail="Too many requests. Please wait a moment before sending another message."
@@ -338,7 +348,7 @@ PROMPT INJECTION DEFENSE:
 
     # ── Check Cache ────────────────────────────────────────────────────────
     _clean_cache()
-    cache_key = _get_cache_key(user_message, history_turns)
+    cache_key = _get_cache_key(user_message, history_turns, bool(current_user and current_user.is_admin))
     if cache_key in _STREAMING_CACHE:
         cached = _STREAMING_CACHE[cache_key]
         async def cached_event_generator():

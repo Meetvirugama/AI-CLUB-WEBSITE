@@ -149,13 +149,15 @@ class TestRateLimiting:
     @pytest.mark.asyncio
     async def test_rate_limit_triggers_429(self, mocker):
         """After MAX_REQUESTS_PER_MINUTE requests, endpoint returns 429."""
-        from chatbot.routes import CHAT_RATE_LIMITS, MAX_REQUESTS_PER_MINUTE
+        from chatbot.routes import _chat_limiter, MAX_REQUESTS_PER_MINUTE
         from main import app
         from httpx import AsyncClient, ASGITransport
 
-        # Directly inject a maxed-out rate limit record for the test IP
+        # Exhaust the limiter for the test client's IP through its public API.
         test_ip = "127.0.0.1"
-        CHAT_RATE_LIMITS[test_ip] = (MAX_REQUESTS_PER_MINUTE + 1, time.time())
+        for _ in range(MAX_REQUESTS_PER_MINUTE):
+            assert _chat_limiter.check(test_ip) is True
+        assert _chat_limiter.check(test_ip) is False
 
         mocker.patch(
             "chatbot.provider.provider_manager.generate_stream",
@@ -167,7 +169,7 @@ class TestRateLimiting:
 
         assert resp.status_code == 429
         # Cleanup
-        CHAT_RATE_LIMITS.pop(test_ip, None)
+        _chat_limiter._hits.pop(test_ip, None)
 
 
 class TestAnalyticsProtection:
