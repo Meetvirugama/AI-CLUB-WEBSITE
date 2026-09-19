@@ -3635,7 +3635,7 @@ const Admin = () => {
                                 ) : typeof val === 'boolean' ? (
                                   <span>{val ? 'Yes' : 'No'}</span>
                                 ) : (
-                                  <span className="whitespace-pre-wrap">{String(val)}</span>
+                                  <span className="whitespace-pre-wrap">{String(val).replace(/^(\d+)\.0$/, '$1')}</span>
                                 )}
                               </div>
                             </div>

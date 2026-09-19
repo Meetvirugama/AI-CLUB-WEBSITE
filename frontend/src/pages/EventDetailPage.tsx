@@ -234,7 +234,11 @@ export default function EventDetailPage() {
             // otherwise fall back to user profile fields
             fields.forEach(f => {
               if (existingFlat[f.label] !== undefined) {
-                init[f.id] = existingFlat[f.label];
+                let val = existingFlat[f.label];
+                if (typeof val === 'string') {
+                  val = val.replace(/^(\d+)\.0$/, '$1');
+                }
+                init[f.id] = val;
               } else {
                 init[f.id] = f.field_type === 'checkbox' ? [] : '';
               }

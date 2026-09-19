@@ -2,10 +2,17 @@ import { useQuery } from '@tanstack/react-query';
 import { getApiUrl, getAuthHeaders } from '../../lib/api';
 import { api } from '../../lib/apiClient';
 
+export interface DashboardMetrics {
+  total_events: number;
+  total_registrations: number;
+  active_events: number;
+  upcoming_events: number;
+}
+
 export const useDashboardStats = () => {
-  return useQuery({
+  return useQuery<DashboardMetrics>({
     queryKey: ['admin', 'dashboardMetrics'],
-    queryFn: () => api.get('/api/admin/dashboard'),
+    queryFn: () => api.get('/api/admin/dashboard') as Promise<DashboardMetrics>,
   });
 };
 
