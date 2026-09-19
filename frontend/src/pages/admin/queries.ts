@@ -94,5 +94,145 @@ export const useAdminRegistrations = (eventId: number | '', search: string, page
   });
 };
 
+// ─── Chatbot Analytics Types ──────────────────────────────────────────────────
+
+export interface ChatOverview {
+  today_requests: number;
+  today_successful: number;
+  today_failed: number;
+  today_input_tokens: number;
+  today_output_tokens: number;
+  today_total_tokens: number;
+  today_avg_latency_ms: number | null;
+  today_success_rate: number | null;
+  today_fallbacks: number;
+  today_rate_limited: number;
+  total_requests: number;
+  total_tokens: number;
+  groq_keys_total: number;
+  gemini_keys_total: number;
+  provider_pool_ready: boolean;
+}
+
+export interface DailyUsagePoint {
+  date: string;
+  total_requests: number;
+  successful: number;
+  failed: number;
+  rate_limited: number;
+  fallbacks: number;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  groq_requests: number;
+  gemini_requests: number;
+  avg_latency_ms: number | null;
+}
+
+export interface DailyUsageResponse {
+  days: number;
+  data: DailyUsagePoint[];
+}
+
+export interface ProviderSummary {
+  provider: string;
+  requests: number;
+  successes: number;
+  failures: number;
+  rate_limits: number;
+  fallbacks: number;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  success_rate: number | null;
+  avg_latency_ms: number | null;
+}
+
+export interface ModelSummary {
+  provider: string;
+  model: string;
+  requests: number;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  failures: number;
+  avg_latency_ms: number | null;
+}
+
+export interface ProvidersResponse {
+  days: number;
+  providers: ProviderSummary[];
+  models: ModelSummary[];
+}
+
+export interface CategoryBreakdown {
+  knowledge: number;
+  navigation: number;
+  greeting: number;
+  out_of_scope: number;
+  restricted: number;
+  no_answer: number;
+  error: number;
+  total: number;
+}
+
+export interface CategoriesResponse {
+  days: number;
+  categories: CategoryBreakdown;
+}
+
+export interface ActivityEntry {
+  id: number;
+  created_at: string;
+  request_type: string;
+  provider: string | null;
+  model: string | null;
+  key_label: string | null;
+  input_tokens: number;
+  output_tokens: number;
+  latency_ms: number | null;
+  status: string;
+  fallback_used: boolean;
+}
+
+export interface ActivityResponse {
+  limit: number;
+  events: ActivityEntry[];
+}
+
+// ─── Chatbot Analytics Hooks ──────────────────────────────────────────────────
+
+export const useChatbotOverview = () =>
+  useQuery<ChatOverview>({
+    queryKey: ['admin', 'chatbot', 'overview'],
+    queryFn: () => api.get('/api/admin/chatbot/overview') as Promise<ChatOverview>,
+    refetchInterval: 30_000,
+  });
+
+export const useChatbotUsage = (days: number) =>
+  useQuery<DailyUsageResponse>({
+    queryKey: ['admin', 'chatbot', 'usage', days],
+    queryFn: () => api.get(`/api/admin/chatbot/usage?days=${days}`) as Promise<DailyUsageResponse>,
+  });
+
+export const useChatbotProviders = (days: number) =>
+  useQuery<ProvidersResponse>({
+    queryKey: ['admin', 'chatbot', 'providers', days],
+    queryFn: () => api.get(`/api/admin/chatbot/providers?days=${days}`) as Promise<ProvidersResponse>,
+  });
+
+export const useChatbotCategories = (days: number) =>
+  useQuery<CategoriesResponse>({
+    queryKey: ['admin', 'chatbot', 'categories', days],
+    queryFn: () => api.get(`/api/admin/chatbot/categories?days=${days}`) as Promise<CategoriesResponse>,
+  });
+
+export const useChatbotActivity = (limit = 50) =>
+  useQuery<ActivityResponse>({
+    queryKey: ['admin', 'chatbot', 'activity', limit],
+    queryFn: () => api.get(`/api/admin/chatbot/activity?limit=${limit}`) as Promise<ActivityResponse>,
+    refetchInterval: 30_000,
+  });
+
 // Keep getAuthHeaders and getApiUrl re-exported for RegistrationsTab direct fetch calls
 export { getAuthHeaders, getApiUrl };
