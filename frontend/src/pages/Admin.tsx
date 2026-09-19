@@ -393,25 +393,7 @@ const Admin = () => {
               </span>
             </div>
 
-            {/* Right: user badge + back button */}
-            <div className="flex items-center gap-2 ml-auto">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200">
-                <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
-                >
-                  {user?.name?.slice(0, 1).toUpperCase() || 'A'}
-                </div>
-                <span className="text-[11px] font-medium text-slate-600 max-w-[120px] truncate">{user?.name}</span>
-              </div>
-              <button
-                onClick={() => navigate('/')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 transition-colors"
-                title="Back to website"
-              >
-                <LogOut size={13} />
-                <span className="hidden sm:block">Exit</span>
-              </button>
-            </div>
+            {/* Removed duplicate top-right user badge and exit button, since they are already in the sidebar */}
           </header>
 
           {/* Tab content */}
