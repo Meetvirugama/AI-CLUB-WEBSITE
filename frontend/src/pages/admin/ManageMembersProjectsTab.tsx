@@ -14,12 +14,12 @@ interface Props {
 // Shared utilities
 // ──────────────────────────────────────────────────────────────────────────────
 
-type ModalState<T> = { open: boolean; editing: T | null };
+type ModalState<T> = { isOpen: boolean; editing: T | null };
 
 function useModalState<T>() {
-  const [state, setState] = useState<ModalState<T>>({ open: false, editing: null });
-  const open = (editing: T | null = null) => setState({ open: true, editing });
-  const close = () => setState({ open: false, editing: null });
+  const [state, setState] = useState<ModalState<T>>({ isOpen: false, editing: null });
+  const open = (editing: T | null = null) => setState({ isOpen: true, editing });
+  const close = () => setState({ isOpen: false, editing: null });
   return { ...state, open, close };
 }
 
@@ -154,7 +154,7 @@ function ManageMembers({ showToast, openConfirm }: Props) {
         </div>
       )}
 
-      {modal.open && (
+      {modal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={modal.close} />
           <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto text-left">
@@ -313,7 +313,7 @@ function ManageProjects({ showToast, openConfirm }: Props) {
         </div>
       )}
 
-      {modal.open && (
+      {modal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={modal.close} />
           <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto text-left">
