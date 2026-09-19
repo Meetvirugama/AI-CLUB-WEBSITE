@@ -3,7 +3,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import { Loader2, ShieldAlert } from "lucide-react";
 import aiClubLogo from "@/assets/ai-club-logo.png";
 import { useAuth } from "../contexts/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 
 interface AuthBarrierProps {
   children: React.ReactNode;
@@ -11,7 +11,7 @@ interface AuthBarrierProps {
 }
 
 export default function AuthBarrier({ children, requireAdmin = false }: AuthBarrierProps) {
-  const { isAuthenticated, isAdmin, isLoading, login } = useAuth();
+  const { isAuthenticated, isAdmin, isLoading, login, logout, user } = useAuth();
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
@@ -106,7 +106,33 @@ export default function AuthBarrier({ children, requireAdmin = false }: AuthBarr
 
   // Enforce admin check if requested
   if (requireAdmin && !isAdmin) {
-    return <Navigate to="/" replace />;
+    return (
+      <div className="fixed inset-0 bg-[#07090e] flex items-center justify-center p-4 z-[9999] overflow-hidden">
+        <div className="relative w-full max-w-md bg-card/60 backdrop-blur-2xl border border-border/80 rounded-3xl p-8 md:p-10 shadow-2xl overflow-hidden flex flex-col items-center">
+          <ShieldAlert className="w-12 h-12 text-destructive mb-4 animate-pulse" />
+          <h2 className="text-2xl font-bold tracking-tight text-foreground text-center mb-2">
+            Access Denied
+          </h2>
+          <p className="text-sm text-muted-foreground text-center mb-8 max-w-xs leading-relaxed">
+            You are signed in as <span className="font-semibold text-foreground">{user?.email}</span>, but this account does not have admin privileges.
+          </p>
+          <div className="w-full flex flex-col gap-3 relative z-10">
+            <button
+              onClick={() => logout()}
+              className="w-full py-2.5 px-4 bg-destructive text-destructive-foreground rounded-full text-sm font-semibold hover:bg-destructive/90 transition-colors"
+            >
+              Sign out and try another account
+            </button>
+            <Link
+              to="/"
+              className="w-full py-2.5 px-4 bg-secondary text-secondary-foreground rounded-full text-sm font-semibold hover:bg-secondary/80 transition-colors text-center text-decoration-none"
+            >
+              Return to Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;

@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuth = async () => {
     try {
-      const data = await api.get<{ authenticated: boolean; user: AuthUser }>('/api/auth/me');
+      const data = await api.get<{ authenticated: boolean; user: AuthUser }>('/api/auth/me', { cache: 'no-store' });
       if (data.authenticated && data.user) {
         setUser(data.user);
         setIsAuthenticated(true);
@@ -80,7 +80,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(data.user);
         setIsAuthenticated(true);
         setIsAdmin(!!data.user.is_admin);
-        window.dispatchEvent(new Event('auth-change'));
       } else {
         throw new Error(data.message || 'Login failed');
       }
@@ -102,7 +101,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAuthenticated(false);
       setIsAdmin(false);
       setIsLoading(false);
-      window.dispatchEvent(new Event('auth-change'));
       // Hard reload to home so Google One Tap resets and no stale state remains
       window.location.href = '/';
     }
