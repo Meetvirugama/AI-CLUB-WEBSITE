@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api } from '../lib/apiClient';
+import { googleLogout } from '@react-oauth/google';
 
 export interface AuthUser {
   id: number;
@@ -101,6 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAuthenticated(false);
       setIsAdmin(false);
       setIsLoading(false);
+      googleLogout();
       // Hard reload to home so Google One Tap resets and no stale state remains
       window.location.href = '/';
     }
