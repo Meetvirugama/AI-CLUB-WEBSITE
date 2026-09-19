@@ -99,9 +99,11 @@ function ManageMembers({ showToast, openConfirm }: Props) {
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
-              placeholder="Search…" className="pl-7 pr-3 py-1.5 border border-border rounded-lg text-xs bg-background text-foreground outline-none focus:border-primary w-36" />
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search…" className="pl-7 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-slate-50 text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 w-36 transition-colors" />
           </div>
-          <button onClick={startAdd} className="px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/95 transition-colors whitespace-nowrap">
+          <button onClick={startAdd} className="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap">
             Add New Member
           </button>
         </div>
@@ -264,13 +266,16 @@ function ManageProjects({ showToast, openConfirm }: Props) {
     else showToast('Delete failed.', 'error');
   }, true);
 
-  const inp = 'w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors';
+  const inp = 'w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 transition-colors';
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold font-display text-foreground">Manage Projects</h2>
-        <button onClick={startAdd} className="px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/95 transition-colors">
+        <div>
+          <h2 className="text-xl font-bold font-display text-slate-900">Manage Projects</h2>
+          <p className="text-xs text-slate-500 mt-0.5">{projects.length} project{projects.length !== 1 ? 's' : ''}</p>
+        </div>
+        <button onClick={startAdd} className="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
           Add New Project
         </button>
       </div>
