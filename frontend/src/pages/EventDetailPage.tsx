@@ -233,15 +233,8 @@ export default function EventDetailPage() {
             // Pre-fill from existing registration responses if available,
             // otherwise fall back to user profile fields
             fields.forEach(f => {
-              const ll = f.label.toLowerCase();
               if (existingFlat[f.label] !== undefined) {
                 init[f.id] = existingFlat[f.label];
-              } else if (ll.includes('name') && authUser?.name) {
-                init[f.id] = authUser.name;
-              } else if (ll.includes('email') && authUser?.email) {
-                init[f.id] = authUser.email;
-              } else if ((ll.includes('student') || ll.includes('id')) && authUser?.student_id) {
-                init[f.id] = authUser.student_id;
               } else {
                 init[f.id] = f.field_type === 'checkbox' ? [] : '';
               }
@@ -808,7 +801,7 @@ export default function EventDetailPage() {
 
                 ) : (
                   /* ── Register form (new registration OR edit mode) ───── */
-                  <form onSubmit={isEditMode ? handleUpdate : handleSubmit} style={{ padding: '1.75rem 2rem' }}>
+                  <form onSubmit={isEditMode ? handleUpdate : handleSubmit} style={{ padding: '1.75rem 2rem' }} autoComplete="off">
 
                     {/* Edit mode top bar */}
                     {isEditMode && (
@@ -886,11 +879,11 @@ export default function EventDetailPage() {
                               ))}
                             </div>
                           ) : field.field_type === 'textarea' ? (
-                            <textarea required={field.required} placeholder={field.placeholder} value={responses[field.id] || ''} onChange={e => handleInputChange(field.id, e.target.value)} rows={3}
+                            <textarea required={field.required} placeholder={field.placeholder} value={responses[field.id] || ''} onChange={e => handleInputChange(field.id, e.target.value)} rows={3} autoComplete="off"
                               style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
                           ) : (
                             <input type={field.field_type === 'number' ? 'number' : field.field_type === 'email' ? 'email' : field.field_type === 'phone' ? 'tel' : 'text'}
-                              required={field.required} placeholder={field.placeholder} value={responses[field.id] || ''} onChange={e => handleInputChange(field.id, e.target.value)}
+                              required={field.required} placeholder={field.placeholder} value={responses[field.id] || ''} onChange={e => handleInputChange(field.id, e.target.value)} autoComplete="off"
                               style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' }} />
                           )}
                         </div>
@@ -902,14 +895,14 @@ export default function EventDetailPage() {
                           <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', fontWeight: 700, color: 'hsl(243,75%,40%)', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: 6 }}>
                             <Users size={15} /> Team Details ({event.min_team_size}–{event.max_team_size} members total)
                           </h3>
-                          <input type="text" placeholder="Team name *" value={teamName} onChange={e => setTeamName(e.target.value)} required
+                          <input type="text" placeholder="Team name *" value={teamName} onChange={e => setTeamName(e.target.value)} required autoComplete="off"
                             style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', marginBottom: '0.85rem', boxSizing: 'border-box' }} />
                           {teamMembers.map((m, i) => (
                             <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                              <input type="text" placeholder={`Member ${i + 1} name`} value={m.name}
+                              <input type="text" placeholder={`Member ${i + 1} name`} value={m.name} autoComplete="off"
                                 onChange={e => setTeamMembers(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
                                 style={{ flex: 1, padding: '8px 10px', borderRadius: 7, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem' }} />
-                              <input type="email" placeholder={`Member ${i + 1} email`} value={m.email}
+                              <input type="email" placeholder={`Member ${i + 1} email`} value={m.email} autoComplete="off"
                                 onChange={e => setTeamMembers(prev => prev.map((x, j) => j === i ? { ...x, email: e.target.value } : x))}
                                 style={{ flex: 1, padding: '8px 10px', borderRadius: 7, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem' }} />
                               {teamMembers.length > 1 && (
