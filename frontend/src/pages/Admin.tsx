@@ -642,11 +642,6 @@ const Admin = () => {
           </motion.div>
         )}
       </AnimatePresence>
-            <span className="text-xs font-medium">{toast.message}</span>
-            <button onClick={() => setToast(prev => ({ ...prev, isOpen: false }))} className="text-muted-foreground hover:text-foreground text-xs ml-2">✕</button>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ── Confirm Modal ─────────────────────────────────────────────────────── */}
       <AnimatePresence>
