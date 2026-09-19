@@ -2,11 +2,27 @@ import { useQuery } from '@tanstack/react-query';
 import { getApiUrl, getAuthHeaders } from '../../lib/api';
 import { api } from '../../lib/apiClient';
 
+export interface RecentRegistration {
+  id: number;
+  user_name: string;
+  event_title: string;
+  created_at: string;
+  payment_status: string;
+}
+
 export interface DashboardMetrics {
   total_events: number;
   total_registrations: number;
   active_events: number;
   upcoming_events: number;
+  recent_registrations: RecentRegistration[];
+}
+
+export interface AdminEvent {
+  id: number;
+  title: string;
+  date?: string;
+  [key: string]: unknown;
 }
 
 export const useDashboardStats = () => {
@@ -53,9 +69,9 @@ export const useSupabaseCounts = () => {
 };
 
 export const useAdminEvents = () => {
-  return useQuery({
+  return useQuery<AdminEvent[]>({
     queryKey: ['admin', 'events'],
-    queryFn: () => api.get('/api/events?limit=100'),
+    queryFn: () => api.get('/api/events?limit=100') as Promise<AdminEvent[]>,
   });
 };
 
