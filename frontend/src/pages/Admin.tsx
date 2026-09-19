@@ -289,30 +289,38 @@ const Admin = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-[#0a0f1e] text-slate-100 flex" style={{ fontFamily: "'Inter', sans-serif" }}>
+      {/* Root wrapper: full viewport height, no scroll on the shell itself */}
+      <div className="h-screen flex overflow-hidden" style={{ fontFamily: "'Inter', sans-serif", background: '#f1f5f9' }}>
 
-        {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-        <aside className={`fixed inset-y-0 left-0 z-40 w-60 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:flex`}
-          style={{ background: 'linear-gradient(180deg, #0d1426 0%, #0a0f1e 100%)', borderRight: '1px solid rgba(99,102,241,0.12)' }}
+        {/* ── Sidebar — truly fixed, never scrolls ────────────────── */}
+        <aside
+          className={`fixed inset-y-0 left-0 z-40 w-60 flex flex-col transition-transform duration-300 ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0`}
+          style={{
+            background: 'linear-gradient(180deg, #0d1426 0%, #111827 100%)',
+            borderRight: '1px solid rgba(99,102,241,0.15)',
+            boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
+          }}
         >
           {/* Logo */}
-          <div className="px-5 py-5 flex items-center gap-3" style={{ borderBottom: '1px solid rgba(99,102,241,0.1)' }}>
+          <div className="px-5 py-4 flex items-center gap-3 shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', boxShadow: '0 0 20px rgba(99,102,241,0.4)' }}
+              style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', boxShadow: '0 0 16px rgba(99,102,241,0.5)' }}
             >
               <LayoutDashboard size={17} className="text-white" />
             </div>
             <div>
-              <p className="text-[13px] font-bold text-white tracking-tight">Admin Console</p>
-              <p className="text-[10px] text-slate-500 font-mono mt-0.5">AI Club · DA-IICT</p>
+              <p className="text-[13px] font-bold text-white tracking-tight leading-tight">Admin Console</p>
+              <p className="text-[10px] text-slate-500 font-mono">AI Club · DA-IICT</p>
             </div>
           </div>
 
-          {/* Nav */}
-          <nav className="flex-1 overflow-y-auto py-4 px-2 custom-scrollbar">
+          {/* Scrollable nav */}
+          <nav className="flex-1 overflow-y-auto py-3 px-2 custom-scrollbar">
             {sections.map(section => (
               <div key={section} className="mb-1">
-                <p className="text-[9px] uppercase font-bold tracking-widest text-slate-600 px-3 py-2 font-mono">{section}</p>
+                <p className="text-[9px] uppercase font-bold tracking-widest text-slate-600 px-3 py-1.5 font-mono">{section}</p>
                 {NAV_ITEMS.filter(i => i.section === section).map(item => (
                   <button
                     key={item.id}
@@ -323,12 +331,12 @@ const Admin = () => {
                         : 'text-slate-500 hover:text-slate-200 hover:bg-white/5'
                     }`}
                     style={activeTab === item.id ? {
-                      background: 'linear-gradient(90deg, rgba(99,102,241,0.25) 0%, rgba(99,102,241,0.08) 100%)',
+                      background: 'linear-gradient(90deg, rgba(99,102,241,0.3) 0%, rgba(99,102,241,0.08) 100%)',
                       borderLeft: '2px solid #6366f1',
                     } : {}}
                   >
-                    <span className={activeTab === item.id ? 'text-indigo-400' : 'text-slate-600 group-hover:text-slate-300'}>{item.icon}</span>
-                    {item.label}
+                    <span className={activeTab === item.id ? 'text-indigo-400' : 'text-slate-600 group-hover:text-slate-300 shrink-0'}>{item.icon}</span>
+                    <span className="truncate">{item.label}</span>
                     {activeTab === item.id && (
                       <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" style={{ boxShadow: '0 0 6px #6366f1' }} />
                     )}
@@ -338,8 +346,8 @@ const Admin = () => {
             ))}
           </nav>
 
-          {/* User footer */}
-          <div className="p-3 mx-2 mb-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          {/* User card — pinned at bottom */}
+          <div className="p-3 mx-2 mb-3 rounded-xl shrink-0" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
                 style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
@@ -351,7 +359,7 @@ const Admin = () => {
                 <p className="text-[10px] text-slate-500 truncate">{user?.email || ''}</p>
               </div>
               <button onClick={() => navigate('/')} title="Back to Site"
-                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-colors shrink-0"
               >
                 <LogOut size={13} />
               </button>
@@ -359,54 +367,56 @@ const Admin = () => {
           </div>
         </aside>
 
-        {/* Sidebar backdrop (mobile) */}
-        {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />}
+        {/* Sidebar mobile backdrop */}
+        {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
-        {/* ── Main content ────────────────────────────────────────────────── */}
-        <main className="flex-1 min-w-0 flex flex-col bg-[#080d1a]">
-          {/* Top header bar */}
-          <div className="flex items-center justify-between px-6 py-3 shrink-0"
-            style={{ background: 'rgba(13,20,38,0.9)', borderBottom: '1px solid rgba(99,102,241,0.1)', backdropFilter: 'blur(12px)' }}
+        {/* ── Main — offset by sidebar width on desktop, fully scrollable ── */}
+        <div className="flex-1 flex flex-col min-w-0 lg:ml-60 h-screen overflow-hidden">
+
+          {/* Sticky top header — never scrolls */}
+          <header className="flex items-center justify-between px-5 py-2.5 shrink-0 bg-white z-20"
+            style={{ borderBottom: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
           >
-            {/* Mobile menu button */}
+            {/* Mobile hamburger */}
             <button onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/10 transition-colors mr-3"
+              className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors mr-2"
             >
               <LayoutDashboard size={18} />
             </button>
 
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[11px] text-slate-500 font-mono hidden sm:block">Admin</span>
-              <span className="text-slate-600 hidden sm:block">/</span>
-              <span className="text-[12px] font-semibold text-slate-200 truncate capitalize">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-slate-400 font-mono hidden sm:block">Admin</span>
+              <span className="text-slate-300 text-xs hidden sm:block">/</span>
+              <span className="text-[13px] font-semibold text-slate-700">
                 {NAV_ITEMS.find(n => n.id === activeTab)?.label ?? 'Dashboard'}
               </span>
             </div>
 
-            {/* Right side user badge */}
+            {/* Right: user badge + back button */}
             <div className="flex items-center gap-2 ml-auto">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg"
-                style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}
-              >
-                <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
                   style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
                 >
                   {user?.name?.slice(0, 1).toUpperCase() || 'A'}
                 </div>
-                <span className="text-[11px] font-medium text-slate-300 max-w-[120px] truncate">{user?.name}</span>
+                <span className="text-[11px] font-medium text-slate-600 max-w-[120px] truncate">{user?.name}</span>
               </div>
-              <button onClick={() => navigate('/')}
-                className="p-2 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/10 transition-colors"
+              <button
+                onClick={() => navigate('/')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 transition-colors"
                 title="Back to website"
               >
-                <LogOut size={15} />
+                <LogOut size={13} />
+                <span className="hidden sm:block">Exit</span>
               </button>
             </div>
-          </div>
+          </header>
 
-          {/* Tab content */}
-          <div className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto custom-scrollbar">
+          {/* Scrollable tab content — only this area scrolls */}
+          <main className="flex-1 overflow-y-auto bg-slate-50 custom-scrollbar">
+            <div className="p-5 md:p-7 lg:p-8">
             <AnimatePresence mode="wait">
               {activeTab === 'dashboard' && (
                 <DashboardTab
@@ -611,8 +621,9 @@ const Admin = () => {
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-        </main>
+            </div>
+          </main>
+        </div>
       </div>
 
       {/* ── Toast ────────────────────────────────────────────────────────────── */}
