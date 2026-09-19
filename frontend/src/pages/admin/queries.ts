@@ -10,12 +10,20 @@ export interface RecentRegistration {
   payment_status: string;
 }
 
+export interface StatusBreakdown {
+  registration_open?: number;
+  upcoming?: number;
+  registration_closed?: number;
+  completed?: number;
+}
+
 export interface DashboardMetrics {
   total_events: number;
   total_registrations: number;
   active_events: number;
   upcoming_events: number;
   recent_registrations: RecentRegistration[];
+  status_breakdown?: StatusBreakdown;
 }
 
 export interface AdminEvent {

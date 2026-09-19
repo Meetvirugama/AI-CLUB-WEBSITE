@@ -245,7 +245,7 @@ function OverviewTab() {
   // Status breakdown for pie chart
   const pieData = useMemo(() => {
     if (!dashboard?.status_breakdown) return [];
-    const b = dashboard.status_breakdown as any;
+    const b = dashboard.status_breakdown;
     return [
       { name: 'Active',    value: b.registration_open   ?? 0, color: '#10b981' },
       { name: 'Upcoming',  value: b.upcoming             ?? 0, color: '#f59e0b' },
