@@ -59,7 +59,6 @@ class AnalyticsSession(Base):
 
     __table_args__ = (
         Index("ix_analytics_sessions_started_at", "started_at"),
-        Index("ix_analytics_sessions_visitor_id", "visitor_id"),
     )
 
 
