@@ -244,3 +244,131 @@ export const useChatbotActivity = (limit = 50) =>
 
 // Keep getAuthHeaders and getApiUrl re-exported for RegistrationsTab direct fetch calls
 export { getAuthHeaders, getApiUrl };
+
+// ─── First-Party Analytics Types ──────────────────────────────────────────────
+
+export interface TrafficOverview {
+  unique_visitors:       number;
+  sessions:              number;
+  page_views:            number;
+  avg_session_duration:  number | null;
+  bounce_rate:           number | null;
+}
+
+export interface DailyPoint {
+  date:            string;
+  unique_visitors: number;
+  sessions:        number;
+  page_views:      number;
+}
+
+export interface HourlyPoint {
+  hour:     number;
+  visitors: number;
+  sessions: number;
+  events:   number;
+}
+
+export interface PageStat {
+  page:          string;
+  views:         number;
+  avg_time_sec:  number | null;
+}
+
+export interface ActionCount {
+  event_type: string;
+  count:      number;
+}
+
+export interface DeviceStat {
+  device_type: string;
+  count:       number;
+  pct:         number;
+}
+
+export interface BrowserStat {
+  browser: string;
+  count:   number;
+  pct:     number;
+}
+
+export interface DeviceBreakdown {
+  devices:  DeviceStat[];
+  browsers: BrowserStat[];
+}
+
+export interface SessionRow {
+  session_id:   string;
+  visitor_id:   string;
+  started_at:   string;
+  duration_sec: number | null;
+  page_views:   number;
+  device_type:  string | null;
+  browser:      string | null;
+}
+
+export interface EventEntry {
+  id:         number;
+  event_type: string;
+  page:       string | null;
+  timestamp:  string;
+  meta:       Record<string, unknown> | null;
+}
+
+export interface SessionTimeline {
+  session_id: string;
+  events:     EventEntry[];
+}
+
+// ─── First-Party Analytics Hooks ──────────────────────────────────────────────
+
+export const useAnalyticsOverview = (days: number) =>
+  useQuery<TrafficOverview>({
+    queryKey: ['analytics', 'overview', days],
+    queryFn:  () => api.get(`/api/analytics/overview?days=${days}`) as Promise<TrafficOverview>,
+    refetchInterval: 60_000,
+  });
+
+export const useAnalyticsTraffic = (days: number) =>
+  useQuery<DailyPoint[]>({
+    queryKey: ['analytics', 'traffic', days],
+    queryFn:  () => api.get(`/api/analytics/traffic?days=${days}`) as Promise<DailyPoint[]>,
+  });
+
+export const useAnalyticsHourly = (days: number) =>
+  useQuery<HourlyPoint[]>({
+    queryKey: ['analytics', 'hourly', days],
+    queryFn:  () => api.get(`/api/analytics/hourly?days=${days}`) as Promise<HourlyPoint[]>,
+  });
+
+export const useAnalyticsPages = (days: number) =>
+  useQuery<PageStat[]>({
+    queryKey: ['analytics', 'pages', days],
+    queryFn:  () => api.get(`/api/analytics/pages?days=${days}`) as Promise<PageStat[]>,
+  });
+
+export const useAnalyticsActions = (days: number) =>
+  useQuery<ActionCount[]>({
+    queryKey: ['analytics', 'actions', days],
+    queryFn:  () => api.get(`/api/analytics/actions?days=${days}`) as Promise<ActionCount[]>,
+  });
+
+export const useAnalyticsDevices = (days: number) =>
+  useQuery<DeviceBreakdown>({
+    queryKey: ['analytics', 'devices', days],
+    queryFn:  () => api.get(`/api/analytics/devices?days=${days}`) as Promise<DeviceBreakdown>,
+  });
+
+export const useAnalyticsSessions = (days: number, limit = 20) =>
+  useQuery<SessionRow[]>({
+    queryKey: ['analytics', 'sessions', days, limit],
+    queryFn:  () => api.get(`/api/analytics/sessions?days=${days}&limit=${limit}`) as Promise<SessionRow[]>,
+  });
+
+export const useAnalyticsSessionTimeline = (sessionId: string | null) =>
+  useQuery<SessionTimeline>({
+    queryKey: ['analytics', 'session', sessionId],
+    queryFn:  () => api.get(`/api/analytics/sessions/${sessionId}`) as Promise<SessionTimeline>,
+    enabled:  !!sessionId,
+  });
+

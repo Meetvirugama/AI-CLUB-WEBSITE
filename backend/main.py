@@ -91,6 +91,12 @@ from chatbot.analytics.queries import log_chat_event
 from chatbot.routes import router as chatbot_router
 from chatbot.rag.models import KnowledgeChunk  # noqa: registers table
 from chatbot.rag.routes import router as chatbot_rag_router
+
+# ── First-party Analytics module ───────────────────────────────────────────
+from analytics.models import (  # noqa: registers tables
+    AnalyticsVisitor, AnalyticsSession, AnalyticsEvent, AnalyticsDaily,
+)
+from analytics.routes import router as analytics_router
 from chatbot.rag.retriever import retrieve_relevant_chunks, format_rag_context
 
 
@@ -186,6 +192,7 @@ app.include_router(weekly_veneza_router)
 app.include_router(chatbot_analytics_router)
 app.include_router(chatbot_rag_router)
 app.include_router(chatbot_router)
+app.include_router(analytics_router)
 
 # ── Stats Endpoint (Navbar) ────────────────────────────────────────────────
 from sqlalchemy.future import select
