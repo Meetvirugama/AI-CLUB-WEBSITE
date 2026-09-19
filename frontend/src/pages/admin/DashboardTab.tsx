@@ -27,12 +27,7 @@ function StatCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4, ease: 'easeOut' }}
-      className="relative overflow-hidden rounded-2xl p-5 flex flex-col justify-between"
-      style={{
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.07)',
-        backdropFilter: 'blur(8px)',
-      }}
+      className="relative overflow-hidden rounded-2xl p-5 flex flex-col justify-between bg-white border border-slate-200 shadow-sm"
     >
       {/* Glow accent */}
       <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full opacity-20 blur-2xl" style={{ background: glow }} />
@@ -47,7 +42,7 @@ function StatCard({
       </div>
       <div>
         <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-1">{label}</p>
-        <p className="text-3xl font-extrabold text-white leading-none">{value}</p>
+        <p className="text-3xl font-extrabold text-slate-900 leading-none">{value}</p>
       </div>
     </motion.div>
   );
@@ -111,17 +106,13 @@ export default function DashboardTab({ setActiveTab, setSelectedEventId, setBuil
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4"
-        style={{
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.18) 0%, rgba(139,92,246,0.08) 50%, rgba(8,13,26,0) 100%)',
-          border: '1px solid rgba(99,102,241,0.25)',
-        }}
+        className="relative overflow-hidden rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white shadow-sm border border-indigo-100"
       >
         <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #6366f1 0%, transparent 60%)' }} />
         <div className="relative">
-          <p className="text-[10px] font-mono text-indigo-400 uppercase tracking-widest mb-1">Good day, admin</p>
-          <h2 className="text-xl font-bold text-white leading-tight">Welcome back, {user?.name?.split(' ')[0] || 'Administrator'}!</h2>
-          <p className="text-sm text-slate-400 mt-1">AI Club DA-IICT Admin Dashboard</p>
+          <p className="text-[10px] font-mono text-indigo-500 uppercase tracking-widest mb-1">Good day, admin</p>
+          <h2 className="text-xl font-bold text-slate-900 leading-tight">Welcome back, {user?.name?.split(' ')[0] || 'Administrator'}!</h2>
+          <p className="text-sm text-slate-500 mt-1">AI Club DA-IICT Admin Dashboard</p>
         </div>
         <button
           onClick={() => setActiveTab('createEvent')}
@@ -144,11 +135,11 @@ export default function DashboardTab({ setActiveTab, setSelectedEventId, setBuil
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Recent registrations */}
-        <div className="lg:col-span-2 rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="lg:col-span-2 rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <Activity size={15} className="text-indigo-400" />
-              <h3 className="text-sm font-semibold text-slate-200">Recent Registrations</h3>
+              <Activity size={15} className="text-indigo-500" />
+              <h3 className="text-sm font-semibold text-slate-800">Recent Registrations</h3>
             </div>
             <span className="text-[10px] font-mono text-slate-600">LAST 5</span>
           </div>
@@ -161,14 +152,14 @@ export default function DashboardTab({ setActiveTab, setSelectedEventId, setBuil
               <p className="text-sm text-slate-600">No registrations yet</p>
             </div>
           ) : (
-            <div className="divide-y divide-white/[0.04]">
+            <div className="divide-y divide-slate-100">
               {metrics.recent_registrations.map((reg: RecentRegistration, i: number) => (
                 <motion.div
                   key={reg.id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/[0.03] transition-colors"
+                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50 transition-colors"
                 >
                   <div
                     className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
@@ -177,9 +168,9 @@ export default function DashboardTab({ setActiveTab, setSelectedEventId, setBuil
                     {initials(reg.user_name || '')}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-slate-200 truncate">{reg.user_name || 'Unknown'}</p>
+                    <p className="text-[13px] font-semibold text-slate-900 truncate">{reg.user_name || 'Unknown'}</p>
                     <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                      → <span className="text-slate-400">{reg.event_title}</span>
+                      → <span className="text-slate-500">{reg.event_title}</span>
                     </p>
                   </div>
                   <span className="text-[10px] font-mono text-slate-600 shrink-0 ml-2">{fmtDate(reg.registered_at)}</span>
@@ -193,8 +184,8 @@ export default function DashboardTab({ setActiveTab, setSelectedEventId, setBuil
         <div className="space-y-4">
 
           {/* Quick actions */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <div className="px-5 py-3.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm">
+            <div className="px-5 py-3.5 border-b border-slate-100">
               <p className="text-[11px] font-mono uppercase tracking-widest text-slate-500">Quick Actions</p>
             </div>
             <div className="p-3 space-y-1.5">
@@ -204,8 +195,7 @@ export default function DashboardTab({ setActiveTab, setSelectedEventId, setBuil
                 { label: 'Manage Live Events', action: () => setActiveTab('manageEvents') },
               ].map(({ label, action }) => (
                 <button key={label} onClick={action}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[12px] font-medium text-slate-400 hover:text-slate-100 transition-all group"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[12px] font-medium text-slate-700 bg-slate-50 border border-slate-100 hover:text-indigo-600 hover:border-indigo-200 transition-all group"
                 >
                   <span>{label}</span>
                   <ChevronRight size={13} className="text-indigo-500 group-hover:translate-x-0.5 transition-transform" />
@@ -224,8 +214,8 @@ export default function DashboardTab({ setActiveTab, setSelectedEventId, setBuil
 
           {/* Event status breakdown */}
           {metrics?.status_breakdown && (
-            <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div className="px-5 py-3.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm">
+              <div className="px-5 py-3.5 border-b border-slate-100">
                 <p className="text-[11px] font-mono uppercase tracking-widest text-slate-500">Event Status</p>
               </div>
               <div className="p-5 space-y-3">
@@ -239,7 +229,7 @@ export default function DashboardTab({ setActiveTab, setSelectedEventId, setBuil
                       <div className="w-2 h-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
                       <span className="text-[12px] text-slate-500">{label}</span>
                     </div>
-                    <span className="text-[13px] font-bold font-mono text-slate-300">{value}</span>
+                    <span className="text-[13px] font-bold font-mono text-slate-900">{value}</span>
                   </div>
                 ))}
               </div>
@@ -247,7 +237,7 @@ export default function DashboardTab({ setActiveTab, setSelectedEventId, setBuil
           )}
 
           {/* System status */}
-          <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="rounded-2xl p-4 bg-white border border-slate-200 shadow-sm">
             <div className="flex items-center gap-2.5">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" style={{ boxShadow: '0 0 8px #10b981' }} />
               <div>

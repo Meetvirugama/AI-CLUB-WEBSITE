@@ -289,8 +289,8 @@ const Admin = () => {
 
   return (
     <>
-      {/* Root wrapper: full viewport height, no scroll on the shell itself */}
-      <div className="h-screen flex overflow-hidden" style={{ fontFamily: "'Inter', sans-serif", background: '#f1f5f9' }}>
+      {/* Root wrapper: full viewport height, allows native page scrolling */}
+      <div className="min-h-screen flex" style={{ fontFamily: "'Inter', sans-serif", background: '#f1f5f9' }}>
 
         {/* ── Sidebar — truly fixed, never scrolls ────────────────── */}
         <aside
@@ -370,11 +370,11 @@ const Admin = () => {
         {/* Sidebar mobile backdrop */}
         {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
-        {/* ── Main — offset by sidebar width on desktop, fully scrollable ── */}
-        <div className="flex-1 flex flex-col min-w-0 lg:ml-60 h-screen overflow-hidden">
+        {/* ── Main — offset by sidebar width on desktop, fully scrollable natively ── */}
+        <div className="flex-1 flex flex-col min-w-0 lg:ml-60 min-h-screen">
 
-          {/* Sticky top header — never scrolls */}
-          <header className="flex items-center justify-between px-5 py-2.5 shrink-0 bg-white z-20"
+          {/* Sticky top header — stays at top of screen while scrolling */}
+          <header className="sticky top-0 flex items-center justify-between px-5 py-2.5 shrink-0 bg-white/90 backdrop-blur z-20"
             style={{ borderBottom: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
           >
             {/* Mobile hamburger */}
@@ -414,8 +414,8 @@ const Admin = () => {
             </div>
           </header>
 
-          {/* Scrollable tab content — only this area scrolls */}
-          <main className="flex-1 overflow-y-auto bg-slate-50 custom-scrollbar">
+          {/* Tab content */}
+          <main className="flex-1 bg-slate-50">
             <div className="p-5 md:p-7 lg:p-8">
             <AnimatePresence mode="wait">
               {activeTab === 'dashboard' && (
