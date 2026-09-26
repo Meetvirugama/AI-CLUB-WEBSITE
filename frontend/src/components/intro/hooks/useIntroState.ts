@@ -31,8 +31,7 @@ export const useIntroStore = create<IntroState>((set) => ({
 /** Returns true on first page visit per browser session */
 export function shouldShowIntro(): boolean {
   try {
-    // DEV: always show on refresh. For production, uncomment the guard:
-    // if (sessionStorage.getItem(INTRO_KEY)) return false;
+    if (sessionStorage.getItem(INTRO_KEY)) return false;
     sessionStorage.setItem(INTRO_KEY, '1');
     return true;
   } catch {

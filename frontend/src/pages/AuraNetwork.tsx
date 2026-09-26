@@ -24,7 +24,7 @@ export const createTeamNodes = (): AuraNode[] =>
 
     return {
       ...member,
-      role: nodeRoles[index],
+      role: nodeRoles[index] ?? 'Member',
       x: 50 + Math.cos(angle) * radius,
       y: 50 + Math.sin(angle) * radius,
     };
@@ -53,6 +53,8 @@ export const AuraNetwork = ({ onSelectNode }: AuraNetworkProps) => {
 
     const network = containerRef.current;
     if (!network) return;
+
+    let mounted = true;
 
     const svg = network.querySelector('#flowSvg') as SVGSVGElement | null;
     const pathContainer = network.querySelector('#flowPaths') as SVGGElement | null;
@@ -367,8 +369,8 @@ export const AuraNetwork = ({ onSelectNode }: AuraNetworkProps) => {
             const idx = timelines.indexOf(timeline);
             if (idx > -1) timelines.splice(idx, 1);
             
-            // Trigger next random flow after a short delay
-            startRandomFlow(Math.random() * 1.5);
+            // Only spawn next flow if component is still mounted
+            if (mounted) startRandomFlow(Math.random() * 1.5);
           }
         });
         
@@ -537,6 +539,7 @@ export const AuraNetwork = ({ onSelectNode }: AuraNetworkProps) => {
     resizeObserver.observe(network);
 
     return () => {
+      mounted = false;
       window.clearTimeout(resizeTimer);
       resizeObserver.disconnect();
       nodeListeners.forEach((remove) => remove());
