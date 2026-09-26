@@ -1280,21 +1280,13 @@ const resultCount = displayedUpcomingEvents.length;
             key={tab.value}
             onClick={() => setActiveTab(tab.value)}
             whileTap={{ scale: 0.96 }}
-            className="relative px-4 py-2 rounded-lg text-xs font-semibold transition-all"
-            style={{
-              background:
-                activeTab === tab.value
-                  ? 'linear-gradient(135deg, hsl(243,75%,59%), hsl(270,80%,62%))'
-                  : 'transparent',
-              color:
-                activeTab === tab.value
-                  ? 'white'
-                  : 'hsl(230,15%,48%)',
-              boxShadow:
-                activeTab === tab.value
-                  ? '0 4px 14px rgba(99,102,241,0.22)'
-                  : 'none',
-            }}
+            className={`
+              px-5 py-2 rounded-xl text-[13px] font-semibold transition-all duration-300 relative overflow-hidden
+              ${activeTab === tab.value
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-transparent text-muted-foreground hover:bg-primary/5 hover:text-primary hover:-translate-y-0.5 hover:shadow-sm'
+              }
+            `}
           >
             {tab.label}
 
@@ -1330,21 +1322,13 @@ const resultCount = displayedUpcomingEvents.length;
             key={category.value}
             onClick={() => setCategoryFilter(category.value)}
             whileTap={{ scale: 0.96 }}
-            className="px-3.5 py-1.5 rounded-full text-xs font-medium transition-all"
-            style={{
-              background:
-                categoryFilter === category.value
-                  ? 'rgba(99,102,241,0.10)'
-                  : 'transparent',
-              color:
-                categoryFilter === category.value
-                  ? 'hsl(243,75%,55%)'
-                  : 'hsl(230,15%,50%)',
-              border:
-                categoryFilter === category.value
-                  ? '1px solid rgba(99,102,241,0.25)'
-                  : '1px solid rgba(100,110,150,0.16)',
-            }}
+            className={`
+              px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all duration-300
+              ${categoryFilter === category.value
+                ? 'bg-primary/10 text-primary border-primary/30 shadow-sm'
+                : 'bg-transparent text-muted-foreground border-border hover:border-primary/40 hover:text-primary hover:bg-primary/5 hover:-translate-y-0.5 hover:shadow-sm'
+              }
+            `}
           >
             {category.label}
           </motion.button>
@@ -1369,12 +1353,7 @@ const resultCount = displayedUpcomingEvents.length;
             placeholder="Search events..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-9 py-2.5 rounded-xl text-xs outline-none"
-            style={{
-              background: 'rgba(255,255,255,0.8)',
-              border: '1px solid rgba(100,110,150,0.18)',
-              color: 'hsl(230,25%,15%)',
-            }}
+            className="w-full pl-9 pr-9 py-2.5 rounded-xl text-xs outline-none bg-white/80 border border-border text-foreground hover:border-primary/40 hover:shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300"
           />
 
           {searchQuery && (

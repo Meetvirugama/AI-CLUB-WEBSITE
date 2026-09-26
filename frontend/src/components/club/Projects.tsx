@@ -297,13 +297,8 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
               placeholder="Search projects..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%', paddingLeft: 32, paddingRight: 12, paddingTop: 8, paddingBottom: 8,
-                fontFamily: 'Inter, sans-serif', fontSize: '0.85rem',
-                border: '1px solid hsl(228, 20%, 76%)', borderRadius: 2,
-                background: 'white', outline: 'none', color: 'hsl(230,25%,12%)',
-                boxSizing: 'border-box',
-              }}
+              className="w-full pl-8 pr-3 py-2 text-[0.85rem] font-sans border border-slate-300 rounded bg-white text-slate-900 outline-none hover:border-indigo-400 hover:shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300"
+              style={{ boxSizing: 'border-box' }}
             />
           </div>
 
@@ -312,19 +307,13 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                style={{
-                  padding: '6px 14px',
-                  fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: '0.72rem',
-                  letterSpacing: '0.05em',
-                  border: '1px solid',
-                  borderColor: activeTab === tab ? 'hsl(243,75%,59%)' : 'hsl(228,20%,76%)',
-                  borderRadius: 2,
-                  background: activeTab === tab ? 'hsl(243,75%,59%)' : 'transparent',
-                  color: activeTab === tab ? 'white' : 'hsl(230,15%,40%)',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
+                className={`
+                  px-3.5 py-1.5 font-mono text-[0.72rem] tracking-wide border rounded cursor-pointer transition-all duration-200
+                  ${activeTab === tab 
+                    ? 'bg-indigo-500 border-indigo-500 text-white shadow-sm' 
+                    : 'bg-transparent border-slate-300 text-slate-600 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50 hover:-translate-y-[1px] hover:shadow-sm'
+                  }
+                `}
               >
                 {tabLabels[tab]}
               </button>

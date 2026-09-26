@@ -22,8 +22,9 @@ import ScrollToTop from "./components/ScrollToTop.tsx";
 import AppErrorBoundary from "./components/AppErrorBoundary.tsx";
 import { AuthProvider } from "./contexts/AuthContext.tsx";
 import { useLocation } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { startSession, trackPageView } from "./lib/analytics";
+import { NeuralAwakening } from "./components/intro/NeuralAwakening";
 
 // Lazy-load heavier pages to keep the initial bundle small
 const Admin = lazy(() => import("./pages/Admin.tsx"));
@@ -76,12 +77,14 @@ const RouteTracker = () => {
   return null;
 };
 
-const App = () => (
+const App = () => {
+  return (
   <AppErrorBoundary>
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <TooltipProvider>
+            <NeuralAwakening onComplete={() => {}} />
             <Toaster />
             <Sonner />
             <BrowserRouter>
@@ -141,6 +144,7 @@ const App = () => (
       </QueryClientProvider>
     </GoogleOAuthProvider>
   </AppErrorBoundary>
-);
+  );
+};
 
 export default App;
