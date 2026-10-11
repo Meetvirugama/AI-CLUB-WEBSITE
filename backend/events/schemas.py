@@ -16,7 +16,7 @@ Design notes
 
 from __future__ import annotations
 
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
@@ -51,9 +51,9 @@ class EventCreateRequest(BaseModel):
     contact_email: Optional[EmailStr] = Field(None, description="Organiser contact e-mail.")
 
     event_type: Optional[EventType] = Field(None, description="'individual' or 'team'.")
-    min_team_size: Optional[int] = Field(None, ge=2, le=100,
+    min_team_size: Optional[int] = Field(None, ge=1, le=100,
                                          description="Required when event_type='team'.")
-    max_team_size: Optional[int] = Field(None, ge=2, le=100,
+    max_team_size: Optional[int] = Field(None, ge=1, le=100,
                                          description="Required when event_type='team'.")
 
     event_date: Optional[date]           = Field(None, description="Date the event takes place (YYYY-MM-DD).")
@@ -116,8 +116,14 @@ class EventCreateRequest(BaseModel):
                 errors.append("registration_start must be before registration_end.")
 
         # 4. registration must close on or before the event start date if both set
+        #    Convert registration_end to IST date for a correct apples-to-apples comparison
+        #    (event_start_date is an IST calendar date entered by admin)
         if self.registration_end and self.event_start_date:
-            if self.registration_end.date() > self.event_start_date:
+            _IST = timezone(timedelta(hours=5, minutes=30))
+            reg_end_ist_date = self.registration_end.astimezone(_IST).date() if self.registration_end.tzinfo else (
+                self.registration_end.replace(tzinfo=_IST).date()
+            )
+            if reg_end_ist_date > self.event_start_date:
                 errors.append("registration_end cannot be after event_start_date.")
 
         # 4. team fields required for team events
@@ -157,8 +163,8 @@ class EventUpdateRequest(BaseModel):
     venue:              Optional[str]      = None
     contact_email:      Optional[EmailStr] = None
     event_type:         Optional[EventType] = None
-    min_team_size:      Optional[int]      = Field(None, ge=2, le=100)
-    max_team_size:      Optional[int]      = Field(None, ge=2, le=100)
+    min_team_size:      Optional[int]      = Field(None, ge=1, le=100)
+    max_team_size:      Optional[int]      = Field(None, ge=1, le=100)
     event_date:         Optional[date]     = None
     event_start_date:   Optional[date]     = None
     event_end_date:     Optional[date]     = None

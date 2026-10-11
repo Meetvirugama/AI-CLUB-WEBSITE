@@ -343,7 +343,7 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
         }
         const activeMembers = teamMembers.filter(m => m.name.trim() && m.email.trim());
         const totalTeamSize = activeMembers.length + 1; // leader + members
-        const minSize = selectedEvent.min_team_size || 2;
+        const minSize = selectedEvent.min_team_size || 1;
         const maxSize = selectedEvent.max_team_size || 4;
 
         if (totalTeamSize < minSize || totalTeamSize > maxSize) {
@@ -1005,80 +1005,7 @@ const resultCount = displayedUpcomingEvents.length;
                               );
                             })}
 
-                            {selectedEvent.event_type === 'team' && (
-                              <div className="mt-6 pt-4 border-t border-border space-y-4">
-                                <h4 className="flex items-center gap-2 font-display font-bold text-sm text-foreground">
-                                  <Users size={16} className="text-primary" />
-                                  Team Details
-                                </h4>
-                                <div>
-                                  <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">
-                                    Team Name <span className="text-destructive">*</span>
-                                  </label>
-                                  <input
-                                    type="text"
-                                    required
-                                    value={teamName}
-                                    onChange={(e) => setTeamName(e.target.value)}
-                                    placeholder="Enter unique team name"
-                                    className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                                  />
-                                </div>
-                                <div className="space-y-3">
-                                  <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase">
-                                    Additional Team Members ({teamMembers.length + 1} / {selectedEvent.max_team_size || 4})
-                                  </label>
-                                  {teamMembers.map((member, idx) => (
-                                    <div key={idx} className="flex gap-2 items-center bg-secondary/30 p-3 rounded-lg border border-border/50 relative">
-                                      <div className="grid grid-cols-2 gap-2 w-full pr-6">
-                                        <input
-                                          type="text"
-                                          required
-                                          value={member.name}
-                                          onChange={(e) => {
-                                            const updated = [...teamMembers];
-                                            updated[idx].name = e.target.value;
-                                            setTeamMembers(updated);
-                                          }}
-                                          placeholder="Member Name"
-                                          className="bg-secondary border border-border rounded-md px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary"
-                                        />
-                                        <input
-                                          type="email"
-                                          required
-                                          value={member.email}
-                                          onChange={(e) => {
-                                            const updated = [...teamMembers];
-                                            updated[idx].email = e.target.value;
-                                            setTeamMembers(updated);
-                                          }}
-                                          placeholder="Member Email"
-                                          className="bg-secondary border border-border rounded-md px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary"
-                                        />
-                                      </div>
-                                      {teamMembers.length > 1 && (
-                                        <button
-                                          type="button"
-                                          onClick={() => removeTeamMember(idx)}
-                                          className="absolute right-2 p-1 text-muted-foreground hover:text-destructive transition-colors"
-                                        >
-                                          <X size={12} />
-                                        </button>
-                                      )}
-                                    </div>
-                                  ))}
-                                  {teamMembers.length + 1 < (selectedEvent.max_team_size || 4) && (
-                                    <button
-                                      type="button"
-                                      onClick={addTeamMember}
-                                      className="text-xs text-primary hover:underline font-semibold flex items-center gap-1 mt-1"
-                                    >
-                                      + Add Team Member
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            )}
+
 
                             <div className="pt-4 border-t border-border/50">
                               <button

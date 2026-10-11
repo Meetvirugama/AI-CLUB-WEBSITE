@@ -699,7 +699,7 @@ const Admin = () => {
                     <div>
                       <h4 className="font-semibold text-foreground text-sm">{selectedRegDetail.user_name}</h4>
                       <p className="text-xs text-muted-foreground">{selectedRegDetail.user_email}</p>
-                      <p className="text-[10px] text-muted-foreground/60 mt-1">Registered: {new Date(selectedRegDetail.registered_at).toLocaleString()}</p>
+                      <p className="text-[10px] text-muted-foreground/60 mt-1">Registered: {new Date(selectedRegDetail.registered_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })} IST</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

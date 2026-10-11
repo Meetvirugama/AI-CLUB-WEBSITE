@@ -371,7 +371,7 @@ function OverviewTab({ range }: { range: DateRange }) {
                     <p className="text-[10px] text-slate-400 truncate">{reg.event_title || 'Unknown Event'}</p>
                   </div>
                   <span className="text-[10px] font-mono text-slate-400 shrink-0">
-                    {new Date(reg.registered_at || reg.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                    {new Date(reg.registered_at || reg.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' })}
                   </span>
                 </motion.div>
               ))}
@@ -395,7 +395,7 @@ function TrafficTab({ range }: { range: DateRange }) {
 
   const dailyChart = useMemo(() =>
     (daily ?? []).map(d => ({
-      label:    new Date(d.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
+      label:    new Date(d.date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' }),
       visitors: d.unique_visitors,
       sessions: d.sessions,
       views:    d.page_views,
@@ -605,7 +605,7 @@ function SessionTimelineModal({ session, onClose }: { session: SessionRow; onClo
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-bold text-slate-700">{e.event_type}</span>
                       <span className="text-[9px] font-mono text-slate-400">
-                        {new Date(e.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        {new Date(e.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Kolkata' })}
                       </span>
                     </div>
                     {e.page && <p className="text-[10px] text-slate-500 font-mono mt-0.5">{e.page}</p>}
@@ -824,7 +824,7 @@ function ChatbotTab({ range }: { range: DateRange }) {
   // Chart data for daily usage
   const usageChartData = useMemo(() =>
     (usage?.data ?? []).map(d => ({
-      label: new Date(d.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
+      label: new Date(d.date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' }),
       requests: d.total_requests,
       successful: d.successful,
       failed: d.failed,
@@ -1070,7 +1070,7 @@ function ChatbotTab({ range }: { range: DateRange }) {
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[9px] text-slate-400">{fmtTokens(e.input_tokens + e.output_tokens)} tokens</span>
                       {e.fallback_used && <span className="text-[9px] bg-amber-100 text-amber-700 px-1 rounded font-mono">fallback</span>}
-                      <span className="text-[9px] text-slate-300 ml-auto font-mono">{new Date(e.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="text-[9px] text-slate-300 ml-auto font-mono">{new Date(e.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}</span>
                     </div>
                   </div>
                 </motion.div>

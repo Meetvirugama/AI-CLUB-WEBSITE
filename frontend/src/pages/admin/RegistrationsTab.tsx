@@ -439,7 +439,8 @@ export default function RegistrationsTab({
                       <td className="px-5 py-3.5 whitespace-nowrap text-xs text-slate-500">
                         {reg.registered_at
                           ? new Date(reg.registered_at).toLocaleDateString('en-IN', {
-                              day: 'numeric', month: 'short', year: 'numeric'
+                              day: 'numeric', month: 'short', year: 'numeric',
+                              timeZone: 'Asia/Kolkata',
                             })
                           : '—'}
                       </td>

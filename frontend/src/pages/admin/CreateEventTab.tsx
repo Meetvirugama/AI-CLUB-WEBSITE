@@ -22,7 +22,7 @@ export default function CreateEventTab({ onSuccess }: CreateEventTabProps) {
     venue: '',
     contact_email: 'ai_club@dau.ac.in',
     event_type: 'individual' as 'individual' | 'team',
-    min_team_size: 2,
+    min_team_size: 1,
     max_team_size: 4,
     event_start_date: '',
     event_end_date: '',
@@ -87,7 +87,7 @@ export default function CreateEventTab({ onSuccess }: CreateEventTabProps) {
         venue: '',
         contact_email: 'ai_club@dau.ac.in',
         event_type: 'individual',
-        min_team_size: 2,
+        min_team_size: 1,
         max_team_size: 4,
         event_start_date: '',
         event_end_date: '',
@@ -212,7 +212,7 @@ export default function CreateEventTab({ onSuccess }: CreateEventTabProps) {
                 <label className="block text-xs font-mono tracking-wider text-muted-foreground uppercase mb-1">Min Team Size</label>
                 <input
                   type="number"
-                  min={2}
+                  min={1}
                   value={eventForm.min_team_size}
                   onChange={(e) => setEventForm({...eventForm, min_team_size: Number(e.target.value)})}
                   className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary transition-colors"

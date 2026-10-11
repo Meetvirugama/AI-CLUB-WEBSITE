@@ -20,7 +20,11 @@ interface Registration {
 }
 
 function formatDate(s: string) {
-  return new Date(s).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return new Date(s).toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+    timeZone: 'Asia/Kolkata',
+  }) + ' IST';
 }
 
 function RegistrationCard({ reg }: { reg: Registration }) {

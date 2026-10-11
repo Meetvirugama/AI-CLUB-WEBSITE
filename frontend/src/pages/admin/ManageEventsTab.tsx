@@ -4,6 +4,7 @@ import { Loader2, Edit, Trash2, X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdminEvents, AdminEvent } from './queries';
 import { getApiUrl } from '../../lib/api';
+import { parseLocalDate, parseLocalDateTime, utcToISTInput } from '../../lib/utils';
 
 interface Props {
   showToast: (msg: string, type?: 'success' | 'error' | 'info') => void;
@@ -24,28 +25,6 @@ const STATUS_LABELS: Record<string, string> = {
   completed: 'Completed',
 };
 
-const parseLocalDate = (dateStr: string | null | undefined): string | null => {
-  if (!dateStr) return null;
-  const trimmed = dateStr.trim();
-  if (!trimmed) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
-  const dmyMatch = trimmed.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
-  if (dmyMatch) {
-    return `${dmyMatch[3]}-${dmyMatch[2].padStart(2, '0')}-${dmyMatch[1].padStart(2, '0')}`;
-  }
-  const parsed = new Date(trimmed);
-  if (!isNaN(parsed.getTime())) return parsed.toISOString().split('T')[0];
-  return trimmed;
-};
-
-const parseLocalDateTime = (s: string | null | undefined): string | null => {
-  if (!s?.trim()) return null;
-  const t = s.trim();
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(t)) return new Date(t).toISOString();
-  const parsed = new Date(t);
-  if (!isNaN(parsed.getTime())) return parsed.toISOString();
-  return t;
-};
 
 type EditForm = {
   title: string; description: string; banner: string; category: string;
@@ -59,7 +38,7 @@ type EditForm = {
 const EMPTY_FORM: EditForm = {
   title: '', description: '', banner: '', category: 'workshop',
   venue: '', contact_email: 'ai_club@dau.ac.in', event_type: 'individual',
-  min_team_size: 2, max_team_size: 4, event_start_date: '', event_end_date: '',
+  min_team_size: 1, max_team_size: 4, event_start_date: '', event_end_date: '',
   start_time: '18:00:00', end_time: '21:00:00', registration_start: '',
   registration_end: '', winners: '', winner_link: '', registration_link: '',
 };
@@ -87,14 +66,14 @@ export default function ManageEventsTab({ showToast, openConfirm }: Props) {
       venue: (ev.venue as string) || '',
       contact_email: (ev.contact_email as string) || 'ai_club@dau.ac.in',
       event_type: ((ev.event_type as string) || 'individual') as 'individual' | 'team',
-      min_team_size: (ev.min_team_size as number) || 2,
+      min_team_size: (ev.min_team_size as number) || 1,
       max_team_size: (ev.max_team_size as number) || 4,
       event_start_date: (ev.event_start_date as string) || (ev.event_date as string) || '',
       event_end_date: (ev.event_end_date as string) || (ev.event_date as string) || '',
       start_time: (ev.start_time as string) || '18:00:00',
       end_time: (ev.end_time as string) || '21:00:00',
-      registration_start: ev.registration_start ? new Date(ev.registration_start as string).toISOString().slice(0, 16) : '',
-      registration_end: ev.registration_end ? new Date(ev.registration_end as string).toISOString().slice(0, 16) : '',
+      registration_start: utcToISTInput(ev.registration_start as string),
+      registration_end:   utcToISTInput(ev.registration_end as string),
       winners: (ev.winners as string) || '',
       winner_link: (ev.winner_link as string) || '',
       registration_link: (ev.registration_link as string) || '',

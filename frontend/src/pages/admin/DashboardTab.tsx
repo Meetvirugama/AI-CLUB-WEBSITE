@@ -93,7 +93,7 @@ export default function DashboardTab({ setActiveTab, setSelectedEventId, setBuil
     if (!iso) return '—';
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '—';
-    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
   };
 
   const initials = (name: string) =>

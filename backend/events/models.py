@@ -17,7 +17,7 @@ club_events
   venue                VARCHAR(500) NOT NULL    — physical address or online link
   contact_email        VARCHAR(255) NOT NULL
   event_type           VARCHAR(20)  NOT NULL    — 'individual' | 'team'
-  min_team_size        INTEGER                  — NULL for individual events
+  min_team_size        INTEGER                  — NULL for individual events; >= 1 for team events
   max_team_size        INTEGER                  — NULL for individual events
   event_date           DATE        NOT NULL
   start_time           TIME        NOT NULL
@@ -63,7 +63,7 @@ class ClubEvent(Base):
         ),
         CheckConstraint(
             "(event_type = 'individual') OR "
-            "(event_type = 'team' AND min_team_size IS NOT NULL AND max_team_size IS NOT NULL AND min_team_size >= 2 AND max_team_size >= min_team_size)",
+            "(event_type = 'team' AND min_team_size IS NOT NULL AND max_team_size IS NOT NULL AND min_team_size >= 1 AND max_team_size >= min_team_size)",
             name="ck_team_size_consistency",
         ),
     )
