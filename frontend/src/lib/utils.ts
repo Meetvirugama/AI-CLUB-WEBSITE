@@ -19,21 +19,22 @@ export function cn(...inputs: ClassValue[]) {
 export function normalizeBannerUrl(url: string | null | undefined): string {
   if (!url) return '';
 
-  // Already a direct uc?export=view URL — pass through
-  if (url.includes('drive.google.com/uc') && url.includes('export=view')) {
+  // Already an lh3 direct URL — pass through
+  if (url.includes('lh3.googleusercontent.com')) {
     return url;
   }
 
   // Pattern: /file/d/FILE_ID/view  or  /file/d/FILE_ID
   const fileMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (fileMatch) {
-    return `https://drive.google.com/uc?export=view&id=${fileMatch[1]}`;
+    // lh3.googleusercontent.com/d/FILE_ID — direct image, no auth redirect
+    return `https://lh3.googleusercontent.com/d/${fileMatch[1]}`;
   }
 
   // Pattern: open?id=FILE_ID  or  uc?id=FILE_ID
   const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   if (url.includes('drive.google.com') && idMatch) {
-    return `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+    return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
   }
 
   return url;
