@@ -891,38 +891,7 @@ export default function EventDetailPage() {
                         </div>
                       ))}
 
-                      {/* Team section */}
-                      {event.event_type === 'team' && (
-                        <div style={{ background: 'hsl(243,75%,98%)', border: '1px solid hsl(243,75%,85%)', borderRadius: 10, padding: '1.25rem' }}>
-                          <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', fontWeight: 700, color: 'hsl(243,75%,40%)', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <Users size={15} /> Team Details ({event.min_team_size}–{event.max_team_size} members total)
-                          </h3>
-                          <input type="text" placeholder="Team name *" value={teamName} onChange={e => setTeamName(e.target.value)} required autoComplete="off"
-                            style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', marginBottom: '0.85rem', boxSizing: 'border-box' }} />
-                          {teamMembers.map((m, i) => (
-                            <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                              <input type="text" placeholder={`Member ${i + 1} name`} value={m.name} autoComplete="off"
-                                onChange={e => setTeamMembers(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
-                                style={{ flex: 1, padding: '8px 10px', borderRadius: 7, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem' }} />
-                              <input type="email" placeholder={`Member ${i + 1} email`} value={m.email} autoComplete="off"
-                                onChange={e => setTeamMembers(prev => prev.map((x, j) => j === i ? { ...x, email: e.target.value } : x))}
-                                style={{ flex: 1, padding: '8px 10px', borderRadius: 7, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem' }} />
-                              {teamMembers.length > 1 && (
-                                <button type="button" onClick={() => setTeamMembers(prev => prev.filter((_, j) => j !== i))}
-                                  style={{ padding: '6px 10px', background: 'hsl(0,70%,96%)', border: '1px solid hsl(0,70%,85%)', borderRadius: 7, color: 'hsl(0,70%,50%)', cursor: 'pointer', fontSize: '0.9rem' }}>
-                                  <X size={13} />
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                          {teamMembers.length + 1 < (event.max_team_size || 4) && (
-                            <button type="button" onClick={() => setTeamMembers(prev => [...prev, { name: '', email: '' }])}
-                              style={{ fontSize: '0.82rem', color: 'hsl(243,75%,59%)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
-                              + Add member
-                            </button>
-                          )}
-                        </div>
-                      )}
+
                     </div>
 
                     {/* Submit / Save button */}
