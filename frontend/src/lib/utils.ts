@@ -6,6 +6,41 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Convert a Google Drive share/view link to a directly embeddable image URL.
+ *
+ * Supported input formats → output:
+ *   https://drive.google.com/file/d/FILE_ID/view?...   → https://drive.google.com/uc?export=view&id=FILE_ID
+ *   https://drive.google.com/open?id=FILE_ID            → https://drive.google.com/uc?export=view&id=FILE_ID
+ *   https://drive.google.com/uc?id=FILE_ID              → https://drive.google.com/uc?export=view&id=FILE_ID
+ *   Any other URL                                        → unchanged
+ *
+ * Requirements: the file must be shared as "Anyone with the link can view".
+ */
+export function normalizeBannerUrl(url: string | null | undefined): string {
+  if (!url) return '';
+
+  // Already a direct uc?export=view URL — pass through
+  if (url.includes('drive.google.com/uc') && url.includes('export=view')) {
+    return url;
+  }
+
+  // Pattern: /file/d/FILE_ID/view  or  /file/d/FILE_ID
+  const fileMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (fileMatch) {
+    return `https://drive.google.com/uc?export=view&id=${fileMatch[1]}`;
+  }
+
+  // Pattern: open?id=FILE_ID  or  uc?id=FILE_ID
+  const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (url.includes('drive.google.com') && idMatch) {
+    return `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+  }
+
+  return url;
+}
+
+
+/**
  * Parse a date string (YYYY-MM-DD or DD/MM/YYYY etc.) and return YYYY-MM-DD.
  * Returns null for empty/invalid input.
  */

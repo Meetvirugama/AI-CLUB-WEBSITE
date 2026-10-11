@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../lib/api';
 import { api } from '../../lib/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
+import { normalizeBannerUrl } from '../../lib/utils';
 
 // Auth travels in the HttpOnly session cookie (credentials: 'include'), so no
 // Authorization header is built here. Never move the token into localStorage:
@@ -859,7 +860,7 @@ const resultCount = displayedUpcomingEvents.length;
               {(selectedEvent.banner || (selectedEvent as any).image_url) && (
                 <div className="w-full mb-4 rounded-xl overflow-hidden bg-secondary border border-border/50">
                   <img
-                    src={selectedEvent.banner || (selectedEvent as any).image_url}
+                    src={normalizeBannerUrl(selectedEvent.banner || (selectedEvent as any).image_url)}
                     alt={selectedEvent.title}
                     className="w-full object-contain"
                     style={{ maxHeight: '320px' }}
@@ -1751,7 +1752,7 @@ const resultCount = displayedUpcomingEvents.length;
               {(selectedEvent.banner || (selectedEvent as any).image_url) && (
                 <div className="w-full mb-4 rounded-xl overflow-hidden bg-secondary border border-border/50">
                   <img
-                    src={selectedEvent.banner || (selectedEvent as any).image_url}
+                    src={normalizeBannerUrl(selectedEvent.banner || (selectedEvent as any).image_url)}
                     alt={selectedEvent.title}
                     className="w-full object-contain"
                     style={{ maxHeight: '320px' }}

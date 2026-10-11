@@ -10,6 +10,7 @@ import {
 import Navbar from '../components/club/Navbar';
 import Footer from '../components/club/Footer';
 import { getApiUrl } from '../lib/api';
+import { normalizeBannerUrl } from '../lib/utils';
 import { api } from '../lib/apiClient';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -407,7 +408,7 @@ export default function EventDetailPage() {
   );
 
   const status = statusMeta[event.status] || statusMeta['upcoming'];
-  const bannerSrc = event.banner || event.poster_url;
+  const bannerSrc = normalizeBannerUrl(event.banner || event.poster_url);
   const rawEventDate = event.event_start_date || event.event_date;
   const isPast = event.status === 'completed' || event.status === 'registration_closed';
   const isOpen = event.status === 'registration_open';
