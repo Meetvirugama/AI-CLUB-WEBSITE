@@ -21,47 +21,47 @@ interface TeamGlobeProps {
 const roleMeta: Record<string, { label: string; classes: string }> = {
   'Convenor': {
     label: 'Convenor',
-    classes: 'bg-amber-50 text-amber-700 border-amber-200',
+    classes: 'bg-amber-500/10 text-amber-500 border border-amber-500/20',
   },
 
   'Deputy Convenor': {
     label: 'Deputy Convenor',
-    classes: 'bg-blue-50 text-blue-700 border-blue-200',
+    classes: 'bg-blue-500/10 text-blue-500 border border-blue-500/20',
   },
 
   'Core Member': {
     label: 'Core Member',
-    classes: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    classes: 'bg-primary/10 text-primary border border-primary/20',
   },
 
   'Extended Core Member': {
     label: 'Extended Core Member',
-    classes: 'bg-purple-50 text-purple-700 border-purple-200',
+    classes: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
   },
 
   'Member': {
     label: 'Member',
-    classes: 'bg-slate-100 text-slate-600 border-slate-200',
+    classes: 'bg-secondary text-muted-foreground border border-border',
   },
 
   'Ex Convenor': {
     label: 'Ex Convenor',
-    classes: 'bg-amber-100/70 text-amber-800 border-amber-300',
+    classes: 'bg-amber-500/15 text-amber-500 border border-amber-500/30',
   },
 
   'Ex Deputy Convenor': {
     label: 'Ex Deputy Convenor',
-    classes: 'bg-blue-100/70 text-blue-800 border-blue-300',
+    classes: 'bg-blue-500/15 text-blue-500 border border-blue-500/30',
   },
 
   'Ex Core Member': {
     label: 'Ex Core Member',
-    classes: 'bg-indigo-100/70 text-indigo-800 border-indigo-300',
+    classes: 'bg-primary/15 text-primary border border-primary/30',
   },
 
   'Alumni': {
     label: 'Alumni',
-    classes: 'bg-emerald-100/80 text-emerald-800 border-emerald-300',
+    classes: 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20',
   },
 };
 
@@ -881,9 +881,9 @@ export default function TeamGlobe({
             rounded-full
 
             border
-            border-indigo-100
+            border-border
 
-            bg-white/85
+            bg-card/90
 
             px-4
             py-1.5
@@ -897,7 +897,7 @@ export default function TeamGlobe({
 
             tracking-[0.16em]
 
-            text-indigo-400
+            text-primary
 
             shadow-sm
 
@@ -906,7 +906,7 @@ export default function TeamGlobe({
         >
           ← Drag horizontally →
 
-          <span className="mx-2 text-slate-300">
+          <span className="mx-2 text-muted-foreground">
             •
           </span>
 
@@ -1050,13 +1050,14 @@ export default function TeamGlobe({
                   justify-center
                   overflow-hidden
                   rounded-[14px]
-                  bg-white
+                  bg-card
+                  text-card-foreground
                   p-1.5
                   transition-all
                   duration-[600ms]
                   ease-out
-                  hover:border-indigo-300
-                  hover:shadow-[0_16px_38px_rgba(99,102,241,0.18)]
+                  hover:border-primary/50
+                  hover:shadow-[0_16px_38px_rgba(0,0,0,0.3)]
                   ${isActive ? 'z-[60]' : 'z-auto'}
                 `}
                 style={{
@@ -1067,11 +1068,11 @@ export default function TeamGlobe({
 
                   border: isActive 
                     ? `1px solid rgba(${cardGlowColor}, 1)` 
-                    : '1px solid #e2e8f0',
+                    : '1px solid var(--border)',
                     
                   boxShadow: isActive
                     ? `0 0 0 2px rgba(${cardGlowColor},0.40), 0 0 36px 4px rgba(${cardGlowColor},0.60)`
-                    : '0 10px 28px rgba(51,65,85,0.12)',
+                    : '0 4px 16px rgba(0,0,0,0.15)',
 
                   transform: `
                     rotateY(${angle}deg)
@@ -1109,16 +1110,16 @@ export default function TeamGlobe({
                     rounded-full
 
                     border
-                    border-slate-200
+                    border-border
 
-                    bg-slate-50
+                    bg-secondary
 
                     ring-2
-                    ring-indigo-500/10
+                    ring-primary/10
 
                     ring-offset-1
 
-                    ring-offset-white
+                    ring-offset-card
                   "
                   style={{
                     width:
@@ -1199,7 +1200,7 @@ export default function TeamGlobe({
 
                     leading-tight
 
-                    text-slate-800
+                    text-foreground
                   "
                   style={{
                     fontSize:
@@ -1277,9 +1278,9 @@ export default function TeamGlobe({
 
           bg-gradient-to-r
 
-          from-[#ECF0F7]
+          from-background
 
-          via-[#ECF0F7]/65
+          via-background/65
 
           to-transparent
         "
@@ -1299,9 +1300,9 @@ export default function TeamGlobe({
 
           bg-gradient-to-l
 
-          from-[#ECF0F7]
+          from-background
 
-          via-[#ECF0F7]/65
+          via-background/65
 
           to-transparent
         "

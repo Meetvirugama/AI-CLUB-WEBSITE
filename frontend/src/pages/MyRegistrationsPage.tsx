@@ -35,36 +35,38 @@ function RegistrationCard({ reg }: { reg: Registration }) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      style={{ background: 'white', borderRadius: 10, border: '1px solid hsl(228,20%,82%)', overflow: 'hidden', marginBottom: '1rem' }}
+      className="bg-card rounded-xl border border-border overflow-hidden mb-4 shadow-sm hover:border-border/80 transition-colors"
     >
       {/* Header */}
-      <div style={{ padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <div className="p-5 flex items-center justify-between flex-wrap gap-3">
         <div>
           <Link
             to={`/events/${reg.event_id}`}
-            style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: '1.1rem', fontWeight: 700, color: 'hsl(230,25%,12%)', textDecoration: 'none' }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(243,75%,59%)'}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230,25%,12%)'}
+            className="font-serif text-lg font-bold text-foreground hover:text-primary transition-colors block"
           >
             {reg.event_title}
           </Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, fontSize: '0.78rem', color: 'hsl(230,15%,50%)', fontFamily: 'Inter, sans-serif' }}>
+          <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground font-sans">
             <Calendar size={12} />
-            Registered: {formatDate(reg.registered_at)}
+            <span>Registered: {formatDate(reg.registered_at)}</span>
             {reg.team && (
-              <><span style={{ margin: '0 4px' }}>·</span><Users size={12} />{reg.team.team_name}</>
+              <>
+                <span className="mx-1">·</span>
+                <Users size={12} />
+                <span>{reg.team.team_name}</span>
+              </>
             )}
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ padding: '3px 10px', borderRadius: 99, fontSize: '0.7rem', fontWeight: 600, color: 'hsl(142,71%,30%)', background: 'hsl(142,71%,95%)', border: '1px solid hsl(142,71%,70%)' }}>
+        <div className="flex items-center gap-2.5">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
             ✓ Registered
           </span>
           {hasDetails && (
             <button
               onClick={() => setExpanded(e => !e)}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px', border: '1px solid hsl(228,20%,80%)', borderRadius: 6, background: 'transparent', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'hsl(230,15%,40%)' }}
+              className="flex items-center gap-1 px-3 py-1.5 border border-border rounded-lg bg-secondary/50 hover:bg-secondary text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               {expanded ? <><ChevronUp size={13} /> Hide</> : <><ChevronDown size={13} /> Details</>}
             </button>
@@ -80,20 +82,20 @@ function RegistrationCard({ reg }: { reg: Registration }) {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            style={{ overflow: 'hidden' }}
+            className="overflow-hidden"
           >
-            <div style={{ padding: '1rem 1.5rem 1.5rem', borderTop: '1px solid hsl(228,20%,90%)', background: 'hsl(228,30%,97%)' }}>
+            <div className="p-5 sm:p-6 border-t border-border bg-secondary/30 space-y-5">
               {/* Form responses */}
               {Object.keys(reg.responses_flat).length > 0 && (
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <h4 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', fontWeight: 700, color: 'hsl(230,20%,30%)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <div>
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
                     Your Responses
                   </h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.75rem' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {Object.entries(reg.responses_flat).map(([label, value]) => (
-                      <div key={label} style={{ background: 'white', borderRadius: 6, padding: '10px 12px', border: '1px solid hsl(228,20%,88%)' }}>
-                        <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 600, color: 'hsl(230,15%,50%)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</p>
-                        <p style={{ margin: '3px 0 0', fontSize: '0.85rem', color: 'hsl(230,25%,12%)', fontFamily: 'Inter, sans-serif' }}>
+                      <div key={label} className="bg-card rounded-lg p-3 border border-border">
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">{label}</p>
+                        <p className="mt-1 text-sm text-foreground font-sans font-medium">
                           {Array.isArray(value) ? value.join(', ') : String(value).replace(/^(\d+)\.0$/, '$1') || '—'}
                         </p>
                       </div>
@@ -104,19 +106,19 @@ function RegistrationCard({ reg }: { reg: Registration }) {
 
               {/* Team info */}
               {reg.team && (
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <h4 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', fontWeight: 700, color: 'hsl(230,20%,30%)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <div>
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
                     Team: {reg.team.team_name}
                   </h4>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div className="flex flex-wrap gap-2">
                     {reg.team.members.map(m => (
-                      <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'white', border: '1px solid hsl(228,20%,88%)', borderRadius: 6, fontSize: '0.82rem', fontFamily: 'Inter, sans-serif' }}>
-                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'hsl(243,75%,90%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, color: 'hsl(243,75%,50%)' }}>
+                      <div key={m.id} className="flex items-center gap-2.5 px-3 py-2 bg-card border border-border rounded-lg text-sm font-sans">
+                        <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0">
                           {m.member_name[0]}
                         </div>
                         <div>
-                          <div style={{ fontWeight: 600, color: 'hsl(230,25%,12%)' }}>{m.member_name}</div>
-                          <div style={{ fontSize: '0.7rem', color: 'hsl(230,15%,50%)' }}>{m.member_email}</div>
+                          <div className="font-medium text-foreground text-xs">{m.member_name}</div>
+                          <div className="text-[11px] text-muted-foreground">{m.member_email}</div>
                         </div>
                       </div>
                     ))}
@@ -127,14 +129,14 @@ function RegistrationCard({ reg }: { reg: Registration }) {
               {/* Uploaded files */}
               {reg.uploaded_files.length > 0 && (
                 <div>
-                  <h4 style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', fontWeight: 700, color: 'hsl(230,20%,30%)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
                     Uploaded Files
                   </h4>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div className="flex flex-wrap gap-2">
                     {reg.uploaded_files.map(f => (
                       <a key={f.id} href={f.file_url} target="_blank" rel="noopener noreferrer"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'white', border: '1px solid hsl(243,75%,80%)', borderRadius: 6, fontSize: '0.8rem', color: 'hsl(243,75%,59%)', textDecoration: 'none' }}>
-                        <FileText size={13} /> {f.original_name || f.field_label} <ExternalLink size={10} />
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-card border border-primary/30 rounded-lg text-xs font-medium text-primary hover:bg-primary/10 transition-colors">
+                        <FileText size={13} /> <span>{f.original_name || f.field_label}</span> <ExternalLink size={10} />
                       </a>
                     ))}
                   </div>
@@ -187,16 +189,19 @@ export default function MyRegistrationsPage() {
   }, [isAuthenticated, authLoading]);
 
   return (
-    <div style={{ background: 'hsl(228,30%,93%)', minHeight: '100vh' }}>
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '5rem 2rem 4rem' }}>
+    <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
+      <Navbar />
+      <div className="max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16 flex-1">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '2rem' }}>
-            <ClipboardList size={28} style={{ color: 'hsl(243,75%,59%)' }} />
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+              <ClipboardList size={22} />
+            </div>
             <div>
-              <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 'clamp(1.6rem,3vw,2.2rem)', fontWeight: 700, color: 'hsl(230,25%,10%)', margin: 0 }}>
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-foreground">
                 My Registrations
               </h1>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', color: 'hsl(230,15%,45%)', margin: '4px 0 0' }}>
+              <p className="font-sans text-xs sm:text-sm text-muted-foreground mt-0.5">
                 All events you've registered for
               </p>
             </div>
@@ -204,49 +209,51 @@ export default function MyRegistrationsPage() {
         </motion.div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '4rem', fontFamily: 'Inter, sans-serif', color: 'hsl(230,15%,45%)', fontSize: '0.9rem' }}>
+          <div className="text-center py-16 font-sans text-muted-foreground text-sm">
             Loading your registrations…
           </div>
         ) : !isLoggedIn ? (
-          <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'white', borderRadius: 10, border: '1px solid hsl(228,20%,83%)' }}>
-            <ClipboardList size={48} style={{ color: 'hsl(228,20%,75%)', margin: '0 auto 1rem' }} />
-            <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', color: 'hsl(230,25%,15%)', marginBottom: '0.5rem' }}>Sign in required</h2>
-            <p style={{ fontFamily: 'Inter, sans-serif', color: 'hsl(230,15%,45%)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+          <div className="text-center py-16 px-6 bg-card rounded-xl border border-border">
+            <ClipboardList size={44} className="text-muted-foreground/50 mx-auto mb-4" />
+            <h2 className="font-serif text-xl font-bold text-foreground mb-2">Sign in required</h2>
+            <p className="font-sans text-muted-foreground text-sm mb-6 max-w-sm mx-auto">
               You need to be signed in to view your registrations.
             </p>
             <Link
               to="/events"
-              style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 22px', background: 'hsl(243,75%,59%)', color: 'white', borderRadius: 6, fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', fontWeight: 600, textDecoration: 'none' }}
+              className="inline-flex items-center px-5 py-2.5 bg-primary text-primary-foreground rounded-lg font-sans text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm"
             >
               Browse Events
             </Link>
           </div>
         ) : error ? (
-          <div style={{ padding: '2rem', background: 'hsl(0,70%,96%)', borderRadius: 10, border: '1px solid hsl(0,70%,85%)', fontFamily: 'Inter, sans-serif', color: 'hsl(0,70%,40%)', fontSize: '0.875rem' }}>
+          <div className="p-5 bg-destructive/10 rounded-xl border border-destructive/20 font-sans text-destructive text-sm">
             Error: {error}
           </div>
         ) : registrations.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'white', borderRadius: 10, border: '1px solid hsl(228,20%,83%)' }}>
-            <ClipboardList size={48} style={{ color: 'hsl(228,20%,75%)', margin: '0 auto 1rem' }} />
-            <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', color: 'hsl(230,25%,15%)', marginBottom: '0.5rem' }}>No registrations yet</h2>
-            <p style={{ fontFamily: 'Inter, sans-serif', color: 'hsl(230,15%,45%)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+          <div className="text-center py-16 px-6 bg-card rounded-xl border border-border">
+            <ClipboardList size={44} className="text-muted-foreground/50 mx-auto mb-4" />
+            <h2 className="font-serif text-xl font-bold text-foreground mb-2">No registrations yet</h2>
+            <p className="font-sans text-muted-foreground text-sm mb-6 max-w-sm mx-auto">
               You haven't registered for any events. Browse upcoming events to get started.
             </p>
             <Link
               to="/events"
-              style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 22px', background: 'hsl(243,75%,59%)', color: 'white', borderRadius: 6, fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', fontWeight: 600, textDecoration: 'none' }}
+              className="inline-flex items-center px-5 py-2.5 bg-primary text-primary-foreground rounded-lg font-sans text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm"
             >
               Browse Events
             </Link>
           </div>
         ) : (
           <>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: 'hsl(230,15%,50%)', marginBottom: '1.25rem' }}>
+            <p className="font-sans text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
               {registrations.length} registration{registrations.length !== 1 ? 's' : ''} found
             </p>
-            {registrations.map(reg => (
-              <RegistrationCard key={reg.id} reg={reg} />
-            ))}
+            <div className="space-y-3">
+              {registrations.map(reg => (
+                <RegistrationCard key={reg.id} reg={reg} />
+              ))}
+            </div>
           </>
         )}
       </div>

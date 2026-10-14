@@ -95,7 +95,7 @@ export default function Achievements() {
                 viewport={{ once: true }}
                 transition={{ type: 'spring', stiffness: 350, damping: 22 }}
                 onClick={() => setSelectedAchievement(item)}
-                className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 hover:border-indigo-400 hover:shadow-xl transition-all cursor-pointer group"
+                className="bg-card border border-border shadow-sm rounded-2xl p-6 hover:border-primary/50 transition-all cursor-pointer group"
               >
                 {item.image_url && (
                   <div className="w-full h-48 mb-4 rounded-xl overflow-hidden bg-secondary">

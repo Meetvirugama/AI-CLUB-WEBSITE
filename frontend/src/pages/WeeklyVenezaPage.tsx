@@ -95,20 +95,20 @@ function TickingClockDivider({ currentWeek }: { currentWeek?: WeeklyVenezaWeek }
 
   return (
     <div className="my-12 relative">
-      {/* Visual glowing divider line */}
+      {/* Visual divider line */}
       <div className="absolute inset-0 flex items-center" aria-hidden="true">
-        <div className="w-full border-t border-indigo-200/60 dark:border-indigo-900/60" />
+        <div className="w-full border-t border-border" />
       </div>
 
       <div className="relative flex justify-center">
         <motion.div 
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-slate-900 text-white rounded-3xl p-6 shadow-2xl border border-indigo-500/30 max-w-2xl w-full relative overflow-hidden backdrop-blur-xl"
+          className="bg-card text-card-foreground rounded-2xl p-6 shadow-md border border-border max-w-2xl w-full relative overflow-hidden backdrop-blur-xl"
         >
-          {/* Ambient neon gradient glow background */}
-          <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl" />
-          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl" />
+          {/* Ambient subtle glow background */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-accent/10 rounded-full blur-3xl" />
 
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
             
@@ -340,7 +340,7 @@ export default function WeeklyVenezaPage() {
   };
 
   return (
-    <div className="min-h-screen relative font-sans text-slate-900 bg-slate-50/50 overflow-hidden pb-20">
+    <div className="min-h-screen relative font-sans text-foreground bg-background overflow-hidden pb-20">
       
       {/* Celebration Modal */}
       <AnimatePresence>
@@ -349,24 +349,24 @@ export default function WeeklyVenezaPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-950/80 p-4 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-md"
           >
             <motion.div
               initial={{ scale: 0.9, y: 40 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 40 }}
-              className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl relative overflow-hidden"
+              className="bg-card text-card-foreground border border-border rounded-3xl p-8 max-w-md w-full text-center shadow-2xl relative overflow-hidden"
             >
-              <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Trophy className="w-10 h-10 text-amber-500" />
               </div>
-              <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Veneza Champion!</h2>
-              <p className="text-slate-600 mb-6 font-medium">
-                Outstanding dedication! You have finished all weekly resources in Weekly Veneza with <span className="font-bold text-indigo-600">~{totalStudyHours} hours</span> of study time.
+              <h2 className="text-3xl font-extrabold text-foreground mb-2">Veneza Champion!</h2>
+              <p className="text-muted-foreground mb-6 font-medium">
+                Outstanding dedication! You have finished all weekly resources in Weekly Veneza with <span className="font-bold text-primary">~{totalStudyHours} hours</span> of study time.
               </p>
               <button
                 onClick={() => setCelebrate(false)}
-                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg"
+                className="w-full py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl transition-all shadow-sm"
               >
                 Keep Up the Momentum!
               </button>
@@ -383,36 +383,36 @@ export default function WeeklyVenezaPage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm font-semibold mb-4"
+            className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold mb-4"
           >
-            <Sparkles className="w-4 h-4 text-indigo-500 animate-pulse" />
+            <Sparkles className="w-4 h-4 text-primary animate-pulse" />
             <span>Weekly Veneza Learning Tracker</span>
           </motion.div>
           
-          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-950 mb-3 bg-clip-text text-transparent bg-gradient-to-r from-slate-950 via-indigo-950 to-indigo-900">
+          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground mb-3">
             Weekly Veneza
           </h1>
-          <p className="text-lg text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-medium leading-relaxed">
             Curated weekly curriculum, hands-on resources, and live ticking progress tracking.
           </p>
         </div>
 
-        {/* Sophisticated Progress Dashboard Card (Matches Attached Screenshot) */}
+        {/* Sophisticated Progress Dashboard Card */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           
           {/* Main Progress Ring Card */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-md border border-slate-100 flex items-center justify-between col-span-1 md:col-span-2">
+          <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border flex items-center justify-between col-span-1 md:col-span-2">
             <div className="flex-1">
-              <span className="text-xs font-bold text-indigo-600 tracking-wider uppercase">OVERALL COMPLETION</span>
-              <h3 className="text-2xl font-black text-slate-900 mt-1 mb-4">Your AI Journey</h3>
+              <span className="text-xs font-bold text-primary tracking-wider uppercase">OVERALL COMPLETION</span>
+              <h3 className="text-2xl font-black text-foreground mt-1 mb-4">Your AI Journey</h3>
               <div className="flex flex-wrap items-center gap-6">
                 <div>
-                  <span className="text-3xl font-black text-slate-950">{completedResourcesCount}</span>
-                  <span className="text-slate-400 font-medium"> / {totalResourcesCount} items</span>
+                  <span className="text-3xl font-black text-foreground">{completedResourcesCount}</span>
+                  <span className="text-muted-foreground font-medium"> / {totalResourcesCount} items</span>
                 </div>
-                <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
-                <div className="flex items-center text-slate-600 font-medium">
-                  <Clock className="w-4 h-4 mr-2 text-indigo-500" />
+                <div className="h-6 w-px bg-border hidden sm:block"></div>
+                <div className="flex items-center text-muted-foreground font-medium">
+                  <Clock className="w-4 h-4 mr-2 text-primary" />
                   <span>~{totalStudyHours}h Study Time</span>
                 </div>
               </div>
@@ -422,7 +422,7 @@ export default function WeeklyVenezaPage() {
             <div className="relative w-28 h-28 flex items-center justify-center flex-shrink-0 ml-4">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                 <circle
-                  className="text-slate-100 stroke-current"
+                  className="text-border stroke-current"
                   strokeWidth="8"
                   cx="50"
                   cy="50"
@@ -430,7 +430,7 @@ export default function WeeklyVenezaPage() {
                   fill="transparent"
                 />
                 <circle
-                  className="text-indigo-600 stroke-current"
+                  className="text-primary stroke-current"
                   strokeWidth="8"
                   strokeLinecap="round"
                   cx="50"
@@ -443,17 +443,17 @@ export default function WeeklyVenezaPage() {
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center flex-col">
-                <span className="text-2xl font-black text-slate-900">{progressPercentage}%</span>
+                <span className="text-2xl font-black text-foreground">{progressPercentage}%</span>
               </div>
             </div>
           </div>
 
           {/* Settings & Actions Card */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-md border border-slate-100 flex flex-col justify-between">
+          <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border flex flex-col justify-between">
             <div>
-              <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">SETTINGS & ACTIONS</span>
-              <h3 className="text-lg font-bold text-slate-900 mt-1">Manage Progress</h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              <span className="text-xs font-bold text-muted-foreground tracking-wider uppercase">SETTINGS & ACTIONS</span>
+              <h3 className="text-lg font-bold text-foreground mt-1">Manage Progress</h3>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 {isAuthenticated ? "Your progress is saved to your account." : "Working as guest. Sign in to sync across devices."}
               </p>
             </div>
@@ -469,7 +469,7 @@ export default function WeeklyVenezaPage() {
                   </button>
                   <button
                     onClick={() => setShowResetConfirm(false)}
-                    className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition-colors"
+                    className="px-3.5 py-2.5 bg-secondary hover:bg-secondary/80 text-foreground text-xs font-bold rounded-xl transition-colors"
                   >
                     Cancel
                   </button>
@@ -478,7 +478,7 @@ export default function WeeklyVenezaPage() {
                 <button
                   onClick={() => setShowResetConfirm(true)}
                   disabled={progress.length === 0}
-                  className="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 hover:text-rose-600 hover:border-rose-200 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-2 disabled:opacity-40"
+                  className="w-full py-2.5 bg-secondary/50 hover:bg-secondary text-foreground/80 border border-border hover:text-rose-500 hover:border-rose-500/30 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-2 disabled:opacity-40"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Reset Progress</span>
@@ -490,10 +490,10 @@ export default function WeeklyVenezaPage() {
         </div>
 
         {/* Filter Chips & Live Search Bar */}
-        <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-100 mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="bg-card rounded-2xl p-4 sm:p-5 shadow-sm border border-border mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
           
           <div className="flex items-center space-x-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 hidden lg:inline flex-shrink-0">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mr-2 hidden lg:inline flex-shrink-0">
               Type:
             </span>
             {["ALL", "VIDEO", "COURSE", "BOOK", "PAPER", "ARTICLE", "CODE"].map((type) => (
@@ -502,8 +502,8 @@ export default function WeeklyVenezaPage() {
                 onClick={() => setSelectedType(type)}
                 className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all flex-shrink-0 ${
                   selectedType === type
-                    ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100"
-                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-secondary/60 text-muted-foreground border-border hover:bg-secondary hover:text-foreground"
                 }`}
               >
                 {type === "ALL" ? "All Resources" : type.charAt(0) + type.slice(1).toLowerCase()}
@@ -512,13 +512,13 @@ export default function WeeklyVenezaPage() {
           </div>
 
           <div className="relative w-full md:w-80">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search weekly resources..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium placeholder-slate-400"
+              className="w-full pl-11 pr-4 py-2.5 text-sm bg-secondary/50 border border-border rounded-xl focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-foreground placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -526,8 +526,8 @@ export default function WeeklyVenezaPage() {
         {/* Loading Spinner */}
         {loadingWeeks || loadingProgress ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-10 h-10 border-4 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-            <span className="text-sm font-semibold text-slate-500">Loading Weekly Veneza curriculum...</span>
+            <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
+            <span className="text-sm font-semibold text-muted-foreground">Loading Weekly Veneza curriculum...</span>
           </div>
         ) : (
           <div className="space-y-6">
@@ -538,11 +538,11 @@ export default function WeeklyVenezaPage() {
             {activeCurrentWeek && (
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 mb-2 px-1">
-                  <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-600 flex items-center">
+                  <span className="text-xs font-extrabold uppercase tracking-widest text-primary flex items-center">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping mr-2"></span>
                     Current Active Week
                   </span>
-                  <div className="flex-1 h-px bg-indigo-200"></div>
+                  <div className="flex-1 h-px bg-primary/20"></div>
                 </div>
 
                 {(() => {
@@ -574,8 +574,8 @@ export default function WeeklyVenezaPage() {
             {pastWeeks.length > 0 && (
               <div className="space-y-4 pt-8">
                 <div className="flex items-center space-x-3 mb-2 px-1">
-                  <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400">Previous Weeks</span>
-                  <div className="flex-1 h-px bg-slate-200"></div>
+                  <span className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground">Previous Weeks</span>
+                  <div className="flex-1 h-px bg-border"></div>
                 </div>
 
                 {pastWeeks.map((week) => {
@@ -642,37 +642,37 @@ function WeekCard({
   const weekProgressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
-    <div className={`bg-white rounded-3xl border transition-all overflow-hidden ${
+    <div className={`bg-card rounded-2xl border transition-all overflow-hidden ${
       isCurrentHighlight
-        ? "border-indigo-500 shadow-xl shadow-indigo-500/10 ring-2 ring-indigo-500/20"
-        : "border-slate-200/80 shadow-sm hover:shadow-md"
+        ? "border-primary shadow-sm ring-1 ring-primary/30"
+        : "border-border shadow-sm hover:border-border/80"
     }`}>
       
       {/* Header */}
       <button
         onClick={onToggle}
-        className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-slate-50/50 transition-colors"
+        className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-secondary/40 transition-colors"
       >
         <div className="flex items-center space-x-4">
           <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm ${
             isWeekDone 
               ? "bg-emerald-500 text-white" 
               : isCurrentHighlight 
-                ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" 
-                : "bg-slate-100 text-slate-700"
+                ? "bg-primary text-primary-foreground shadow-sm" 
+                : "bg-secondary text-muted-foreground"
           }`}>
             {isWeekDone ? <Check className="w-5 h-5 stroke-[3]" /> : `W${week.week_number}`}
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="text-base sm:text-lg font-bold text-slate-900">{week.title}</h3>
+              <h3 className="text-base sm:text-lg font-bold text-foreground">{week.title}</h3>
               {isCurrentHighlight && (
-                <span className="bg-indigo-100 text-indigo-700 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md">
+                <span className="bg-primary/10 text-primary border border-primary/20 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md">
                   Active
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-500 mt-0.5 font-medium">
+            <p className="text-xs text-muted-foreground mt-0.5 font-medium">
               {completedCount} of {totalCount} completed
             </p>
           </div>
@@ -680,18 +680,18 @@ function WeekCard({
 
         <div className="flex items-center space-x-6">
           <div className="hidden sm:flex items-center space-x-2">
-            <div className="w-28 h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-28 h-2 bg-secondary rounded-full overflow-hidden">
               <div 
-                className={`h-full transition-all duration-500 ${isWeekDone ? "bg-emerald-500" : "bg-indigo-600"}`}
+                className={`h-full transition-all duration-500 ${isWeekDone ? "bg-emerald-500" : "bg-primary"}`}
                 style={{ width: `${weekProgressPercent}%` }}
               />
             </div>
-            <span className="text-xs font-bold text-slate-400 w-8 text-right">
+            <span className="text-xs font-bold text-muted-foreground w-8 text-right">
               {weekProgressPercent}%
             </span>
           </div>
 
-          {isOpen ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+          {isOpen ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
         </div>
       </button>
 
@@ -704,15 +704,15 @@ function WeekCard({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="border-t border-slate-100 bg-slate-50/40 p-6 space-y-3">
+            <div className="border-t border-border bg-secondary/20 p-6 space-y-3">
               {week.description && (
-                <p className="text-xs text-slate-500 mb-4 italic leading-relaxed">
+                <p className="text-xs text-muted-foreground mb-4 italic leading-relaxed">
                   {week.description}
                 </p>
               )}
 
               {filteredRes.length === 0 ? (
-                <p className="text-xs text-slate-400 text-center py-4">No resources match your filters for this week.</p>
+                <p className="text-xs text-muted-foreground text-center py-4">No resources match your filters for this week.</p>
               ) : (
                 filteredRes.map((item) => {
                   const isCompleted = progress.includes(item.id);
@@ -723,10 +723,10 @@ function WeekCard({
                   return (
                     <div 
                       key={item.id}
-                      className={`flex items-start sm:items-center justify-between p-4 bg-white rounded-2xl border transition-all ${
+                      className={`flex items-start sm:items-center justify-between p-4 bg-card rounded-xl border transition-all ${
                         isCompleted 
-                          ? "border-emerald-200 bg-emerald-50/20" 
-                          : "border-slate-200/70 hover:border-slate-300 shadow-2xs"
+                          ? "border-emerald-500/20 bg-emerald-500/5" 
+                          : "border-border hover:border-border/90 shadow-2xs"
                       }`}
                     >
                       <div className="flex items-start space-x-4">
@@ -735,16 +735,16 @@ function WeekCard({
                           className="mt-0.5 sm:mt-0 focus:outline-none transition-transform active:scale-90"
                         >
                           {isCompleted ? (
-                            <CheckCircle2 className="w-6 h-6 text-emerald-500 fill-emerald-50" />
+                            <CheckCircle2 className="w-6 h-6 text-emerald-500" />
                           ) : (
-                            <Circle className="w-6 h-6 text-slate-300 hover:text-indigo-600 transition-colors" />
+                            <Circle className="w-6 h-6 text-muted-foreground/40 hover:text-primary transition-colors" />
                           )}
                         </button>
 
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             <h4 className={`font-bold text-sm sm:text-base ${
-                              isCompleted ? 'text-slate-400 line-through' : 'text-slate-900'
+                              isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'
                             }`}>
                               {item.title}
                             </h4>
@@ -755,7 +755,7 @@ function WeekCard({
                             </span>
                           </div>
 
-                          <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed max-w-3xl">
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed max-w-3xl">
                             {item.description}
                           </p>
                         </div>
@@ -765,7 +765,7 @@ function WeekCard({
                         href={item.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="ml-4 p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-xl transition-all border border-transparent hover:border-slate-200 flex-shrink-0"
+                        className="ml-4 p-2.5 text-muted-foreground hover:text-primary hover:bg-secondary rounded-xl transition-all border border-transparent hover:border-border flex-shrink-0"
                         title="Open Resource Link"
                       >
                         <ExternalLink className="w-4 h-4" />
