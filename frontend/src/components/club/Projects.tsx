@@ -112,8 +112,8 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
       <section
         id="projects"
         style={{
-          background: 'hsl(228, 30%, 93%)',
-          borderTop: '1px solid hsl(228, 20%, 80%)',
+          background: 'hsl(var(--background))',
+          borderTop: '1px solid hsl(var(--border))',
         }}
       >
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '5rem 2rem' }}>
@@ -124,7 +124,7 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
               fontSize: 'clamp(2rem, 4vw, 3.5rem)',
               fontWeight: 700,
               letterSpacing: '-0.025em',
-              color: 'hsl(230, 25%, 10%)',
+              color: 'hsl(var(--foreground))',
               marginBottom: '0.6rem',
             }}
           >
@@ -134,7 +134,7 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
             style={{
               fontFamily: 'Inter, sans-serif',
               fontSize: '1rem',
-              color: 'hsl(230, 15%, 40%)',
+              color: 'hsl(var(--muted-foreground))',
               maxWidth: 520,
               lineHeight: 1.65,
               marginBottom: '3rem',
@@ -147,7 +147,7 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4">
             {projectList.length === 0 && !loading ? (
               <div style={{ padding: '2rem' }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', color: 'hsl(230,15%,50%)', fontSize: '0.9rem' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>
                   No projects available.
                 </p>
               </div>
@@ -159,21 +159,21 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
                   key={p.id}
                   style={{
                     padding: '1.75rem',
-                    background: 'white',
+                    background: 'hsl(var(--card))',
                     borderRadius: '16px',
-                    border: '1px solid hsl(228,20%,84%)',
+                    border: '1px solid hsl(var(--border))',
                     transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
                     cursor: 'pointer',
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.transform = 'translateY(-5px) scale(1.02)';
-                    (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 24px -6px rgba(99, 102, 241, 0.18)';
-                    (e.currentTarget as HTMLElement).style.borderColor = 'hsl(243, 75%, 59%)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 24px -6px rgba(121, 101, 255, 0.15)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--primary))';
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)';
                     (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-                    (e.currentTarget as HTMLElement).style.borderColor = 'hsl(228,20%,84%)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--border))';
                   }}
                 >
                   <span className={`${tagClass}`} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
@@ -184,7 +184,7 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
                       fontFamily: 'Playfair Display, Georgia, serif',
                       fontSize: '1.1rem',
                       fontWeight: 700,
-                      color: 'hsl(230,25%,12%)',
+                      color: 'hsl(var(--foreground))',
                       marginTop: '0.75rem',
                       marginBottom: '0.25rem',
                       letterSpacing: '-0.01em',
@@ -193,13 +193,13 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
                   >
                     {formatProjectText(p.title)}
                   </h4>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'hsl(230,15%,50%)', marginBottom: '0.6rem' }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.6rem' }}>
                     by {p.author}{p.contributors ? ` • Contributors: ${p.contributors}` : ''}
                   </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: 'hsl(230,15%,38%)', lineHeight: 1.6, marginBottom: '1rem', whiteSpace: 'pre-line' }}>{formatProjectText(p.description)}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', lineHeight: 1.6, marginBottom: '1rem', whiteSpace: 'pre-line' }}>{formatProjectText(p.description)}</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '1rem' }}>
                     {p.tags.slice(0, 4).map((tag) => (
-                      <span key={tag} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.62rem', padding: '2px 7px', border: '1px solid hsl(228,20%,78%)', borderRadius: 2, color: 'hsl(230,15%,45%)' }}>
+                      <span key={tag} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.62rem', padding: '2px 7px', border: '1px solid hsl(var(--border))', borderRadius: 4, background: 'hsl(var(--secondary))', color: 'hsl(var(--muted-foreground))' }}>
                         {tag}
                       </span>
                     ))}
@@ -212,8 +212,8 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
                       style={{
                         display: 'inline-flex', alignItems: 'center', gap: 5,
                         fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem',
-                        color: 'hsl(243,75%,59%)', textDecoration: 'none',
-                        border: '1px solid hsl(243,75%,80%)', padding: '4px 10px', borderRadius: 2,
+                        color: 'hsl(var(--primary))', textDecoration: 'none',
+                        border: '1px solid hsl(var(--border))', padding: '4px 10px', borderRadius: 4,
                       }}
                     >
                       <ExternalLink size={11} /> GitHub
@@ -234,7 +234,7 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
                 gap: '6px',
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: '0.8rem',
-                color: 'hsl(243, 75%, 59%)',
+                color: 'hsl(var(--primary))',
                 textDecoration: 'none',
                 letterSpacing: '0.02em',
               }}
@@ -269,7 +269,7 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
   return (
     <section
       id="projects"
-      style={{ background: 'hsl(228, 30%, 93%)', minHeight: '80vh' }}
+      style={{ background: 'hsl(var(--background))', minHeight: '80vh' }}
     >
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '4rem 2rem' }}>
         <h1
@@ -278,26 +278,26 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
             fontSize: 'clamp(2rem, 4vw, 3.5rem)',
             fontWeight: 700,
             letterSpacing: '-0.025em',
-            color: 'hsl(230, 25%, 10%)',
+            color: 'hsl(var(--foreground))',
             marginBottom: '0.5rem',
           }}
         >
           Student Projects
         </h1>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.95rem', color: 'hsl(230, 15%, 45%)', marginBottom: '2rem' }}>
+        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.95rem', color: 'hsl(var(--muted-foreground))', marginBottom: '2rem' }}>
           Built by club members. Open source where possible.
         </p>
 
         {/* Search + Tabs */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', marginBottom: '2rem' }}>
           <div style={{ position: 'relative', flex: '1 1 260px', maxWidth: 360 }}>
-            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'hsl(230,15%,50%)' }} />
+            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--muted-foreground))' }} />
             <input
               type="text"
               placeholder="Search projects..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 text-[0.85rem] font-sans border border-slate-300 rounded bg-white text-slate-900 outline-none hover:border-indigo-400 hover:shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300"
+              className="w-full pl-8 pr-3 py-2 text-[0.85rem] font-sans border border-border rounded-lg bg-secondary text-foreground outline-none hover:border-primary/40 hover:shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 placeholder:text-muted-foreground"
               style={{ boxSizing: 'border-box' }}
             />
           </div>
@@ -308,10 +308,10 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`
-                  px-3.5 py-1.5 font-mono text-[0.72rem] tracking-wide border rounded cursor-pointer transition-all duration-200
+                  px-3.5 py-1.5 font-mono text-[0.72rem] tracking-wide border rounded-lg cursor-pointer transition-all duration-200
                   ${activeTab === tab 
-                    ? 'bg-indigo-500 border-indigo-500 text-white shadow-sm' 
-                    : 'bg-transparent border-slate-300 text-slate-600 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50 hover:-translate-y-[1px] hover:shadow-sm'
+                    ? 'bg-primary border-primary text-primary-foreground shadow-sm' 
+                    : 'bg-transparent border-border text-muted-foreground hover:border-primary/40 hover:text-primary hover:bg-primary/5 hover:-translate-y-[1px] hover:shadow-sm'
                   }
                 `}
               >
@@ -322,7 +322,7 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
         </div>
 
         {loading ? (
-          <p style={{ fontFamily: 'Inter, sans-serif', color: 'hsl(230,15%,50%)', fontSize: '0.9rem', padding: '2rem 0' }}>Loading projects...</p>
+          <p style={{ fontFamily: 'Inter, sans-serif', color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', padding: '2rem 0' }}>Loading projects...</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4">
             {filtered.map((p) => {
@@ -333,21 +333,21 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
                   key={p.id}
                   style={{
                     padding: '1.75rem',
-                    background: 'white',
+                    background: 'hsl(var(--card))',
                     borderRadius: '16px',
-                    border: '1px solid hsl(228,20%,84%)',
+                    border: '1px solid hsl(var(--border))',
                     transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
                     cursor: 'pointer',
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.transform = 'translateY(-5px) scale(1.02)';
-                    (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 24px -6px rgba(99, 102, 241, 0.18)';
-                    (e.currentTarget as HTMLElement).style.borderColor = 'hsl(243, 75%, 59%)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 24px -6px rgba(121, 101, 255, 0.15)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--primary))';
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)';
                     (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-                    (e.currentTarget as HTMLElement).style.borderColor = 'hsl(228,20%,84%)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--border))';
                   }}
                 >
                   <span className={`${tagClass}`} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
@@ -358,7 +358,7 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
                       fontFamily: 'Playfair Display, Georgia, serif',
                       fontSize: '1.1rem',
                       fontWeight: 700,
-                      color: 'hsl(230,25%,12%)',
+                      color: 'hsl(var(--foreground))',
                       marginTop: '0.75rem',
                       marginBottom: '0.25rem',
                       letterSpacing: '-0.01em',
@@ -367,11 +367,11 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
                   >
                     {formatProjectText(p.title)}
                   </h4>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'hsl(230,15%,50%)', marginBottom: '0.6rem' }}>by {p.author}</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: 'hsl(230,15%,38%)', lineHeight: 1.6, marginBottom: '1rem', whiteSpace: 'pre-line' }}>{formatProjectText(p.description)}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.78rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.6rem' }}>by {p.author}</p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', lineHeight: 1.6, marginBottom: '1rem', whiteSpace: 'pre-line' }}>{formatProjectText(p.description)}</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '1rem' }}>
                     {p.tags.slice(0, 4).map((tag) => (
-                      <span key={tag} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.62rem', padding: '2px 7px', border: '1px solid hsl(228,20%,78%)', borderRadius: 2, color: 'hsl(230,15%,45%)' }}>
+                      <span key={tag} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.62rem', padding: '2px 7px', border: '1px solid hsl(var(--border))', borderRadius: 4, background: 'hsl(var(--secondary))', color: 'hsl(var(--muted-foreground))' }}>
                         {tag}
                       </span>
                     ))}
@@ -384,8 +384,8 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
                       style={{
                         display: 'inline-flex', alignItems: 'center', gap: 5,
                         fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem',
-                        color: 'hsl(243,75%,59%)', textDecoration: 'none',
-                        border: '1px solid hsl(243,75%,80%)', padding: '4px 10px', borderRadius: 2,
+                        color: 'hsl(var(--primary))', textDecoration: 'none',
+                        border: '1px solid hsl(var(--border))', padding: '4px 10px', borderRadius: 4,
                       }}
                     >
                       <ExternalLink size={11} /> GitHub
@@ -395,8 +395,8 @@ export default function Projects({ isHomepage = false }: { isHomepage?: boolean 
               );
             })}
             {filtered.length === 0 && (
-              <div style={{ padding: '3rem', background: 'white', gridColumn: '1/-1' }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', color: 'hsl(230,15%,50%)', fontSize: '0.9rem' }}>No projects found.</p>
+              <div style={{ padding: '3rem', background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 16, gridColumn: '1/-1' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>No projects found.</p>
               </div>
             )}
           </div>

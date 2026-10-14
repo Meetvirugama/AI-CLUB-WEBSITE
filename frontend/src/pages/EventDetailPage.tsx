@@ -60,10 +60,10 @@ interface FormField {
 // ─── Status config ────────────────────────────────────────────────────────────
 
 const statusMeta: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  upcoming:            { label: 'Upcoming',             color: 'hsl(217,91%,40%)',  bg: 'hsl(217,91%,95%)',  border: 'hsl(217,91%,80%)' },
-  registration_open:   { label: 'Registration Open',    color: 'hsl(142,71%,30%)',  bg: 'hsl(142,71%,95%)',  border: 'hsl(142,71%,75%)' },
-  registration_closed: { label: 'Registration Closed',  color: 'hsl(0,70%,40%)',    bg: 'hsl(0,70%,96%)',    border: 'hsl(0,70%,80%)' },
-  completed:           { label: 'Completed',             color: 'hsl(230,15%,45%)', bg: 'hsl(228,20%,93%)',  border: 'hsl(228,20%,80%)' },
+  upcoming:            { label: 'Upcoming',             color: 'hsl(217,91%,60%)',  bg: 'hsl(217 91% 60% / 0.12)',  border: 'hsl(217 91% 60% / 0.28)' },
+  registration_open:   { label: 'Registration Open',    color: 'hsl(142,71%,50%)',  bg: 'hsl(142 71% 45% / 0.12)',  border: 'hsl(142 71% 45% / 0.28)' },
+  registration_closed: { label: 'Registration Closed',  color: 'hsl(0,70%,65%)',    bg: 'hsl(0 70% 60% / 0.12)',    border: 'hsl(0 70% 60% / 0.28)' },
+  completed:           { label: 'Completed',             color: 'hsl(var(--muted-foreground))', bg: 'hsl(var(--muted))',  border: 'hsl(var(--border))' },
 };
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
@@ -415,11 +415,11 @@ export default function EventDetailPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div style={{ background: 'hsl(228,28%,95%)', minHeight: '100vh', display: 'flex', flexDirection: 'column', paddingTop: '56px' }}>
+    <div style={{ background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', minHeight: '100vh', display: 'flex', flexDirection: 'column', paddingTop: '56px' }}>
 
       {/* ── Hero banner image ───────────────────────────────────────────────── */}
       {bannerSrc && (
-        <div style={{ width: '100%', height: 420, overflow: 'hidden', position: 'relative', background: '#0a0c1e', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ width: '100%', height: 420, overflow: 'hidden', position: 'relative', background: 'hsl(var(--card))', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           {/* Blurred background layer */}
           <div style={{
             position: 'absolute', inset: -30,
@@ -427,7 +427,7 @@ export default function EventDetailPage() {
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             filter: 'blur(25px)',
-            opacity: 0.6
+            opacity: 0.4
           }} />
           {/* Main image */}
           <img
@@ -445,7 +445,7 @@ export default function EventDetailPage() {
           {/* Gradient overlay */}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'linear-gradient(to bottom, rgba(10,12,30,0.0) 0%, rgba(10,12,30,0.5) 100%)',
+            background: 'linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.8) 100%)',
             pointerEvents: 'none'
           }} />
         </div>
@@ -460,18 +460,18 @@ export default function EventDetailPage() {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               fontSize: '0.82rem', fontFamily: 'Inter, sans-serif',
-              color: 'hsl(230,15%,40%)', background: 'white',
-              border: '1px solid hsl(228,20%,82%)', borderRadius: 8,
+              color: 'hsl(var(--foreground))', background: 'hsl(var(--card))',
+              border: '1px solid hsl(var(--border))', borderRadius: 8,
               padding: '6px 14px', cursor: 'pointer', marginBottom: '2rem',
               transition: 'all 0.2s',
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.color = 'hsl(243,75%,59%)';
-              (e.currentTarget as HTMLElement).style.borderColor = 'hsl(243,75%,70%)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--primary))';
+              (e.currentTarget as HTMLElement).style.color = 'hsl(var(--primary))';
             }}
             onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.color = 'hsl(230,15%,40%)';
-              (e.currentTarget as HTMLElement).style.borderColor = 'hsl(228,20%,82%)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--border))';
+              (e.currentTarget as HTMLElement).style.color = 'hsl(var(--foreground))';
             }}
           >
             <ArrowLeft size={14} /> Back to Events
@@ -499,7 +499,7 @@ export default function EventDetailPage() {
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4,
                   padding: '4px 12px', borderRadius: 99, fontSize: '0.72rem', fontWeight: 500,
-                  color: 'hsl(230,15%,42%)', background: 'white', border: '1px solid hsl(228,20%,80%)',
+                  color: 'hsl(var(--muted-foreground))', background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))',
                   fontFamily: 'Inter, sans-serif',
                 }}>
                   <Tag size={11} /> {event.category}
@@ -510,7 +510,7 @@ export default function EventDetailPage() {
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4,
                   padding: '4px 12px', borderRadius: 99, fontSize: '0.72rem', fontWeight: 500,
-                  color: 'hsl(243,75%,50%)', background: 'hsl(243,75%,97%)', border: '1px solid hsl(243,75%,80%)',
+                  color: 'hsl(var(--primary))', background: 'hsl(var(--primary) / 0.12)', border: '1px solid hsl(var(--primary) / 0.3)',
                   fontFamily: 'Inter, sans-serif',
                 }}>
                   <Users size={11} /> Team Event · {event.min_team_size}–{event.max_team_size} members
@@ -522,7 +522,7 @@ export default function EventDetailPage() {
             <h1 style={{
               fontFamily: 'Playfair Display, Georgia, serif',
               fontSize: 'clamp(1.75rem, 4vw, 2.8rem)',
-              fontWeight: 700, color: 'hsl(230,25%,10%)',
+              fontWeight: 700, color: 'hsl(var(--foreground))',
               margin: '0 0 1.5rem', lineHeight: 1.2,
               letterSpacing: '-0.02em',
             }}>
@@ -536,12 +536,12 @@ export default function EventDetailPage() {
             }}>
               {/* Date */}
               {rawEventDate && (
-                <div style={{ background: 'white', borderRadius: 10, padding: '0.85rem 1rem', border: '1px solid hsl(228,20%,84%)' }}>
+                <div style={{ background: 'hsl(var(--card))', borderRadius: 10, padding: '0.85rem 1rem', border: '1px solid hsl(var(--border))' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    <Calendar size={14} style={{ color: 'hsl(243,75%,59%)' }} />
-                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'hsl(243,75%,59%)', letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>Date</span>
+                    <Calendar size={14} style={{ color: 'hsl(var(--primary))' }} />
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'hsl(var(--primary))', letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>Date</span>
                   </div>
-                  <p style={{ fontSize: '0.88rem', color: 'hsl(230,20%,18%)', fontFamily: 'Inter, sans-serif', fontWeight: 600, margin: 0 }}>
+                  <p style={{ fontSize: '0.88rem', color: 'hsl(var(--card-foreground))', fontFamily: 'Inter, sans-serif', fontWeight: 600, margin: 0 }}>
                     {formatEventDate(event)}
                   </p>
                 </div>
@@ -549,12 +549,12 @@ export default function EventDetailPage() {
 
               {/* Time */}
               {(event.start_time || event.end_time) && (
-                <div style={{ background: 'white', borderRadius: 10, padding: '0.85rem 1rem', border: '1px solid hsl(228,20%,84%)' }}>
+                <div style={{ background: 'hsl(var(--card))', borderRadius: 10, padding: '0.85rem 1rem', border: '1px solid hsl(var(--border))' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    <Clock size={14} style={{ color: 'hsl(243,75%,59%)' }} />
-                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'hsl(243,75%,59%)', letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>Time (IST)</span>
+                    <Clock size={14} style={{ color: 'hsl(var(--primary))' }} />
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'hsl(var(--primary))', letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>Time (IST)</span>
                   </div>
-                  <p style={{ fontSize: '0.88rem', color: 'hsl(230,20%,18%)', fontFamily: 'Inter, sans-serif', fontWeight: 600, margin: 0 }}>
+                  <p style={{ fontSize: '0.88rem', color: 'hsl(var(--card-foreground))', fontFamily: 'Inter, sans-serif', fontWeight: 600, margin: 0 }}>
                     {formatBareTime(event.start_time)}{event.end_time ? ` – ${formatBareTime(event.end_time)}` : ''}
                   </p>
                 </div>
@@ -562,12 +562,12 @@ export default function EventDetailPage() {
 
               {/* Venue */}
               {event.venue && (
-                <div style={{ background: 'white', borderRadius: 10, padding: '0.85rem 1rem', border: '1px solid hsl(228,20%,84%)' }}>
+                <div style={{ background: 'hsl(var(--card))', borderRadius: 10, padding: '0.85rem 1rem', border: '1px solid hsl(var(--border))' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    <MapPin size={14} style={{ color: 'hsl(243,75%,59%)' }} />
-                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'hsl(243,75%,59%)', letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>Venue</span>
+                    <MapPin size={14} style={{ color: 'hsl(var(--primary))' }} />
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'hsl(var(--primary))', letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>Venue</span>
                   </div>
-                  <p style={{ fontSize: '0.88rem', color: 'hsl(230,20%,18%)', fontFamily: 'Inter, sans-serif', fontWeight: 600, margin: 0 }}>
+                  <p style={{ fontSize: '0.88rem', color: 'hsl(var(--card-foreground))', fontFamily: 'Inter, sans-serif', fontWeight: 600, margin: 0 }}>
                     {event.venue}
                   </p>
                 </div>
@@ -575,12 +575,12 @@ export default function EventDetailPage() {
 
               {/* Event type */}
               {event.event_type && (
-                <div style={{ background: 'white', borderRadius: 10, padding: '0.85rem 1rem', border: '1px solid hsl(228,20%,84%)' }}>
+                <div style={{ background: 'hsl(var(--card))', borderRadius: 10, padding: '0.85rem 1rem', border: '1px solid hsl(var(--border))' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    <Users size={14} style={{ color: 'hsl(243,75%,59%)' }} />
-                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'hsl(243,75%,59%)', letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>Format</span>
+                    <Users size={14} style={{ color: 'hsl(var(--primary))' }} />
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'hsl(var(--primary))', letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>Format</span>
                   </div>
-                  <p style={{ fontSize: '0.88rem', color: 'hsl(230,20%,18%)', fontFamily: 'Inter, sans-serif', fontWeight: 600, margin: 0, textTransform: 'capitalize' }}>
+                  <p style={{ fontSize: '0.88rem', color: 'hsl(var(--card-foreground))', fontFamily: 'Inter, sans-serif', fontWeight: 600, margin: 0, textTransform: 'capitalize' }}>
                     {event.event_type}
                     {event.event_type === 'team' && event.min_team_size && event.max_team_size
                       ? ` (${event.min_team_size}–${event.max_team_size} members)`
@@ -591,12 +591,12 @@ export default function EventDetailPage() {
 
               {/* Capacity */}
               {event.participants !== undefined && event.max_participants && (
-                <div style={{ background: 'white', borderRadius: 10, padding: '0.85rem 1rem', border: '1px solid hsl(228,20%,84%)' }}>
+                <div style={{ background: 'hsl(var(--card))', borderRadius: 10, padding: '0.85rem 1rem', border: '1px solid hsl(var(--border))' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    <Users size={14} style={{ color: 'hsl(243,75%,59%)' }} />
-                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'hsl(243,75%,59%)', letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>Capacity</span>
+                    <Users size={14} style={{ color: 'hsl(var(--primary))' }} />
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'hsl(var(--primary))', letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>Capacity</span>
                   </div>
-                  <p style={{ fontSize: '0.88rem', color: 'hsl(230,20%,18%)', fontFamily: 'Inter, sans-serif', fontWeight: 600, margin: 0 }}>
+                  <p style={{ fontSize: '0.88rem', color: 'hsl(var(--card-foreground))', fontFamily: 'Inter, sans-serif', fontWeight: 600, margin: 0 }}>
                     {event.participants}+ / {event.max_participants} registered
                   </p>
                 </div>
@@ -604,12 +604,12 @@ export default function EventDetailPage() {
 
               {/* Registration window */}
               {(event.registration_start || event.registration_end) && (
-                <div style={{ background: 'white', borderRadius: 10, padding: '0.85rem 1rem', border: '1px solid hsl(228,20%,84%)', gridColumn: 'span 2' }}>
+                <div style={{ background: 'hsl(var(--card))', borderRadius: 10, padding: '0.85rem 1rem', border: '1px solid hsl(var(--border))', gridColumn: 'span 2' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    <Calendar size={14} style={{ color: 'hsl(243,75%,59%)' }} />
-                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'hsl(243,75%,59%)', letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>Registration Window (IST)</span>
+                    <Calendar size={14} style={{ color: 'hsl(var(--primary))' }} />
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'hsl(var(--primary))', letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>Registration Window (IST)</span>
                   </div>
-                  <p style={{ fontSize: '0.85rem', color: 'hsl(230,20%,18%)', fontFamily: 'Inter, sans-serif', fontWeight: 600, margin: 0 }}>
+                  <p style={{ fontSize: '0.85rem', color: 'hsl(var(--card-foreground))', fontFamily: 'Inter, sans-serif', fontWeight: 600, margin: 0 }}>
                     {event.registration_start ? formatRegDate(event.registration_start) : '—'}
                     {' → '}
                     {event.registration_end ? formatRegDate(event.registration_end) : '—'}
@@ -620,19 +620,19 @@ export default function EventDetailPage() {
 
             {/* Speaker */}
             {event.speaker && (
-              <div style={{ background: 'hsl(243,75%,98%)', border: '1px solid hsl(243,75%,85%)', borderRadius: 10, padding: '1rem 1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <div style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 10, padding: '1rem 1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                 <span style={{ fontSize: '1.3rem' }}>🎤</span>
                 <div>
-                  <p style={{ fontSize: '0.68rem', fontWeight: 700, color: 'hsl(243,75%,55%)', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif', margin: '0 0 2px' }}>Speaker</p>
-                  <p style={{ fontSize: '0.95rem', color: 'hsl(230,25%,12%)', fontFamily: 'Inter, sans-serif', fontWeight: 600, margin: 0 }}>{event.speaker}</p>
+                  <p style={{ fontSize: '0.68rem', fontWeight: 700, color: 'hsl(var(--primary))', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif', margin: '0 0 2px' }}>Speaker</p>
+                  <p style={{ fontSize: '0.95rem', color: 'hsl(var(--foreground))', fontFamily: 'Inter, sans-serif', fontWeight: 600, margin: 0 }}>{event.speaker}</p>
                 </div>
               </div>
             )}
 
             {/* Description */}
             {event.description && (
-              <div style={{ background: 'white', borderRadius: 12, padding: '1.5rem 2rem', border: '1px solid hsl(228,20%,83%)', marginBottom: '2rem' }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.95rem', lineHeight: 1.85, color: 'hsl(230,20%,22%)', margin: 0, whiteSpace: 'pre-wrap' }}>
+              <div style={{ background: 'hsl(var(--card))', borderRadius: 12, padding: '1.5rem 2rem', border: '1px solid hsl(var(--border))', marginBottom: '2rem' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.95rem', lineHeight: 1.85, color: 'hsl(var(--muted-foreground))', margin: 0, whiteSpace: 'pre-wrap' }}>
                   {event.description}
                 </p>
               </div>
@@ -645,10 +645,10 @@ export default function EventDetailPage() {
                   <span style={{ fontSize: '1.2rem' }}>🏆</span>
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'hsl(35,90%,40%)', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' }}>Winners</span>
                 </div>
-                <p style={{ fontSize: '0.9rem', color: 'hsl(230,20%,22%)', fontFamily: 'Inter, sans-serif', lineHeight: 1.6, margin: 0 }}>{event.winners}</p>
+                <p style={{ fontSize: '0.9rem', color: 'hsl(var(--foreground))', fontFamily: 'Inter, sans-serif', lineHeight: 1.6, margin: 0 }}>{event.winners}</p>
                 {event.winner_link && (
                   <a href={event.winner_link} target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 10, fontSize: '0.82rem', color: 'hsl(243,75%,59%)', textDecoration: 'none', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 10, fontSize: '0.82rem', color: 'hsl(var(--primary))', textDecoration: 'none', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
                     View results <ExternalLink size={13} />
                   </a>
                 )}
@@ -658,7 +658,7 @@ export default function EventDetailPage() {
             {/* External registration link (for non-open status) */}
             {event.registration_link && !isOpen && (
               <a href={event.registration_link} target="_blank" rel="noopener noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 24px', background: 'hsl(243,75%,59%)', color: 'white', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', fontWeight: 600, textDecoration: 'none', marginBottom: '2rem' }}>
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 24px', background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', fontWeight: 600, textDecoration: 'none', marginBottom: '2rem' }}>
                 <ExternalLink size={15} /> Register via External Link
               </a>
             )}
@@ -667,10 +667,10 @@ export default function EventDetailPage() {
           {/* ── Registration form / Edit panel ────────────────────────────── */}
           {isOpen && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.15 }}>
-              <div style={{ background: 'white', borderRadius: 14, border: '1px solid hsl(228,20%,80%)', overflow: 'hidden', boxShadow: '0 8px 30px rgba(45,50,100,0.06)' }}>
+              <div style={{ background: 'hsl(var(--card))', borderRadius: 14, border: '1px solid hsl(var(--border))', overflow: 'hidden', boxShadow: '0 8px 30px rgba(0,0,0,0.1)' }}>
 
                 {/* Form header */}
-                <div style={{ padding: '1.5rem 2rem', background: isRegistered ? 'linear-gradient(135deg, hsl(142,65%,38%), hsl(160,60%,42%))' : 'linear-gradient(135deg, hsl(243,75%,59%), hsl(270,80%,62%))', color: 'white' }}>
+                <div style={{ padding: '1.5rem 2rem', background: isRegistered ? 'linear-gradient(135deg, hsl(142,65%,38%), hsl(160,60%,42%))' : 'linear-gradient(135deg, hsl(var(--primary)), hsl(270,80%,62%))', color: 'white' }}>
                   <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: '1.3rem', fontWeight: 700, margin: 0 }}>
                     {isRegistered && !isEditMode ? '✓ You are registered!' : isEditMode ? '✏️ Edit Your Registration' : 'Register for this Event'}
                   </h2>
@@ -689,25 +689,25 @@ export default function EventDetailPage() {
                   <div style={{ padding: '2rem' }}>
 
                     {/* Status card */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'hsl(142,60%,97%)', border: '1px solid hsl(142,60%,82%)', borderRadius: 10, padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
-                      <CheckCircle size={32} style={{ color: 'hsl(142,65%,38%)', flexShrink: 0 }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'hsl(142 60% 50% / 0.1)', border: '1px solid hsl(142 60% 50% / 0.3)', borderRadius: 10, padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
+                      <CheckCircle size={32} style={{ color: 'hsl(142,65%,48%)', flexShrink: 0 }} />
                       <div>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, color: 'hsl(142,50%,22%)', margin: '0 0 2px', fontSize: '0.95rem' }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, color: 'hsl(var(--foreground))', margin: '0 0 2px', fontSize: '0.95rem' }}>
                           Registration confirmed!
                         </p>
-                        <p style={{ fontFamily: 'Inter, sans-serif', color: 'hsl(142,40%,35%)', fontSize: '0.82rem', margin: 0 }}>
-                          Check <Link to="/my-registrations" style={{ color: 'hsl(142,55%,30%)', fontWeight: 600 }}>My Registrations</Link> for full details.
+                        <p style={{ fontFamily: 'Inter, sans-serif', color: 'hsl(var(--muted-foreground))', fontSize: '0.82rem', margin: 0 }}>
+                          Check <Link to="/my-registrations" style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>My Registrations</Link> for full details.
                         </p>
                       </div>
                     </div>
 
                     {/* Withdraw confirm inline */}
                     {showWithdrawConfirm ? (
-                      <div style={{ background: 'hsl(0,70%,97%)', border: '1px solid hsl(0,70%,83%)', borderRadius: 10, padding: '1.25rem', marginBottom: '1rem' }}>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'hsl(0,55%,30%)', fontWeight: 600, margin: '0 0 0.75rem' }}>
+                      <div style={{ background: 'hsl(0 70% 50% / 0.1)', border: '1px solid hsl(0 70% 50% / 0.3)', borderRadius: 10, padding: '1.25rem', marginBottom: '1rem' }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'hsl(0,70%,60%)', fontWeight: 600, margin: '0 0 0.75rem' }}>
                           ⚠️ Are you sure you want to withdraw your registration?
                         </p>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: 'hsl(0,40%,40%)', margin: '0 0 1rem' }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: 'hsl(var(--muted-foreground))', margin: '0 0 1rem' }}>
                           This action is permanent. All your responses and uploaded files will be deleted.
                         </p>
                         <div style={{ display: 'flex', gap: 10 }}>
@@ -728,8 +728,8 @@ export default function EventDetailPage() {
                             onClick={() => setShowWithdrawConfirm(false)}
                             disabled={isWithdrawing}
                             style={{
-                              padding: '9px 20px', background: 'white', color: 'hsl(230,15%,40%)',
-                              border: '1px solid hsl(228,20%,82%)', borderRadius: 8,
+                              padding: '9px 20px', background: 'hsl(var(--secondary))', color: 'hsl(var(--foreground))',
+                              border: '1px solid hsl(var(--border))', borderRadius: 8,
                               fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', fontWeight: 600,
                               cursor: 'pointer',
                             }}
@@ -747,10 +747,10 @@ export default function EventDetailPage() {
                           style={{
                             display: 'inline-flex', alignItems: 'center', gap: 7,
                             padding: '10px 20px',
-                            background: 'linear-gradient(135deg, hsl(243,75%,59%), hsl(270,80%,62%))',
+                            background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(270,80%,62%))',
                             color: 'white', border: 'none', borderRadius: 9,
                             fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', fontWeight: 700,
-                            cursor: 'pointer', boxShadow: '0 4px 14px rgba(99,102,241,0.25)',
+                            cursor: 'pointer', boxShadow: '0 4px 14px rgba(121,101,255,0.25)',
                             transition: 'opacity 0.2s',
                           }}
                           onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
@@ -766,18 +766,16 @@ export default function EventDetailPage() {
                           style={{
                             display: 'inline-flex', alignItems: 'center', gap: 7,
                             padding: '10px 20px',
-                            background: 'white', color: 'hsl(0,70%,48%)',
-                            border: '1.5px solid hsl(0,70%,80%)', borderRadius: 9,
+                            background: 'hsl(var(--card))', color: 'hsl(0,70%,60%)',
+                            border: '1px solid hsl(0,70%,50% / 0.4)', borderRadius: 9,
                             fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', fontWeight: 700,
                             cursor: 'pointer', transition: 'all 0.2s',
                           }}
                           onMouseEnter={e => {
-                            (e.currentTarget as HTMLElement).style.background = 'hsl(0,70%,97%)';
-                            (e.currentTarget as HTMLElement).style.borderColor = 'hsl(0,70%,65%)';
+                            (e.currentTarget as HTMLElement).style.background = 'hsl(0,70%,50% / 0.1)';
                           }}
                           onMouseLeave={e => {
-                            (e.currentTarget as HTMLElement).style.background = 'white';
-                            (e.currentTarget as HTMLElement).style.borderColor = 'hsl(0,70%,80%)';
+                            (e.currentTarget as HTMLElement).style.background = 'hsl(var(--card))';
                           }}
                         >
                           <Trash2 size={15} /> Withdraw
@@ -791,9 +789,9 @@ export default function EventDetailPage() {
                         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                           style={{
                             marginTop: '1rem', padding: '12px 16px', borderRadius: 8,
-                            background: submitMsg.type === 'success' ? 'hsl(142,71%,95%)' : 'hsl(0,70%,96%)',
-                            border: `1px solid ${submitMsg.type === 'success' ? 'hsl(142,71%,70%)' : 'hsl(0,70%,80%)'}`,
-                            color: submitMsg.type === 'success' ? 'hsl(142,71%,30%)' : 'hsl(0,70%,40%)',
+                            background: submitMsg.type === 'success' ? 'hsl(142 71% 45% / 0.15)' : 'hsl(0 70% 60% / 0.15)',
+                            border: `1px solid ${submitMsg.type === 'success' ? 'hsl(142,71%,50%)' : 'hsl(0,70%,60%)'}`,
+                            color: submitMsg.type === 'success' ? 'hsl(142,71%,50%)' : 'hsl(0,70%,60%)',
                             fontFamily: 'Inter, sans-serif', fontSize: '0.875rem',
                           }}>
                           {submitMsg.text}
@@ -808,14 +806,14 @@ export default function EventDetailPage() {
 
                     {/* Edit mode top bar */}
                     {isEditMode && (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid hsl(228,20%,88%)' }}>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: 'hsl(230,15%,45%)', margin: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid hsl(var(--border))' }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', color: 'hsl(var(--muted-foreground))', margin: 0 }}>
                           Make your changes below and click Save.
                         </p>
                         <button
                           type="button"
                           onClick={() => { setIsEditMode(false); setSubmitMsg(null); }}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', color: 'hsl(230,15%,45%)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
                         >
                           <X size={13} /> Cancel
                         </button>
@@ -828,9 +826,9 @@ export default function EventDetailPage() {
                         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                           style={{
                             marginBottom: '1.25rem', padding: '12px 16px', borderRadius: 8,
-                            background: submitMsg.type === 'success' ? 'hsl(142,71%,95%)' : 'hsl(0,70%,96%)',
-                            border: `1px solid ${submitMsg.type === 'success' ? 'hsl(142,71%,70%)' : 'hsl(0,70%,80%)'}`,
-                            color: submitMsg.type === 'success' ? 'hsl(142,71%,30%)' : 'hsl(0,70%,40%)',
+                            background: submitMsg.type === 'success' ? 'hsl(142 71% 45% / 0.15)' : 'hsl(0 70% 60% / 0.15)',
+                            border: `1px solid ${submitMsg.type === 'success' ? 'hsl(142,71%,50%)' : 'hsl(0,70%,60%)'}`,
+                            color: submitMsg.type === 'success' ? 'hsl(142,71%,50%)' : 'hsl(0,70%,60%)',
                             fontFamily: 'Inter, sans-serif', fontSize: '0.875rem',
                           }}>
                           {submitMsg.text}
@@ -841,21 +839,21 @@ export default function EventDetailPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                       {formFields.map(field => (
                         <div key={field.id}>
-                          <label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', fontWeight: 700, color: 'hsl(230,20%,20%)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                            {field.label} {field.required && <span style={{ color: 'hsl(0,70%,50%)' }}>*</span>}
+                          <label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', fontWeight: 700, color: 'hsl(var(--foreground))', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                            {field.label} {field.required && <span style={{ color: 'hsl(0,70%,60%)' }}>*</span>}
                           </label>
 
                           {field.field_type === 'file' ? (
-                            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', background: 'hsl(228,28%,97%)', border: '1.5px dashed hsl(228,20%,78%)', borderRadius: 8, padding: '12px', cursor: 'pointer', boxSizing: 'border-box' }}>
-                              <Upload size={16} style={{ color: 'hsl(243,75%,59%)' }} />
-                              <span style={{ fontSize: '0.875rem', fontFamily: 'Inter, sans-serif', color: 'hsl(230,15%,45%)' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', background: 'hsl(var(--secondary))', border: '1.5px dashed hsl(var(--border))', borderRadius: 8, padding: '12px', cursor: 'pointer', boxSizing: 'border-box' }}>
+                              <Upload size={16} style={{ color: 'hsl(var(--primary))' }} />
+                              <span style={{ fontSize: '0.875rem', fontFamily: 'Inter, sans-serif', color: 'hsl(var(--muted-foreground))' }}>
                                 {uploadedFiles[field.id] ? uploadedFiles[field.id].name : field.placeholder || 'Choose File'}
                               </span>
                               <input type="file" required={field.required && !uploadedFiles[field.id]} onChange={e => { if (e.target.files?.[0]) handleFileChange(field.id, e.target.files[0]); }} style={{ display: 'none' }} />
                             </label>
                           ) : field.field_type === 'dropdown' || field.field_type === 'select' ? (
                             <select required={field.required} value={responses[field.id] || ''} onChange={e => handleInputChange(field.id, e.target.value)}
-                              style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', outline: 'none', background: 'white', boxSizing: 'border-box' }}>
+                              style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid hsl(var(--border))', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', outline: 'none', background: 'hsl(var(--secondary))', color: 'hsl(var(--foreground))', boxSizing: 'border-box' }}>
                               <option value="" disabled>{field.placeholder || 'Select option...'}</option>
                               {(field.options_json ? JSON.parse(field.options_json) : field.options || []).map((o: string) => (
                                 <option key={o} value={o}>{o}</option>
@@ -864,9 +862,9 @@ export default function EventDetailPage() {
                           ) : field.field_type === 'checkbox' ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
                               {(field.options_json ? JSON.parse(field.options_json) : field.options || []).map((opt: string) => (
-                                <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.875rem', fontFamily: 'Inter, sans-serif', color: 'hsl(230,20%,22%)' }}>
+                                <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.875rem', fontFamily: 'Inter, sans-serif', color: 'hsl(var(--foreground))' }}>
                                   <input type="checkbox" checked={(responses[field.id] || []).includes(opt)} onChange={e => handleCheckboxChange(field.id, opt, e.target.checked)}
-                                    style={{ width: 16, height: 16, accentColor: 'hsl(243,75%,59%)' }} />
+                                    style={{ width: 16, height: 16, accentColor: 'hsl(var(--primary))' }} />
                                   {opt}
                                 </label>
                               ))}
@@ -874,20 +872,20 @@ export default function EventDetailPage() {
                           ) : field.field_type === 'radio' ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
                               {(field.options_json ? JSON.parse(field.options_json) : field.options || []).map((opt: string) => (
-                                <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.875rem', fontFamily: 'Inter, sans-serif', color: 'hsl(230,20%,22%)' }}>
+                                <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.875rem', fontFamily: 'Inter, sans-serif', color: 'hsl(var(--foreground))' }}>
                                   <input type="radio" name={`radio-${field.id}`} checked={responses[field.id] === opt} onChange={() => handleInputChange(field.id, opt)}
-                                    style={{ width: 16, height: 16, accentColor: 'hsl(243,75%,59%)' }} />
+                                    style={{ width: 16, height: 16, accentColor: 'hsl(var(--primary))' }} />
                                   {opt}
                                 </label>
                               ))}
                             </div>
                           ) : field.field_type === 'textarea' ? (
                             <textarea required={field.required} placeholder={field.placeholder} value={responses[field.id] || ''} onChange={e => handleInputChange(field.id, e.target.value)} rows={3} autoComplete="off"
-                              style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+                              style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid hsl(var(--border))', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', resize: 'vertical', outline: 'none', background: 'hsl(var(--secondary))', color: 'hsl(var(--foreground))', boxSizing: 'border-box' }} />
                           ) : (
                             <input type={field.field_type === 'number' ? 'number' : field.field_type === 'email' ? 'email' : field.field_type === 'phone' ? 'tel' : 'text'}
                               required={field.required} placeholder={field.placeholder} value={responses[field.id] || ''} onChange={e => handleInputChange(field.id, e.target.value)} autoComplete="off"
-                              style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid hsl(228,20%,80%)', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' }} />
+                              style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid hsl(var(--border))', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem', outline: 'none', background: 'hsl(var(--secondary))', color: 'hsl(var(--foreground))', boxSizing: 'border-box' }} />
                           )}
                         </div>
                       ))}
@@ -905,13 +903,13 @@ export default function EventDetailPage() {
                         background: (isEditMode || userProfile)
                           ? (isEditMode
                             ? 'linear-gradient(135deg, hsl(142,65%,38%), hsl(160,60%,42%))'
-                            : 'linear-gradient(135deg, hsl(243,75%,59%), hsl(270,80%,62%))')
-                          : 'hsl(228,20%,80%)',
-                        color: 'white', border: 'none', borderRadius: 10,
+                            : 'linear-gradient(135deg, hsl(var(--primary)), hsl(270,80%,62%))')
+                          : 'hsl(var(--muted))',
+                        color: (isEditMode || userProfile) ? 'white' : 'hsl(var(--muted-foreground))', border: 'none', borderRadius: 10,
                         fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', fontWeight: 700,
                         cursor: (!isEditMode && !userProfile) ? 'not-allowed' : 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                        boxShadow: (isEditMode || userProfile) ? '0 5px 20px rgba(99,102,241,0.22)' : 'none',
+                        boxShadow: (isEditMode || userProfile) ? '0 5px 20px rgba(121,101,255,0.22)' : 'none',
                         transition: 'opacity 0.2s',
                         opacity: (isEditMode ? isUpdating : isSubmitting) ? 0.7 : 1,
                       }}
@@ -937,9 +935,9 @@ export default function EventDetailPage() {
 
           {/* Closed / completed notice */}
           {isPast && (
-            <div style={{ background: 'white', borderRadius: 12, border: '1px solid hsl(228,20%,82%)', padding: '2rem', textAlign: 'center' }}>
-              <XCircle size={40} style={{ color: 'hsl(228,20%,68%)', margin: '0 auto 1rem', display: 'block' }} />
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.95rem', color: 'hsl(230,15%,45%)', margin: 0 }}>
+            <div style={{ background: 'hsl(var(--card))', borderRadius: 12, border: '1px solid hsl(var(--border))', padding: '2rem', textAlign: 'center' }}>
+              <XCircle size={40} style={{ color: 'hsl(var(--muted-foreground))', margin: '0 auto 1rem', display: 'block' }} />
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.95rem', color: 'hsl(var(--muted-foreground))', margin: 0 }}>
                 This event has ended. Registration is no longer available.
               </p>
             </div>

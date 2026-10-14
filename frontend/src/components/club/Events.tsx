@@ -579,8 +579,8 @@ const resultCount = displayedUpcomingEvents.length;
       <section
         id="events"
         style={{
-          background: 'hsl(228, 28%, 91%)',
-          borderTop: '1px solid hsl(228, 20%, 80%)',
+          background: 'hsl(var(--background))',
+          borderTop: '1px solid hsl(var(--border))',
         }}
       >
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '5rem 2rem' }}>
@@ -591,7 +591,7 @@ const resultCount = displayedUpcomingEvents.length;
               fontSize: 'clamp(2rem, 4vw, 3.5rem)',
               fontWeight: 700,
               letterSpacing: '-0.025em',
-              color: 'hsl(230, 25%, 10%)',
+              color: 'hsl(var(--foreground))',
               marginBottom: '0.6rem',
             }}
           >
@@ -601,7 +601,7 @@ const resultCount = displayedUpcomingEvents.length;
             style={{
               fontFamily: 'Inter, sans-serif',
               fontSize: '1rem',
-              color: 'hsl(230, 15%, 45%)',
+              color: 'hsl(var(--muted-foreground))',
               marginBottom: '2.5rem',
             }}
           >
@@ -611,9 +611,9 @@ const resultCount = displayedUpcomingEvents.length;
           {/* Event list */}
           <div>
             {loadingEvents ? (
-              <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.8rem', color: 'hsl(230, 15%, 50%)' }}>Loading events...</p>
+              <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Loading events...</p>
             ) : displayedUpcomingEvents.length === 0 ? (
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'hsl(230, 15%, 50%)', padding: '2rem 0', borderTop: '1px solid hsl(228, 20%, 80%)' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'hsl(var(--muted-foreground))', padding: '2rem 0', borderTop: '1px solid hsl(var(--border))' }}>
                 No upcoming events at the moment. Check back soon.
               </p>
             ) : (
@@ -636,8 +636,8 @@ const resultCount = displayedUpcomingEvents.length;
                       gap: '2rem',
                       padding: '1.5rem',
                       borderRadius: '16px',
-                      background: 'white',
-                      border: '1px solid hsl(228, 20%, 84%)',
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
                       alignItems: 'flex-start',
                       marginBottom: '1rem',
                       transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -645,13 +645,13 @@ const resultCount = displayedUpcomingEvents.length;
                     }}
                     onMouseEnter={e => {
                       (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px) scale(1.01)';
-                      (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 24px -6px rgba(99, 102, 241, 0.18)';
-                      (e.currentTarget as HTMLElement).style.borderColor = 'hsl(243, 75%, 59%)';
+                      (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 24px -6px rgba(121, 101, 255, 0.15)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--primary))';
                     }}
                     onMouseLeave={e => {
                       (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)';
                       (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-                      (e.currentTarget as HTMLElement).style.borderColor = 'hsl(228, 20%, 84%)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--border))';
                     }}
                   >
                     {/* Date column */}
@@ -688,7 +688,7 @@ const resultCount = displayedUpcomingEvents.length;
                           fontFamily: 'Playfair Display, Georgia, serif',
                           fontSize: '1.1rem',
                           fontWeight: 700,
-                          color: 'hsl(230, 25%, 12%)',
+                          color: 'hsl(var(--foreground))',
                           marginBottom: '0.35rem',
                           letterSpacing: '-0.01em',
                         }}
@@ -699,7 +699,7 @@ const resultCount = displayedUpcomingEvents.length;
                         style={{
                           fontFamily: 'Inter, sans-serif',
                           fontSize: '0.88rem',
-                          color: 'hsl(230, 15%, 40%)',
+                          color: 'hsl(var(--muted-foreground))',
                           lineHeight: 1.6,
                           marginBottom: '0.75rem',
                           maxWidth: 600,
@@ -711,12 +711,12 @@ const resultCount = displayedUpcomingEvents.length;
                         style={{
                           fontFamily: 'JetBrains Mono, monospace',
                           fontSize: '0.75rem',
-                          color: 'hsl(230, 15%, 48%)',
+                          color: 'hsl(var(--muted-foreground))',
                         }}
                       >
                         {metaParts.join(' · ')}
                         {ev.status === 'registration_open' && (
-                          <span style={{ color: 'hsl(243, 75%, 59%)', marginLeft: metaParts.length > 0 ? 8 : 0 }}>· Open for registration</span>
+                          <span style={{ color: 'hsl(var(--primary))', marginLeft: metaParts.length > 0 ? 8 : 0 }}>· Open for registration</span>
                         )}
                       </p>
 
@@ -724,7 +724,7 @@ const resultCount = displayedUpcomingEvents.length;
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
                         {ev.status === 'registration_open' && !authLoading && (
                           registeredEventIds.includes(Number(ev.id)) ? (
-                            <span style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(243,75%,59%)', padding: '4px 12px', border: '1px solid hsl(243,75%,80%)', borderRadius: 2 }}>
+                            <span style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(var(--primary))', padding: '4px 12px', border: '1px solid hsl(var(--primary) / 0.4)', borderRadius: 2 }}>
                               Registered ✓
                             </span>
                           ) : ev.registration_link ? (
@@ -732,14 +732,14 @@ const resultCount = displayedUpcomingEvents.length;
                               href={ev.registration_link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(228,30%,93%)', background: 'hsl(230,25%,12%)', padding: '5px 14px', borderRadius: 2, textDecoration: 'none', border: '1px solid hsl(230,25%,12%)' }}
+                              style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(var(--primary-foreground))', background: 'hsl(var(--primary))', padding: '5px 14px', borderRadius: 4, textDecoration: 'none', border: '1px solid hsl(var(--primary))' }}
                             >
                               Register now
                             </a>
                           ) : (
                             <button
                               onClick={() => navigate(`/events/${ev.id}`)}
-                              style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(228,30%,93%)', background: 'hsl(230,25%,12%)', padding: '5px 14px', borderRadius: 2, border: '1px solid hsl(230,25%,12%)', cursor: 'pointer' }}
+                              style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(var(--primary-foreground))', background: 'hsl(var(--primary))', padding: '5px 14px', borderRadius: 4, border: '1px solid hsl(var(--primary))', cursor: 'pointer' }}
                             >
                               Register now
                             </button>
@@ -747,9 +747,9 @@ const resultCount = displayedUpcomingEvents.length;
                         )}
                         <button
                           onClick={() => navigate(`/events/${ev.id}`)}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(243,75%,59%)', background: 'transparent', padding: '4px 10px', border: '1px solid hsl(243,75%,75%)', borderRadius: 2, cursor: 'pointer' }}
-                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'hsl(243,75%,97%)'}
-                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(var(--primary))', background: 'transparent', padding: '4px 10px', border: '1px solid hsl(var(--border))', borderRadius: 4, cursor: 'pointer' }}
+                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--primary))'}
+                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--border))'}
                         >
                           <ArrowRight size={11} /> View Details
                         </button>
@@ -765,9 +765,9 @@ const resultCount = displayedUpcomingEvents.length;
               style={{
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: '0.72rem',
-                color: 'hsl(230, 15%, 55%)',
+                color: 'hsl(var(--muted-foreground))',
                 marginTop: '1.5rem',
-                borderTop: '1px solid hsl(228, 20%, 80%)',
+                borderTop: '1px solid hsl(var(--border))',
                 paddingTop: '1rem',
               }}
             >
@@ -777,13 +777,13 @@ const resultCount = displayedUpcomingEvents.length;
 
           {/* Past Events Highlights (2 Past Events on Homepage) */}
           {pastEvents.length > 0 && (
-            <div style={{ marginTop: '3rem', paddingTop: '2.5rem', borderTop: '1px solid hsl(228, 20%, 80%)' }}>
+            <div style={{ marginTop: '3rem', paddingTop: '2.5rem', borderTop: '1px solid hsl(var(--border))' }}>
               <h3
                 style={{
                   fontFamily: 'Playfair Display, Georgia, serif',
                   fontSize: '1.5rem',
                   fontWeight: 700,
-                  color: 'hsl(230, 25%, 10%)',
+                  color: 'hsl(var(--foreground))',
                   marginBottom: '1.25rem',
                 }}
               >
@@ -794,7 +794,7 @@ const resultCount = displayedUpcomingEvents.length;
                   <div
                     key={pe.id}
                     onClick={() => navigate(`/events/${pe.id}`)}
-                    className="glass-card relative overflow-hidden p-6 flex flex-col justify-between cursor-pointer group bg-white border border-slate-200 rounded-2xl hover:border-indigo-400 hover:shadow-xl transition-all"
+                    className="glass-card relative overflow-hidden p-6 flex flex-col justify-between cursor-pointer group bg-card border border-border rounded-2xl hover:border-primary/40 hover:shadow-xl transition-all"
                   >
                     <div>
                       {pe.image_url && (
@@ -820,7 +820,7 @@ const resultCount = displayedUpcomingEvents.length;
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 fontFamily: 'JetBrains Mono, monospace', fontSize: '0.8rem',
-                color: 'hsl(243, 75%, 59%)', textDecoration: 'none', letterSpacing: '0.02em',
+                color: 'hsl(var(--primary))', textDecoration: 'none', letterSpacing: '0.02em',
               }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.textDecoration = 'underline'; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.textDecoration = 'none'; }}
@@ -1044,21 +1044,7 @@ const resultCount = displayedUpcomingEvents.length;
 
   // ── Full page: original detailed view ────────────────────────────
   return (
-    <section id="events" style={{
-  background: `
-    radial-gradient(
-      circle at 10% 10%,
-      rgba(99,102,241,0.08),
-      transparent 28%
-    ),
-    radial-gradient(
-      circle at 90% 30%,
-      rgba(139,92,246,0.07),
-      transparent 25%
-    ),
-    hsl(228, 28%, 95%)
-  `,
-}}>
+    <section id="events" className="bg-background text-foreground transition-colors duration-200">
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '4rem 2rem' }}>
           <motion.div
   initial={{ opacity: 0, y: 20 }}
@@ -1067,21 +1053,17 @@ const resultCount = displayedUpcomingEvents.length;
   className="mb-10"
 >
   <div
-    className="text-xs font-semibold uppercase tracking-[0.2em] mb-3"
-    style={{
-      color: 'hsl(243,75%,59%)',
-    }}
+    className="text-xs font-semibold uppercase tracking-[0.2em] mb-3 text-primary"
   >
     AI CLUB · EVENTS
   </div>
 
   <h1
-    className="font-display font-bold"
+    className="font-display font-bold text-foreground"
     style={{
       fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
       lineHeight: 1,
       letterSpacing: '-0.045em',
-      color: 'hsl(230,25%,10%)',
     }}
   >
     Discover what&apos;s
@@ -1089,7 +1071,7 @@ const resultCount = displayedUpcomingEvents.length;
     <span
       style={{
         background:
-          'linear-gradient(90deg, hsl(243,75%,59%), hsl(270,80%,62%))',
+          'linear-gradient(90deg, hsl(var(--primary)), hsl(270 80% 62%))',
         WebkitBackgroundClip: 'text',
         WebkitTextFillColor: 'transparent',
       }}
@@ -1099,11 +1081,10 @@ const resultCount = displayedUpcomingEvents.length;
   </h1>
 
   <p
-    className="mt-5 max-w-2xl"
+    className="mt-5 max-w-2xl text-muted-foreground"
     style={{
       fontSize: '1rem',
       lineHeight: 1.7,
-      color: 'hsl(230,15%,45%)',
     }}
   >
     Workshops, hackathons, seminars, and AI events organized
@@ -1119,8 +1100,7 @@ const resultCount = displayedUpcomingEvents.length;
         {/* Highlight banner */}
         {featured && (
           <motion.div
-            className="rounded-2xl p-8 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
-            style={{ background: 'linear-gradient(135deg, hsl(217 91% 60% / 0.1), hsl(160 90% 43% / 0.05))', border: '1px solid hsl(217 91% 60% / 0.25)' }}
+            className="rounded-2xl p-8 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-card border border-border"
             initial={{ opacity: 0, scale: 0.97 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
@@ -1186,13 +1166,7 @@ const resultCount = displayedUpcomingEvents.length;
     initial={{ opacity: 0, y: 15 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4 }}
-    className="rounded-2xl p-4 md:p-5 mb-8"
-    style={{
-      background: 'rgba(255,255,255,0.72)',
-      border: '1px solid rgba(99,102,241,0.12)',
-      boxShadow: '0 8px 30px rgba(45,50,100,0.05)',
-      backdropFilter: 'blur(14px)',
-    }}
+    className="rounded-2xl p-4 md:p-5 mb-8 bg-card border border-border shadow-sm backdrop-blur-md"
   >
     <div className="flex flex-col xl:flex-row gap-5 xl:items-center">
 
@@ -1211,8 +1185,8 @@ const resultCount = displayedUpcomingEvents.length;
             className={`
               px-5 py-2 rounded-xl text-[13px] font-semibold transition-all duration-300 relative overflow-hidden
               ${activeTab === tab.value
-                ? 'bg-primary text-white shadow-md'
-                : 'bg-transparent text-muted-foreground hover:bg-primary/5 hover:text-primary hover:-translate-y-0.5 hover:shadow-sm'
+                ? 'bg-primary text-primary-foreground shadow-md'
+                : 'bg-transparent text-muted-foreground hover:bg-primary/10 hover:text-primary hover:-translate-y-0.5 hover:shadow-sm'
               }
             `}
           >
@@ -1223,7 +1197,7 @@ const resultCount = displayedUpcomingEvents.length;
                 className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full"
                 style={{
                   background:
-                    activeTab === 'live' ? 'white' : 'rgb(34,197,94)',
+                    activeTab === 'live' ? 'currentColor' : 'rgb(34,197,94)',
                 }}
               />
             )}
@@ -1253,7 +1227,7 @@ const resultCount = displayedUpcomingEvents.length;
             className={`
               px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all duration-300
               ${categoryFilter === category.value
-                ? 'bg-primary/10 text-primary border-primary/30 shadow-sm'
+                ? 'bg-primary/15 text-primary border-primary/30 shadow-sm'
                 : 'bg-transparent text-muted-foreground border-border hover:border-primary/40 hover:text-primary hover:bg-primary/5 hover:-translate-y-0.5 hover:shadow-sm'
               }
             `}
@@ -1281,7 +1255,7 @@ const resultCount = displayedUpcomingEvents.length;
             placeholder="Search events..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-9 py-2.5 rounded-xl text-xs outline-none bg-white/80 border border-border text-foreground hover:border-primary/40 hover:shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300"
+            className="w-full pl-9 pr-9 py-2.5 rounded-xl text-xs outline-none bg-secondary/60 border border-border text-foreground hover:border-primary/40 hover:shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 placeholder:text-muted-foreground"
           />
 
           {searchQuery && (
@@ -1376,23 +1350,14 @@ const resultCount = displayedUpcomingEvents.length;
             },
           }}
           onClick={() => navigate(`/events/${card.id}`)}
-          className="group relative overflow-hidden rounded-2xl cursor-pointer"
-          style={{
-            background:
-              'linear-gradient(145deg, rgba(255,255,255,0.95), rgba(246,247,255,0.92))',
-            border: '1px solid rgba(99,102,241,0.16)',
-            boxShadow:
-              '0 8px 30px rgba(45, 50, 100, 0.08)',
-            transition:
-              'box-shadow 0.3s ease, border-color 0.3s ease',
-          }}
+          className="group relative overflow-hidden rounded-2xl cursor-pointer bg-card border border-border transition-all duration-300 hover:border-primary/40 hover:-translate-y-1 shadow-sm"
         >
           {/* Hover glow */}
           <div
             className="absolute -top-24 -right-24 w-48 h-48 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
             style={{
               background:
-                'radial-gradient(circle, rgba(99,102,241,0.18), transparent 70%)',
+                'radial-gradient(circle, rgba(121,101,255,0.15), transparent 70%)',
               filter: 'blur(10px)',
             }}
           />
@@ -1403,7 +1368,7 @@ const resultCount = displayedUpcomingEvents.length;
             style={{
               height: '210px',
               background:
-                'linear-gradient(135deg, hsl(243,75%,59%,0.12), hsl(270,80%,65%,0.08))',
+                'linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(270 80% 65% / 0.08))',
             }}
           >
             {eventImage ? (
@@ -1429,20 +1394,14 @@ const resultCount = displayedUpcomingEvents.length;
               className="absolute inset-0 pointer-events-none"
               style={{
                 background:
-                  'linear-gradient(to top, rgba(10,12,30,0.72) 0%, rgba(10,12,30,0.08) 55%, transparent 100%)',
+                  'linear-gradient(to top, rgba(10,12,30,0.8) 0%, rgba(10,12,30,0.1) 55%, transparent 100%)',
               }}
             />
 
             {/* Category */}
             <div className="absolute top-4 left-4">
               <span
-                className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-[0.14em] uppercase"
-                style={{
-                  background: 'rgba(255,255,255,0.9)',
-                  color: 'hsl(243,75%,50%)',
-                  backdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(255,255,255,0.7)',
-                }}
+                className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-[0.14em] uppercase bg-card/90 text-primary border border-border backdrop-blur-md"
               >
                 {card.category}
               </span>
@@ -1452,40 +1411,22 @@ const resultCount = displayedUpcomingEvents.length;
             <div className="absolute top-4 right-4">
               {isLive ? (
                 <span
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase"
-                  style={{
-                    background: 'rgba(34,197,94,0.92)',
-                    color: 'white',
-                    boxShadow: '0 4px 15px rgba(34,197,94,0.3)',
-                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-500 text-white shadow-sm"
                 >
                   <span
-                    className="w-1.5 h-1.5 rounded-full bg-white"
-                    style={{
-                      animation: 'pulse 1.5s infinite',
-                    }}
+                    className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"
                   />
                   Live
                 </span>
               ) : isPast ? (
                 <span
-                  className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-wider uppercase"
-                  style={{
-                    background: 'rgba(15,23,42,0.72)',
-                    color: 'white',
-                    backdropFilter: 'blur(8px)',
-                  }}
+                  className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-secondary/80 text-muted-foreground backdrop-blur-md border border-border"
                 >
                   Past
                 </span>
               ) : (
                 <span
-                  className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-wider uppercase"
-                  style={{
-                    background: 'rgba(99,102,241,0.9)',
-                    color: 'white',
-                    backdropFilter: 'blur(8px)',
-                  }}
+                  className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-primary text-primary-foreground backdrop-blur-md"
                 >
                   Upcoming
                 </span>
@@ -1509,9 +1450,8 @@ const resultCount = displayedUpcomingEvents.length;
           {/* Card content */}
           <div className="p-6">
             <h4
-              className="font-display font-bold text-xl leading-tight mb-3"
+              className="font-display font-bold text-xl leading-tight mb-3 text-card-foreground"
               style={{
-                color: 'hsl(230,25%,12%)',
                 letterSpacing: '-0.02em',
               }}
             >
@@ -1519,9 +1459,8 @@ const resultCount = displayedUpcomingEvents.length;
             </h4>
 
             <p
-              className="text-sm leading-relaxed mb-5"
+              className="text-sm leading-relaxed mb-5 text-muted-foreground"
               style={{
-                color: 'hsl(230,15%,45%)',
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
@@ -1533,28 +1472,17 @@ const resultCount = displayedUpcomingEvents.length;
 
             {/* Event information */}
             <div
-              className="space-y-2.5 pt-4"
-              style={{
-                borderTop: '1px solid rgba(100,110,150,0.14)',
-              }}
+              className="space-y-2.5 pt-4 border-t border-border"
             >
               {(card.venue || card.event_type) && (
                 <div className="flex items-center gap-2 text-xs">
                   <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center"
-                    style={{
-                      background: 'rgba(99,102,241,0.08)',
-                      color: 'hsl(243,75%,59%)',
-                    }}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center bg-primary/10 text-primary"
                   >
                     <CalendarDays size={13} />
                   </div>
 
-                  <span
-                    style={{
-                      color: 'hsl(230,15%,48%)',
-                    }}
-                  >
+                  <span className="text-muted-foreground">
                     {card.venue || 'Online'}
                   </span>
 
@@ -1563,12 +1491,7 @@ const resultCount = displayedUpcomingEvents.length;
                       <span className="text-muted-foreground/40">
                         •
                       </span>
-                      <span
-                        className="capitalize"
-                        style={{
-                          color: 'hsl(230,15%,48%)',
-                        }}
-                      >
+                      <span className="capitalize text-muted-foreground">
                         {card.event_type} event
                       </span>
                     </>
@@ -1579,20 +1502,12 @@ const resultCount = displayedUpcomingEvents.length;
               {card.speaker && (
                 <div className="flex items-center gap-2 text-xs">
                   <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center"
-                    style={{
-                      background: 'rgba(139,92,246,0.08)',
-                      color: 'rgb(139,92,246)',
-                    }}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center bg-accent/10 text-accent"
                   >
                     <Mic size={13} />
                   </div>
 
-                  <span
-                    style={{
-                      color: 'hsl(230,15%,48%)',
-                    }}
-                  >
+                  <span className="text-muted-foreground">
                     {card.speaker}
                   </span>
                 </div>
@@ -1604,24 +1519,14 @@ const resultCount = displayedUpcomingEvents.length;
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="mt-4 p-3 rounded-xl"
-                style={{
-                  background:
-                    'linear-gradient(135deg, rgba(234,179,8,0.10), rgba(245,158,11,0.04))',
-                  border: '1px solid rgba(234,179,8,0.20)',
-                }}
+                className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20"
               >
-                <div className="flex items-center gap-2 text-xs font-semibold text-yellow-600 mb-1">
+                <div className="flex items-center gap-2 text-xs font-semibold text-amber-500 mb-1">
                   <span>🏆</span>
                   Winners
                 </div>
 
-                <div
-                  className="text-xs leading-relaxed"
-                  style={{
-                    color: 'hsl(230,15%,40%)',
-                  }}
-                >
+                <div className="text-xs leading-relaxed text-muted-foreground">
                   {card.winners}
                 </div>
 
@@ -1646,12 +1551,7 @@ const resultCount = displayedUpcomingEvents.length;
                 {registeredEventIds.includes(Number(card.id)) ? (
                   <button
                     disabled
-                    className="w-full py-2.5 rounded-xl text-xs font-semibold"
-                    style={{
-                      background: 'rgba(99,102,241,0.07)',
-                      color: 'rgba(99,102,241,0.45)',
-                      border: '1px solid rgba(99,102,241,0.12)',
-                    }}
+                    className="w-full py-2.5 rounded-xl text-xs font-semibold bg-primary/20 text-primary border border-primary/20 cursor-not-allowed"
                   >
                     Already Registered
                   </button>
@@ -1661,14 +1561,7 @@ const resultCount = displayedUpcomingEvents.length;
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="group/button w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2"
-                    style={{
-                      background:
-                        'linear-gradient(135deg, hsl(243,75%,59%), hsl(270,80%,62%))',
-                      color: 'white',
-                      boxShadow:
-                        '0 5px 18px rgba(99,102,241,0.22)',
-                    }}
+                    className="group/button w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                   >
                     Register Now
                     <ArrowRight
@@ -1682,14 +1575,7 @@ const resultCount = displayedUpcomingEvents.length;
                       e.stopPropagation();
                       navigate(`/events/${card.id}`);
                     }}
-                    className="group/button w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2"
-                    style={{
-                      background:
-                        'linear-gradient(135deg, hsl(243,75%,59%), hsl(270,80%,62%))',
-                      color: 'white',
-                      boxShadow:
-                        '0 5px 18px rgba(99,102,241,0.22)',
-                    }}
+                    className="group/button w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                   >
                     Register Now
                     <ArrowRight
@@ -1704,11 +1590,7 @@ const resultCount = displayedUpcomingEvents.length;
 
           {/* Bottom accent */}
           <div
-            className="absolute bottom-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{
-              background:
-                'linear-gradient(90deg, hsl(243,75%,59%), hsl(270,80%,65%))',
-            }}
+            className="absolute bottom-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-primary"
           />
         </motion.div>
       );

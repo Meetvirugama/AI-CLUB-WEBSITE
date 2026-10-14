@@ -27,7 +27,7 @@ const Index = () => {
   }, [location]);
 
   return (
-    <div style={{ background: 'hsl(228, 30%, 93%)', minHeight: '100vh' }}>
+    <div className="bg-background text-foreground min-h-screen transition-colors duration-200">
       <Hero />
       <ProgressTrackerCard />
       <Events isHomepage={true} />
