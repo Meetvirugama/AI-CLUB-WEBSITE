@@ -573,11 +573,11 @@ export default function TeamGlobe({
         // Smooth physics inertia if user just dragged and flung
         if (Math.abs(velocityRef.current) > 0.005) {
           rotationYRef.current += velocityRef.current;
-          velocityRef.current *= 0.94; // exponential damping friction
+          velocityRef.current *= 0.92; // smooth exponential damping friction
         } else {
           velocityRef.current = 0;
-          // Constant butter-smooth auto-rotation (~0.7 deg/sec)
-          rotationYRef.current += delta * 0.012;
+          // Gentle, calm, and readable auto-rotation
+          rotationYRef.current += delta * 0.0055;
         }
 
         if (cylinderRef.current) {
