@@ -1042,23 +1042,33 @@ const resultCount = displayedUpcomingEvents.length;
     );
   }
 
-  // ── Full page: original detailed view ────────────────────────────
+  
+  // ── Full page: premium dark events page ──────────────────────────
   return (
-    <section id="events" style={{
-  background: `
-    radial-gradient(
-      circle at 10% 10%,
-      rgba(99,102,241,0.08),
-      transparent 28%
-    ),
-    radial-gradient(
-      circle at 90% 30%,
-      rgba(139,92,246,0.07),
-      transparent 25%
-    ),
-    hsl(228, 28%, 95%)
-  `,
-}}>
+    <section
+      id="events"
+      style={{
+        position: 'relative',
+        isolation: 'isolate',
+        minHeight: '100vh',
+        overflow: 'hidden',
+        color: '#F4F5FF',
+        background: `
+          radial-gradient(
+            ellipse at 12% 4%,
+            rgba(124, 58, 237, 0.20),
+            transparent 34%
+          ),
+          radial-gradient(
+            ellipse at 92% 18%,
+            rgba(6, 182, 212, 0.12),
+            transparent 30%
+          ),
+          #080A12
+        `,
+      }}
+    >
+
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '4rem 2rem' }}>
           <motion.div
   initial={{ opacity: 0, y: 20 }}
@@ -1067,48 +1077,62 @@ const resultCount = displayedUpcomingEvents.length;
   className="mb-10"
 >
   <div
-    className="text-xs font-semibold uppercase tracking-[0.2em] mb-3"
-    style={{
-      color: 'hsl(243,75%,59%)',
-    }}
-  >
-    AI CLUB · EVENTS
-  </div>
+  className="text-xs font-semibold uppercase tracking-[0.2em] mb-3"
+  data-events-style="events-inline-31"
+  style={{
+    color: '#A78BFA',
+    fontSize: '0.72rem',
+    fontWeight: 700,
+    letterSpacing: '0.22em',
+    textTransform: 'uppercase',
+  }}
+>
+  AI CLUB · EVENTS
+</div>
 
-  <h1
-    className="font-display font-bold"
+  
+<h1
+  className="font-display font-bold"
+  data-events-style="events-inline-32"
+  style={{
+    fontSize: 'clamp(2.6rem, 6vw, 5rem)',
+    lineHeight: 1.02,
+    letterSpacing: '-0.055em',
+    fontWeight: 800,
+    color: '#F8FAFC',
+    margin: 0,
+  }}
+>
+  Discover what's
+  <br />
+  <span
+    data-events-style="events-inline-33"
     style={{
-      fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
-      lineHeight: 1,
-      letterSpacing: '-0.045em',
-      color: 'hsl(230,25%,10%)',
+      background: 'linear-gradient(90deg, #A78BFA 0%, #818CF8 45%, #67E8F9 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
     }}
   >
-    Discover what&apos;s
-    <br />
-    <span
-      style={{
-        background:
-          'linear-gradient(90deg, hsl(243,75%,59%), hsl(270,80%,62%))',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-      }}
-    >
-      happening next.
-    </span>
-  </h1>
+    happening next.
+  </span>
+</h1>
 
-  <p
-    className="mt-5 max-w-2xl"
-    style={{
-      fontSize: '1rem',
-      lineHeight: 1.7,
-      color: 'hsl(230,15%,45%)',
-    }}
-  >
-    Workshops, hackathons, seminars, and AI events organized
-    by the AI Club community.
-  </p>
+
+  
+<p
+  className="mt-5 max-w-2xl"
+  style={{
+    fontSize: '1rem',
+    lineHeight: 1.8,
+    color: '#A1A1B5',
+    maxWidth: '42rem',
+  }}
+>
+  Workshops, hackathons, seminars, and AI events organized
+  by the AI Club community.
+</p>
+
 </motion.div>
         <motion.div
           initial={{ opacity: 0 }}
@@ -1376,15 +1400,15 @@ const resultCount = displayedUpcomingEvents.length;
             },
           }}
           onClick={() => navigate(`/events/${card.id}`)}
-          className="group relative overflow-hidden rounded-2xl cursor-pointer"
+          className="group relative flex h-full flex-col overflow-hidden rounded-3xl cursor-pointer"
           style={{
             background:
-              'linear-gradient(145deg, rgba(255,255,255,0.95), rgba(246,247,255,0.92))',
-            border: '1px solid rgba(99,102,241,0.16)',
+              'linear-gradient(155deg, rgba(24,27,48,0.98) 0%, rgba(13,15,29,0.99) 58%, rgba(19,15,37,0.99) 100%)',
+            border: '1px solid rgba(167,139,250,0.20)',
             boxShadow:
-              '0 8px 30px rgba(45, 50, 100, 0.08)',
+              '0 12px 35px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.045)',
             transition:
-              'box-shadow 0.3s ease, border-color 0.3s ease',
+              'box-shadow 300ms ease, border-color 300ms ease',
           }}
         >
           {/* Hover glow */}
@@ -1392,8 +1416,8 @@ const resultCount = displayedUpcomingEvents.length;
             className="absolute -top-24 -right-24 w-48 h-48 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
             style={{
               background:
-                'radial-gradient(circle, rgba(99,102,241,0.18), transparent 70%)',
-              filter: 'blur(10px)',
+                'radial-gradient(circle, rgba(139,92,246,0.24), rgba(34,211,238,0.08) 45%, transparent 72%)',
+              filter: 'blur(14px)',
             }}
           />
 
