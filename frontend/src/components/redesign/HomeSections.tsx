@@ -171,9 +171,19 @@ function FeaturedEvent({ event }: { event: ClubEvent }) {
   );
 }
 
-function PastTrack({ items }: { items: PastEvent[] }) {
+interface TrackItem {
+  key: string;
+  title: string;
+  category?: string;
+  dateLabel?: string;
+  image?: string | null;
+  to?: string;
+}
+
+function PastTrack({ items }: { items: TrackItem[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
   const [limit, setLimit] = useState(0);
   useEffect(() => {
     const measure = () => {
@@ -192,33 +202,60 @@ function PastTrack({ items }: { items: PastEvent[] }) {
         drag="x"
         dragConstraints={{ left: -limit, right: 0 }}
         dragElastic={0.12}
+        onDragStart={() => { dragging.current = true; }}
+        // Let the click that ends a drag pass before links work again.
+        onDragEnd={() => { setTimeout(() => { dragging.current = false; }, 0); }}
         className="flex w-max cursor-grab gap-4 active:cursor-grabbing"
       >
-        {items.map((p, i) => (
-          <motion.div
-            key={p.id}
-            initial={{ opacity: 0, x: 40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.06, duration: 0.6, ease: EASE }}
-            className="group w-[250px] shrink-0 overflow-hidden rounded-[20px] border border-rd-line bg-rd-card sm:w-[280px]"
-          >
-            <div className="pointer-events-none relative aspect-[4/3] overflow-hidden">
-              <SafeImage src={p.image_url} fallbackIndex={i} className="h-full w-full transition-transform duration-700 group-hover:scale-105" />
-              {p.category && (
-                <span className="rd-mono absolute left-3 top-3 rounded-full bg-black/55 px-2.5 py-1 text-[9.5px] text-white backdrop-blur-md">{p.category}</span>
-              )}
-            </div>
-            <div className="p-4">
-              <div className="rd-mono text-[10px] text-rd-faint">{p.date_label || 'Past event'}</div>
-              <div className="mt-2 line-clamp-2 text-[15px] font-semibold leading-snug text-rd-fg">{p.title}</div>
-            </div>
-          </motion.div>
-        ))}
+        {items.map((p, i) => {
+          const body = (
+            <>
+              <div className="pointer-events-none relative aspect-[4/3] overflow-hidden">
+                <SafeImage src={p.image} fallbackIndex={i} className="h-full w-full transition-transform duration-700 group-hover:scale-105" />
+                {p.category && (
+                  <span className="rd-mono absolute left-3 top-3 rounded-full bg-black/55 px-2.5 py-1 text-[9.5px] text-white backdrop-blur-md">{p.category}</span>
+                )}
+              </div>
+              <div className="p-4">
+                <div className="rd-mono text-[10px] text-rd-faint">{p.dateLabel || 'Past event'}</div>
+                <div className="mt-2 line-clamp-2 text-[15px] font-semibold leading-snug text-rd-fg">{p.title}</div>
+              </div>
+            </>
+          );
+          return (
+            <motion.div
+              key={p.key}
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.06, duration: 0.6, ease: EASE }}
+              className="group w-[250px] shrink-0 overflow-hidden rounded-[20px] border border-rd-line bg-rd-card sm:w-[280px]"
+            >
+              {p.to ? (
+                <Link
+                  to={p.to}
+                  draggable={false}
+                  onClick={e => { if (dragging.current) e.preventDefault(); }}
+                  className="block"
+                >
+                  {body}
+                </Link>
+              ) : body}
+            </motion.div>
+          );
+        })}
       </motion.div>
     </div>
   );
 }
+
+const eventDateLabel = (d?: string) => {
+  if (!d) return undefined;
+  const date = new Date(d);
+  return Number.isNaN(date.getTime())
+    ? d
+    : date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
+};
 
 function HomeEvents() {
   const { data: evData } = useApi<{ events: ClubEvent[] }>('events', '/api/events?limit=50');
@@ -229,6 +266,29 @@ function HomeEvents() {
     .filter(e => e.event_start_date)
     .sort((a, b) => (b.event_start_date || '').localeCompare(a.event_start_date || ''))[0];
   const featured = live || recent;
+
+  // Events from Admin → Events come first (newest first, minus the featured one),
+  // then the Past Events & Achievements entries.
+  const trackItems: TrackItem[] = [
+    ...[...events]
+      .filter(e => e.id !== featured?.id)
+      .sort((a, b) => (b.event_start_date || '').localeCompare(a.event_start_date || ''))
+      .map(e => ({
+        key: `event-${e.id}`,
+        title: e.title,
+        category: e.category,
+        dateLabel: eventDateLabel(e.event_start_date),
+        image: e.banner,
+        to: `/events/${e.id}`,
+      })),
+    ...past.map(p => ({
+      key: `past-${p.id}`,
+      title: p.title,
+      category: p.category,
+      dateLabel: p.date_label,
+      image: p.image_url,
+    })),
+  ];
 
   return (
     <section id="events" className="relative scroll-mt-16 border-t border-rd-line py-24 sm:py-32">
@@ -257,11 +317,11 @@ function HomeEvents() {
                 <span>Recently</span>
                 <span className="inline-flex items-center gap-1.5"><MoveHorizontal size={12} /> Drag</span>
               </div>
-              <div className="rd-display mt-3 text-4xl font-medium text-rd-fg">{past.length}+ events</div>
+              <div className="rd-display mt-3 text-4xl font-medium text-rd-fg">{events.length + past.length}+ events</div>
               <p className="mt-2 text-sm text-rd-muted">From Kaggle contests to a BlackRock speaker session.</p>
             </div>
             <div className="-mx-6 pl-6 sm:-mx-8 sm:pl-8">
-              <PastTrack items={past} />
+              <PastTrack items={trackItems} />
             </div>
           </Reveal>
         </div>
