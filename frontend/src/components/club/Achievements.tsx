@@ -98,7 +98,7 @@ export default function Achievements() {
   };
 
   return (
-    <section className="py-20 relative overflow-hidden min-h-[60vh]" id="achievements">
+    <section className="pt-20 pb-16 relative overflow-hidden min-h-[60vh]" id="achievements">
       {/* Framer ServiceTiles Scoped Styles */}
       <style>{`
         .st-grid {
@@ -344,16 +344,6 @@ export default function Achievements() {
       <div className="container mx-auto px-6 md:px-12 relative z-10 max-w-7xl">
         {/* Left-aligned Heading Section */}
         <div className="text-left mb-14 max-w-3xl">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase mb-5 bg-primary/10 border border-primary/20 text-primary"
-          >
-            <Trophy className="w-3.5 h-3.5 text-amber-400" />
-            <span>Honors & Milestones</span>
-          </motion.div>
-
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

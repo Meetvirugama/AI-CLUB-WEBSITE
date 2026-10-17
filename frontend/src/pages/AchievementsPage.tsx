@@ -10,7 +10,7 @@ const AchievementsPage = () => {
   }, []);
 
   return (
-    <div className="relative z-[1] min-h-screen pt-16">
+    <div className="relative z-[1] min-h-screen">
       <Achievements />
       <div className="h-px bg-border mx-6 md:mx-12 relative z-[1]" />
       <Footer short />
