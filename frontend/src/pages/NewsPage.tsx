@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import { ExternalLink, Newspaper, X, ArrowRight, Sparkles, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ExternalLink, Newspaper, X, ArrowRight, Sparkles } from 'lucide-react';
 import Navbar from '@/components/club/Navbar';
 import Footer from '@/components/club/Footer';
 import Chatbot from '@/chatbot/Chatbot';
@@ -98,18 +97,8 @@ const NewsPage = () => {
 
   return (
     <div className="relative z-[1] min-h-screen">
-      <div className="pt-28 max-w-[1280px] mx-auto px-8 -mb-16 relative z-10">
-        <Link 
-          to="/" 
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-transparent border border-border/50 text-[10px] font-mono tracking-widest uppercase text-muted-foreground hover:text-foreground hover:border-primary/30 hover:from-primary/15 transition-all duration-300 group"
-        >
-          <ArrowLeft size={11} className="group-hover:-translate-x-1 transition-transform duration-300 text-primary" />
-          <span>Back to Home</span>
-        </Link>
-      </div>
-
       <section className="relative overflow-hidden min-h-screen bg-background text-foreground transition-colors duration-200">
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '4rem 2rem' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '6.5rem 2rem 4rem' }}>
           
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
