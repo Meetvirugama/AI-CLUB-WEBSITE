@@ -496,13 +496,22 @@ export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
       className={`bg-background ${isHomepage ? 'border-t border-border' : 'flex-1 w-full flex flex-col min-h-0'}`}
     >
       <div className={isHomepage ? "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-50" : "w-full flex-1 flex flex-col min-h-0 px-4 sm:px-8 lg:px-12 pt-3 pb-3 max-w-[100vw] relative z-50"}>
-        <div className="relative z-50 bg-background/80 dark:bg-slate-950/60 backdrop-blur-md rounded-2xl p-4 mb-3 border border-border/40 dark:border-white/5 shadow-sm">
-          <p className={`font-sans text-muted-foreground ${isHomepage ? 'text-base mb-6' : 'text-xs sm:text-sm mb-3.5'}`}>
-            Students who keep the Wednesday sessions running.
-          </p>
+        {isHomepage ? (
+          <div className="mb-8">
+            <h2 className="font-serif text-3xl sm:text-5xl mb-2 font-bold tracking-tight text-foreground">
+              The team
+            </h2>
+            <p className="font-sans text-muted-foreground text-base">
+              Students who keep the Wednesday sessions running.
+            </p>
+          </div>
+        ) : (
+          <div className="relative z-50 bg-background/80 dark:bg-slate-950/60 backdrop-blur-md rounded-2xl p-4 mb-3 border border-border/40 dark:border-white/5 shadow-sm">
+            <p className="font-sans text-muted-foreground text-xs sm:text-sm mb-3.5">
+              Students who keep the Wednesday sessions running.
+            </p>
 
-          {/* Search + Filters for full page */}
-          {!isHomepage && (
+            {/* Search + Filters for full page */}
             <div className="flex gap-4 flex-wrap items-center">
               <div className="relative flex-1 min-w-[200px] max-w-xs">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -552,8 +561,8 @@ export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
                 </button>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex flex-col items-center py-12 flex-1 justify-center">
