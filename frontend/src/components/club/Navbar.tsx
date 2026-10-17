@@ -1,19 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Menu, X, LogOut, Shield, ChevronDown, ClipboardList, User, Sparkles, MessageSquare } from 'lucide-react';
+import { Menu, X, LogOut, Shield, ChevronDown, ClipboardList, User } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
-import { getApiUrl } from '../../lib/api';
 import aiClubLogo from '@/assets/ai-club-logo.png';
 import FireworkLauncher, { type FireworkLauncherHandle } from './FireworkLauncher';
 import { useAuth } from '../../contexts/AuthContext';
-import { useChatbot } from '../../contexts/ChatbotContext';
 import ThemeToggle from '../ThemeToggle';
-
-interface NavCounts {
-  events: number;
-  projects: number;
-  members: number;
-}
 
 const navItems = [
   { label: 'About', href: '/#hero' },
@@ -45,9 +37,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { user, isAuthenticated, isLoading: authLoading, login, logout } = useAuth();
-  const { isOpen: isChatOpen, openChat, toggleChat } = useChatbot();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [counts, setCounts] = useState<NavCounts>({ events: 0, projects: 0, members: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fireworkRef = useRef<FireworkLauncherHandle | null>(null);
   const venezaButtonRef = useRef<HTMLAnchorElement>(null);
@@ -74,25 +64,6 @@ export default function Navbar() {
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  useEffect(() => {
-    const fetchCounts = async () => {
-      try {
-        const res = await fetch(getApiUrl('/api/stats'));
-        if (res.ok) {
-          const data = await res.json();
-          setCounts({
-            events: data.events ?? 0,
-            projects: data.projects ?? 0,
-            members: data.members ?? 0,
-          });
-        }
-      } catch (err) {
-        console.error("Failed to fetch stats", err);
-      }
-    };
-    fetchCounts();
   }, []);
 
   // We now use the <GoogleLogin /> component directly which returns an ID Token
@@ -164,7 +135,6 @@ export default function Navbar() {
           <ul style={{ display: 'flex', alignItems: 'center', gap: '4px', listStyle: 'none', margin: 0, padding: 0 }}>
           {navItems.map((item) => {
             const active = isActive(item);
-            const badgeCount = item.label === 'Events' ? counts.events : item.label === 'Projects' ? counts.projects : item.label === 'Team' ? counts.members : 0;
             
             if (item.label === 'Weekly Veneza') {
               return (
@@ -235,10 +205,7 @@ export default function Navbar() {
                 <a
                   href={item.pagePath || item.href}
                   onClick={(e) => handleNavClick(e, item.pagePath || item.href)}
-                  style={{
-                    ...linkStyle(active),
-                    gap: '6px',
-                  }}
+                  style={linkStyle(active)}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
                     if (!active) {
@@ -255,44 +222,10 @@ export default function Navbar() {
                   }}
                 >
                   <span>{item.label}</span>
-                  {badgeCount > 0 && (
-                    <span
-                      style={{
-                        fontFamily: 'JetBrains Mono, monospace',
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        padding: '2px 7px',
-                        borderRadius: '12px',
-                        background: active ? 'hsl(243, 75%, 59%)' : 'hsl(228, 20%, 82%)',
-                        color: active ? 'white' : 'hsl(230, 25%, 30%)',
-                      }}
-                    >
-                      {badgeCount}
-                    </span>
-                  )}
                 </a>
               </li>
             );
           })}
-            {/* AI Chat Navigation Option */}
-            <li>
-              <button
-                type="button"
-                onClick={() => toggleChat()}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-sans text-[0.83rem] transition-all duration-200 cursor-pointer ${
-                  isChatOpen
-                    ? 'text-primary bg-primary/15 font-semibold ring-1 ring-primary/30 shadow-sm'
-                    : 'text-muted-foreground hover:text-primary hover:bg-primary/10 font-normal'
-                }`}
-                title="Open AURA AI Chat (Cmd/Ctrl + K)"
-              >
-                <MessageSquare size={13} className="text-primary" />
-                <span>AI Chat</span>
-                <span className="text-[9px] uppercase font-mono px-1.5 py-0.2 rounded bg-primary/20 text-primary font-bold">
-                  AI
-                </span>
-              </button>
-            </li>
           </ul>
 
           {/* Right: Auth */}
@@ -394,25 +327,6 @@ export default function Navbar() {
             }}
           >
             <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-              {/* Mobile AI Chat Assistant link */}
-              <li style={{ borderBottom: '1px solid hsl(var(--border))', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileOpen(false);
-                    openChat();
-                  }}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-primary/10 border border-primary/25 text-primary text-sm font-semibold transition-all active:scale-98 cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <MessageSquare size={16} className="text-primary" />
-                    <span>AI Chat Assistant</span>
-                  </span>
-                  <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-primary/20 border border-primary/30">
-                    AURA
-                  </span>
-                </button>
-              </li>
 
               {navItems.map((item) => {
                 const active = isActive(item);
