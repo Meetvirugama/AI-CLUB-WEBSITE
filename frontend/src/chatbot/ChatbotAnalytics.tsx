@@ -197,21 +197,21 @@ const StatCard = ({
   <motion.div
     initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
-    className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col gap-3"
+    className="bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col gap-3"
   >
-    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${accent ?? 'bg-indigo-50 text-indigo-600'}`}>
+    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${accent ?? 'bg-primary/10 text-primary'}`}>
       {icon}
     </div>
     <div>
-      <p className="text-2xl font-extrabold font-display text-slate-900">{value}</p>
-      <p className="text-xs font-semibold text-slate-500 mt-0.5">{label}</p>
-      {sub && <p className="text-[11px] text-slate-400 mt-1">{sub}</p>}
+      <p className="text-2xl font-extrabold font-display text-foreground">{value}</p>
+      <p className="text-xs font-semibold text-muted-foreground mt-0.5">{label}</p>
+      {sub && <p className="text-[11px] text-muted-foreground/70 mt-1">{sub}</p>}
     </div>
   </motion.div>
 );
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest font-mono mb-4">{children}</h3>
+  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest font-mono mb-4">{children}</h3>
 );
 
 const fmt = (n: number) => n.toLocaleString();
@@ -314,17 +314,17 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
       {/* ── Header ───────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-extrabold text-slate-900 font-display">Chatbot Analytics</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h2 className="text-base font-extrabold text-foreground font-display">Chatbot Analytics</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
             NeuralNode — production operations dashboard
             {lastRefresh && (
-              <span className="ml-2 text-slate-400">· Last updated {fmtTime(lastRefresh.toISOString())}</span>
+              <span className="ml-2 text-muted-foreground/70">· Last updated {fmtTime(lastRefresh.toISOString())}</span>
             )}
           </p>
         </div>
         <button
           onClick={() => { setLoading(true); fetchAll(period); }}
-          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-foreground bg-secondary hover:bg-secondary/80 border border-border rounded-lg transition-colors"
         >
           <RefreshCw size={12} />
           Refresh
@@ -335,8 +335,8 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
       {overview && (
         <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-xs font-semibold ${
           overview.provider_pool_ready
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-            : 'bg-red-50 border-red-200 text-red-700'
+            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
+            : 'bg-red-500/10 border-red-500/20 text-red-500'
         }`}>
           <span className={`w-2 h-2 rounded-full ${overview.provider_pool_ready ? 'bg-emerald-500' : 'bg-red-500'} animate-pulse`} />
           {overview.provider_pool_ready
@@ -353,8 +353,8 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
             onClick={() => setPeriod(opt.days)}
             className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
               period === opt.days
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                : 'bg-secondary text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
             }`}
           >
             {opt.label}
@@ -404,31 +404,31 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
       )}
 
       {/* ── Daily usage chart ──────────────────────────────────────────── */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
         <SectionTitle>Daily Chat Volume</SectionTitle>
         {daily.length === 0 ? (
-          <div className="flex items-center justify-center py-16 text-sm text-slate-400">No data for this period yet</div>
+          <div className="flex items-center justify-center py-16 text-sm text-muted-foreground">No data for this period yet</div>
         ) : (
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={daily} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0}   />
+                  <stop offset="5%"  stopColor="#7965FF" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#7965FF" stopOpacity={0}   />
                 </linearGradient>
                 <linearGradient id="gradFailed" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%"  stopColor="#ef4444" stopOpacity={0.25} />
                   <stop offset="95%" stopColor="#ef4444" stopOpacity={0}    />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="date" tickFormatter={fmtDate} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
+              <XAxis dataKey="date" tickFormatter={fmtDate} tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,.08)' }}
+                contentStyle={{ fontSize: 11, borderRadius: 8, backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--foreground))', border: '1px solid hsl(var(--border))' }}
                 labelFormatter={fmtDate}
               />
-              <Area type="monotone" dataKey="total_requests" name="Total" stroke="#6366f1" fill="url(#gradTotal)" strokeWidth={2} dot={false} />
+              <Area type="monotone" dataKey="total_requests" name="Total" stroke="#7965FF" fill="url(#gradTotal)" strokeWidth={2} dot={false} />
               <Area type="monotone" dataKey="failed" name="Failed" stroke="#ef4444" fill="url(#gradFailed)" strokeWidth={1.5} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
@@ -436,21 +436,21 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
       </div>
 
       {/* ── Daily token chart ──────────────────────────────────────────── */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
         <SectionTitle>Daily Token Usage</SectionTitle>
         {daily.length === 0 ? (
-          <div className="flex items-center justify-center py-16 text-sm text-slate-400">No data for this period yet</div>
+          <div className="flex items-center justify-center py-16 text-sm text-muted-foreground">No data for this period yet</div>
         ) : (
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={daily} margin={{ top: 4, right: 8, bottom: 0, left: 0 }} barSize={daily.length > 20 ? 6 : 12}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="date" tickFormatter={fmtDate} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={n => n >= 1000 ? `${(n/1000).toFixed(0)}k` : n} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
+              <XAxis dataKey="date" tickFormatter={fmtDate} tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} tickFormatter={n => n >= 1000 ? `${(n/1000).toFixed(0)}k` : n} />
               <Tooltip
-                contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
+                contentStyle={{ fontSize: 11, borderRadius: 8, backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--foreground))', border: '1px solid hsl(var(--border))' }}
                 labelFormatter={fmtDate}
               />
-              <Bar dataKey="input_tokens"  name="Input"  fill="#6366f1" radius={[3,3,0,0]} />
+              <Bar dataKey="input_tokens"  name="Input"  fill="#7965FF" radius={[3,3,0,0]} />
               <Bar dataKey="output_tokens" name="Output" fill="#22c55e" radius={[3,3,0,0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -461,27 +461,27 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Provider breakdown */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
           <SectionTitle>Provider Usage ({period}-day)</SectionTitle>
           {providers.length === 0 ? (
-            <p className="text-sm text-slate-400 py-8 text-center">No provider data yet</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">No provider data yet</p>
           ) : (
             <div className="space-y-3">
               {providers.map(p => (
-                <div key={p.provider} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div key={p.provider} className="flex items-center justify-between p-3 bg-secondary/40 rounded-xl border border-border">
                   <div className="flex items-center gap-3">
                     <span
                       className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                       style={{ background: PROVIDER_COLORS[p.provider] ?? '#94a3b8' }}
                     />
                     <div>
-                      <p className="text-xs font-bold text-slate-800 capitalize">{p.provider}</p>
-                      <p className="text-[10px] text-slate-500">{fmt(p.requests)} requests</p>
+                      <p className="text-xs font-bold text-foreground capitalize">{p.provider}</p>
+                      <p className="text-[10px] text-muted-foreground">{fmt(p.requests)} requests</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-semibold text-slate-700">{fmt(p.total_tokens)} tokens</p>
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-xs font-semibold text-foreground">{fmt(p.total_tokens)} tokens</p>
+                    <p className="text-[10px] text-muted-foreground">
                       {p.success_rate != null ? `${p.success_rate.toFixed(1)}% ok` : '—'} · {fmtMs(p.avg_latency_ms)}
                     </p>
                   </div>
@@ -492,21 +492,21 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
         </div>
 
         {/* Model breakdown */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
           <SectionTitle>Model Usage ({period}-day)</SectionTitle>
           {models.length === 0 ? (
-            <p className="text-sm text-slate-400 py-8 text-center">No model data yet</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">No model data yet</p>
           ) : (
             <div className="space-y-2">
               {models.map(m => (
-                <div key={`${m.provider}/${m.model}`} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div key={`${m.provider}/${m.model}`} className="flex items-center justify-between p-3 bg-secondary/40 rounded-xl border border-border">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-mono font-semibold text-slate-800 truncate">{m.model}</p>
-                    <p className="text-[10px] text-slate-500 capitalize">{m.provider} · {fmt(m.requests)} reqs</p>
+                    <p className="text-[11px] font-mono font-semibold text-foreground truncate">{m.model}</p>
+                    <p className="text-[10px] text-muted-foreground capitalize">{m.provider} · {fmt(m.requests)} reqs</p>
                   </div>
                   <div className="text-right flex-shrink-0 ml-3">
-                    <p className="text-xs font-semibold text-slate-700">{fmt(m.total_tokens)} tok</p>
-                    <p className="text-[10px] text-slate-400">{m.failures} fails · {fmtMs(m.avg_latency_ms)}</p>
+                    <p className="text-xs font-semibold text-foreground">{fmt(m.total_tokens)} tok</p>
+                    <p className="text-[10px] text-muted-foreground">{m.failures} fails · {fmtMs(m.avg_latency_ms)}</p>
                   </div>
                 </div>
               ))}
@@ -516,44 +516,44 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
       </div>
 
       {/* ── API Key Health ─────────────────────────────────────────────── */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
         <SectionTitle>API Key Health (Today)</SectionTitle>
         {keys.length === 0 ? (
-          <p className="text-sm text-slate-400 py-8 text-center">No key data available</p>
+          <p className="text-sm text-muted-foreground py-8 text-center">No key data available</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {keys.map(k => (
               <div
                 key={k.label}
-                className="p-4 rounded-xl border border-slate-100 bg-slate-50 flex flex-col gap-3"
+                className="p-4 rounded-xl border border-border bg-secondary/30 flex flex-col gap-3"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-xs font-bold text-slate-800">{k.label}</p>
-                    <p className="text-[10px] text-slate-400 capitalize">{k.provider}</p>
+                    <p className="text-xs font-bold text-foreground">{k.label}</p>
+                    <p className="text-[10px] text-muted-foreground capitalize">{k.provider}</p>
                   </div>
                   <Pill status={k.status} />
                 </div>
                 <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-                  <div className="bg-white rounded-lg px-2 py-1.5 border border-slate-100">
-                    <p className="text-slate-400">Requests</p>
-                    <p className="font-bold text-slate-700">{fmt(k.requests_today)}</p>
+                  <div className="bg-card rounded-lg px-2 py-1.5 border border-border">
+                    <p className="text-muted-foreground">Requests</p>
+                    <p className="font-bold text-foreground">{fmt(k.requests_today)}</p>
                   </div>
-                  <div className="bg-white rounded-lg px-2 py-1.5 border border-slate-100">
-                    <p className="text-slate-400">Success</p>
-                    <p className="font-bold text-emerald-600">{fmt(k.successes_today)}</p>
+                  <div className="bg-card rounded-lg px-2 py-1.5 border border-border">
+                    <p className="text-muted-foreground">Success</p>
+                    <p className="font-bold text-emerald-500">{fmt(k.successes_today)}</p>
                   </div>
-                  <div className="bg-white rounded-lg px-2 py-1.5 border border-slate-100">
-                    <p className="text-slate-400">Tokens In</p>
-                    <p className="font-bold text-slate-700">{fmt(k.tokens_in_today)}</p>
+                  <div className="bg-card rounded-lg px-2 py-1.5 border border-border">
+                    <p className="text-muted-foreground">Tokens In</p>
+                    <p className="font-bold text-foreground">{fmt(k.tokens_in_today)}</p>
                   </div>
-                  <div className="bg-white rounded-lg px-2 py-1.5 border border-slate-100">
-                    <p className="text-slate-400">Tokens Out</p>
-                    <p className="font-bold text-slate-700">{fmt(k.tokens_out_today)}</p>
+                  <div className="bg-card rounded-lg px-2 py-1.5 border border-border">
+                    <p className="text-muted-foreground">Tokens Out</p>
+                    <p className="font-bold text-foreground">{fmt(k.tokens_out_today)}</p>
                   </div>
                 </div>
                 {k.last_used && (
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-muted-foreground">
                     Last used {new Date(k.last_used).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 )}
@@ -567,10 +567,10 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
       {categories && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Pie chart */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
             <SectionTitle>Query Categories ({period}-day)</SectionTitle>
             {catData.length === 0 ? (
-              <p className="text-sm text-slate-400 py-8 text-center">No data yet</p>
+              <p className="text-sm text-muted-foreground py-8 text-center">No data yet</p>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
@@ -589,10 +589,10 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
                   </Pie>
                   <Tooltip
                     formatter={(v: number) => [fmt(v), '']}
-                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
+                    contentStyle={{ fontSize: 11, borderRadius: 8, backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--foreground))', border: '1px solid hsl(var(--border))' }}
                   />
                   <Legend
-                    formatter={(value) => <span style={{ fontSize: 10, color: '#64748b' }}>{value}</span>}
+                    formatter={(value) => <span style={{ fontSize: 10, color: 'var(--muted-foreground)' }}>{value}</span>}
                     iconSize={8}
                     iconType="circle"
                   />
@@ -602,7 +602,7 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
           </div>
 
           {/* Category counts */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
             <SectionTitle>Breakdown</SectionTitle>
             <div className="space-y-2">
               {Object.entries(categories)
@@ -613,20 +613,20 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
                   return (
                     <div key={k} className="flex items-center gap-3">
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: CATEGORY_COLORS[k] ?? '#94a3b8' }} />
-                      <span className="text-xs text-slate-600 min-w-[130px]">{REQ_TYPE_LABELS[k] ?? k}</span>
-                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <span className="text-xs text-muted-foreground min-w-[130px]">{REQ_TYPE_LABELS[k] ?? k}</span>
+                      <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all"
                           style={{ width: `${pct}%`, background: CATEGORY_COLORS[k] ?? '#94a3b8' }}
                         />
                       </div>
-                      <span className="text-xs font-bold text-slate-700 w-8 text-right">{fmt(v as number)}</span>
+                      <span className="text-xs font-bold text-foreground w-8 text-right">{fmt(v as number)}</span>
                     </div>
                   );
                 })}
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Total</span>
-                <span className="text-xs font-bold text-slate-800">{fmt(categories.total)}</span>
+              <div className="pt-2 border-t border-border flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground">Total</span>
+                <span className="text-xs font-bold text-foreground">{fmt(categories.total)}</span>
               </div>
             </div>
           </div>
@@ -634,17 +634,17 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
       )}
 
       {/* ── Recent Activity ────────────────────────────────────────────── */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
         <SectionTitle>Recent Activity</SectionTitle>
         {activity.length === 0 ? (
-          <p className="text-sm text-slate-400 py-8 text-center">No activity recorded yet</p>
+          <p className="text-sm text-muted-foreground py-8 text-center">No activity recorded yet</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[11px]">
               <thead>
-                <tr className="border-b border-slate-100">
+                <tr className="border-b border-border">
                   {['Time', 'Type', 'Provider', 'Model', 'Key', 'In Tok', 'Out Tok', 'Latency', 'Status'].map(h => (
-                    <th key={h} className="px-3 py-2 text-left font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                    <th key={h} className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -652,25 +652,25 @@ export default function ChatbotAnalytics({ getAuthHeaders }: Props) {
                 {activity.map((e, i) => (
                   <tr
                     key={e.id}
-                    className={`border-b border-slate-50 hover:bg-slate-50 transition-colors ${i % 2 === 0 ? '' : 'bg-slate-50/40'}`}
+                    className={`border-b border-border/50 hover:bg-secondary/40 transition-colors ${i % 2 === 0 ? '' : 'bg-secondary/20'}`}
                   >
-                    <td className="px-3 py-2 text-slate-500 font-mono whitespace-nowrap">{fmtTime(e.created_at)}</td>
+                    <td className="px-3 py-2 text-muted-foreground font-mono whitespace-nowrap">{fmtTime(e.created_at)}</td>
                     <td className="px-3 py-2">
-                      <span className="font-semibold text-slate-700">{REQ_TYPE_LABELS[e.request_type] ?? e.request_type}</span>
+                      <span className="font-semibold text-foreground">{REQ_TYPE_LABELS[e.request_type] ?? e.request_type}</span>
                     </td>
-                    <td className="px-3 py-2 capitalize text-slate-600">{e.provider ?? '—'}</td>
-                    <td className="px-3 py-2 font-mono text-slate-500 max-w-[120px] truncate">{e.model ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-500">{e.key_label ?? '—'}</td>
-                    <td className="px-3 py-2 text-right text-slate-600">{fmt(e.input_tokens)}</td>
-                    <td className="px-3 py-2 text-right text-slate-600">{fmt(e.output_tokens)}</td>
-                    <td className="px-3 py-2 text-right font-mono text-slate-600">{fmtMs(e.latency_ms)}</td>
+                    <td className="px-3 py-2 capitalize text-muted-foreground">{e.provider ?? '—'}</td>
+                    <td className="px-3 py-2 font-mono text-muted-foreground max-w-[120px] truncate">{e.model ?? '—'}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{e.key_label ?? '—'}</td>
+                    <td className="px-3 py-2 text-right text-muted-foreground">{fmt(e.input_tokens)}</td>
+                    <td className="px-3 py-2 text-right text-muted-foreground">{fmt(e.output_tokens)}</td>
+                    <td className="px-3 py-2 text-right font-mono text-muted-foreground">{fmtMs(e.latency_ms)}</td>
                     <td className="px-3 py-2">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold text-[10px] border ${
                         e.status === 'success' || e.status === 'fallback'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
                           : e.status === 'rate_limited'
-                          ? 'bg-orange-50 text-orange-700 border-orange-200'
-                          : 'bg-red-50 text-red-700 border-red-200'
+                          ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+                          : 'bg-red-500/10 text-red-400 border-red-500/20'
                       }`}>
                         {e.fallback_used && <span title="Fallback used">↪</span>}
                         {e.status}

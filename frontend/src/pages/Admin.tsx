@@ -290,7 +290,7 @@ const Admin = () => {
   return (
     <>
       {/* Root wrapper: full viewport height, allows native page scrolling */}
-      <div className="min-h-screen flex" style={{ fontFamily: "'Inter', sans-serif", background: '#f1f5f9' }}>
+      <div className="min-h-screen flex bg-background text-foreground" style={{ fontFamily: "'Inter', sans-serif" }}>
 
         {/* ── Sidebar — truly fixed, never scrolls ────────────────── */}
         <aside
@@ -374,21 +374,19 @@ const Admin = () => {
         <div className="flex-1 flex flex-col min-w-0 lg:ml-60 min-h-screen">
 
           {/* Sticky top header — stays at top of screen while scrolling */}
-          <header className="sticky top-0 flex items-center justify-between px-5 py-2.5 shrink-0 bg-white/90 backdrop-blur z-20"
-            style={{ borderBottom: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
-          >
+          <header className="sticky top-0 flex items-center justify-between px-5 py-2.5 shrink-0 bg-card/90 backdrop-blur z-20 border-b border-border shadow-sm">
             {/* Mobile hamburger */}
             <button onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors mr-2"
+              className="lg:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors mr-2"
             >
               <LayoutDashboard size={18} />
             </button>
 
             {/* Breadcrumb */}
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-slate-400 font-mono hidden sm:block">Admin</span>
-              <span className="text-slate-300 text-xs hidden sm:block">/</span>
-              <span className="text-[13px] font-semibold text-slate-700">
+              <span className="text-xs text-muted-foreground font-mono hidden sm:block">Admin</span>
+              <span className="text-border text-xs hidden sm:block">/</span>
+              <span className="text-[13px] font-semibold text-foreground">
                 {NAV_ITEMS.find(n => n.id === activeTab)?.label ?? 'Dashboard'}
               </span>
             </div>
@@ -397,7 +395,7 @@ const Admin = () => {
           </header>
 
           {/* Tab content */}
-          <main className="flex-1 bg-slate-50">
+          <main className="flex-1 bg-background">
             <div className="p-5 md:p-7 lg:p-8">
             <AnimatePresence mode="wait">
               {activeTab === 'dashboard' && (

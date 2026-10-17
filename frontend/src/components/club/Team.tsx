@@ -27,21 +27,21 @@ import TeamWorldBox from './TeamWorldBox';
 import { Search, ArrowRight, Sparkles, X, FolderGit2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// Role badge colours — light editorial palette
+// Role badge colours — restrained palette with high-contrast dark theme glow
 const roleMeta: Record<MemberRole, { label: string; classes: string }> = {
-  'Convenor':             { label: 'Convenor',             classes: 'bg-amber-50 text-amber-700 border border-amber-200' },
-  'Deputy Convenor':      { label: 'Deputy Convenor',      classes: 'bg-blue-50 text-blue-700 border border-blue-200' },
-  'Core Member':          { label: 'Core Member',          classes: 'bg-indigo-50 text-indigo-700 border border-indigo-200' },
-  'Extended Core Member': { label: 'Extended Core Member', classes: 'bg-purple-50 text-purple-700 border border-purple-200' },
-  'Member':               { label: 'Member',               classes: 'bg-slate-100 text-slate-650 border border-slate-200' },
-  'Ex Convenor':          { label: 'Ex Convenor',          classes: 'bg-amber-100/70 text-amber-800 border border-amber-300' },
-  'Ex Deputy Convenor':     { label: 'Ex Deputy Convenor',     classes: 'bg-blue-100/70 text-blue-800 border border-blue-300' },
-  'Ex Core Member':         { label: 'Ex Core Member',         classes: 'bg-indigo-100/70 text-indigo-800 border border-indigo-300' },
-  'Alumni':                 { label: 'Alumni',                 classes: 'bg-emerald-100/80 text-emerald-800 border border-emerald-300' },
+  'Convenor':             { label: 'Convenor',      classes: 'bg-amber-400/15 text-amber-600 dark:text-amber-300 border border-amber-400/30 dark:border-amber-400/40 shadow-[0_0_8px_rgba(245,158,11,0.15)]' },
+  'Deputy Convenor':      { label: 'Deputy Convenor', classes: 'bg-sky-400/15 text-sky-600 dark:text-sky-300 border border-sky-400/30 dark:border-sky-400/40 shadow-[0_0_8px_rgba(56,189,248,0.15)]' },
+  'Core Member':          { label: 'Core Member',   classes: 'bg-indigo-400/15 text-indigo-600 dark:text-indigo-300 border border-indigo-400/30 dark:border-indigo-400/40 shadow-[0_0_8px_rgba(99,102,241,0.15)]' },
+  'Extended Core Member': { label: 'Extended Core', classes: 'bg-purple-400/15 text-purple-600 dark:text-purple-300 border border-purple-400/30 dark:border-purple-400/40 shadow-[0_0_8px_rgba(168,85,247,0.15)]' },
+  'Member':               { label: 'Member',        classes: 'bg-slate-400/10 text-slate-700 dark:text-slate-200 border border-slate-300/80 dark:border-white/10' },
+  'Ex Convenor':          { label: 'Ex Convenor',   classes: 'bg-amber-400/15 text-amber-600 dark:text-amber-300 border border-amber-400/30 dark:border-amber-400/40 shadow-[0_0_8px_rgba(245,158,11,0.15)]' },
+  'Ex Deputy Convenor':     { label: 'Ex Deputy',     classes: 'bg-sky-400/15 text-sky-600 dark:text-sky-300 border border-sky-400/30 dark:border-sky-400/40 shadow-[0_0_8px_rgba(56,189,248,0.15)]' },
+  'Ex Core Member':         { label: 'Ex Core',       classes: 'bg-indigo-400/15 text-indigo-600 dark:text-indigo-300 border border-indigo-400/30 dark:border-indigo-400/40 shadow-[0_0_8px_rgba(99,102,241,0.15)]' },
+  'Alumni':                 { label: 'Alumni',        classes: 'bg-emerald-400/15 text-emerald-600 dark:text-emerald-300 border border-emerald-400/30 dark:border-emerald-400/40 shadow-[0_0_8px_rgba(16,185,129,0.15)]' },
 };
 
 const RoleBadge = ({ role }: { role: MemberRole }) => {
-  const { label, classes } = roleMeta[role] || { label: role, classes: 'bg-slate-100 text-slate-600' };
+  const { label, classes } = roleMeta[role] || { label: role, classes: 'bg-secondary text-muted-foreground border border-border' };
   return (
     <span className={`inline-block text-[9px] font-bold px-2.5 py-0.5 rounded-full mt-1 tracking-wide uppercase ${classes}`}>
       {label}
@@ -105,7 +105,7 @@ function MemberAvatar({ name, photo }: { name: string; photo: string }) {
 
   if (currentUrl && urlIndex < urls.length) {
     return (
-      <div className="w-[84px] h-[84px] rounded-full mx-auto mb-3 overflow-hidden ring-2 ring-indigo-500/20 ring-offset-2 ring-offset-[#ECF0F7]">
+      <div className="w-[84px] h-[84px] rounded-full mx-auto mb-3 overflow-hidden ring-2 ring-indigo-500/20 dark:ring-indigo-400/30 ring-offset-2 ring-offset-card shadow-md">
         <img
           src={currentUrl}
           alt={name}
@@ -118,17 +118,7 @@ function MemberAvatar({ name, photo }: { name: string; photo: string }) {
   }
 
   return (
-    <div
-      style={{
-        width: 80, height: 80, borderRadius: '50%',
-        background: 'hsl(243, 75%, 92%)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '1.1rem',
-        color: 'hsl(243, 75%, 45%)',
-        margin: '0 auto 0.75rem',
-        border: '1.5px solid hsl(243, 75%, 85%)',
-      }}
-    >
+    <div className="w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center font-bold text-lg font-sans text-indigo-600 dark:text-indigo-300 bg-gradient-to-br from-indigo-500/15 to-purple-500/20 border-2 border-indigo-400/30 shadow-md">
       {initials}
     </div>
   );
@@ -184,16 +174,15 @@ function TeamMemberCard({ member, projects, achievements }: TeamMemberCardProps)
         >
           {/* FRONT SIDE */}
           <div 
-            className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-4 bg-[#ECF0F7] text-center border-r border-b border-slate-200 transition-colors duration-300"
+            className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-4 bg-card/85 dark:bg-slate-900/80 backdrop-blur-sm text-center border-r border-b border-border/80 dark:border-white/10 hover:border-indigo-500/40 transition-colors duration-300"
             style={{ 
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
-              background: isHovered ? 'white' : '#ECF0F7'
             }}
           >
             <MemberAvatar name={member.name} photo={member.photo || ''} />
             
-            <h4 className="font-sans text-[0.95rem] font-bold text-slate-900 leading-snug mb-1">
+            <h4 className="font-sans text-[0.95rem] font-bold text-foreground leading-snug mb-1">
               {member.name}
             </h4>
             
@@ -205,7 +194,7 @@ function TeamMemberCard({ member, projects, achievements }: TeamMemberCardProps)
                   href={member.github} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="text-slate-400 hover:text-slate-900 transition-colors"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <GitHubIcon />
@@ -216,7 +205,7 @@ function TeamMemberCard({ member, projects, achievements }: TeamMemberCardProps)
                   href={member.linkedin} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="text-slate-400 hover:text-indigo-650 transition-colors"
+                  className="text-muted-foreground hover:text-primary transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <LinkedInIcon />
@@ -225,8 +214,8 @@ function TeamMemberCard({ member, projects, achievements }: TeamMemberCardProps)
             </div>
             
             {hasStats && (
-              <div className="mt-4 flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[9px] font-bold text-indigo-600 uppercase tracking-widest">
-                <Sparkles className="w-2.5 h-2.5 text-indigo-500 animate-pulse" />
+              <div className="mt-4 flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] font-bold text-primary uppercase tracking-widest shadow-sm">
+                <Sparkles className="w-2.5 h-2.5 text-primary animate-pulse" />
                 <span>Details</span>
               </div>
             )}
@@ -234,7 +223,7 @@ function TeamMemberCard({ member, projects, achievements }: TeamMemberCardProps)
 
           {/* BACK SIDE */}
           <div 
-            className="absolute inset-0 w-full h-full flex flex-col justify-between p-4 bg-slate-950 text-white border-r border-b border-slate-900 text-left selection:bg-indigo-500/30 selection:text-white"
+            className="absolute inset-0 w-full h-full flex flex-col justify-between p-4 bg-slate-900/95 dark:bg-[#111425] text-white border-r border-b border-indigo-500/20 text-left selection:bg-indigo-500/30 selection:text-white backdrop-blur-md"
             style={{ 
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
@@ -337,23 +326,23 @@ function TeamMemberCard({ member, projects, achievements }: TeamMemberCardProps)
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-background/80 backdrop-blur-sm"
               onClick={() => setIsModalOpen(false)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col z-10"
+              className="relative bg-card text-card-foreground border border-border rounded-3xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col z-10"
             >
-              <div className="flex items-center justify-between p-6 border-b border-slate-100 flex-shrink-0">
+              <div className="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
                 <div>
-                  <span className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">Member Contributions</span>
-                  <h3 className="text-xl font-bold text-slate-900 mt-0.5">{member.name}'s Projects</h3>
+                  <span className="text-[10px] text-primary font-bold uppercase tracking-wider">Member Contributions</span>
+                  <h3 className="text-xl font-bold text-foreground mt-0.5">{member.name}'s Projects</h3>
                 </div>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="text-slate-450 hover:text-slate-700 transition-colors p-1"
+                  className="text-muted-foreground hover:text-foreground transition-colors p-1"
                 >
                   <X size={20} />
                 </button>
@@ -361,14 +350,14 @@ function TeamMemberCard({ member, projects, achievements }: TeamMemberCardProps)
 
               <div className="p-6 overflow-y-auto space-y-5 text-left flex-1 scrollbar-thin">
                 {matchedProjects.map((proj) => (
-                  <div key={proj.id} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl relative group">
+                  <div key={proj.id} className="p-4 bg-secondary/50 border border-border rounded-2xl relative group">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h4 className="font-bold text-slate-900 text-sm sm:text-base leading-snug">{proj.title}</h4>
+                        <h4 className="font-bold text-foreground text-sm sm:text-base leading-snug">{proj.title}</h4>
                         {proj.tags && (
                           <div className="flex flex-wrap gap-1 mt-1.5">
                             {JSON.parse(proj.tags.replace(/'/g, '"')).map((tag: string) => (
-                              <span key={tag} className="text-[9px] bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                              <span key={tag} className="text-[9px] bg-primary/10 text-primary border border-primary/20 font-bold px-2 py-0.5 rounded uppercase tracking-wider">
                                 {tag}
                               </span>
                             ))}
@@ -381,14 +370,14 @@ function TeamMemberCard({ member, projects, achievements }: TeamMemberCardProps)
                           href={proj.github_link} 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          className="p-2 text-slate-400 hover:text-indigo-600 bg-white border border-slate-200/60 rounded-xl hover:shadow transition-all"
+                          className="p-2 text-muted-foreground hover:text-primary bg-card border border-border rounded-xl hover:shadow transition-all"
                         >
                           <FolderGit2 className="w-4 h-4" />
                         </a>
                       )}
                     </div>
 
-                    <p className="text-xs text-slate-500 mt-3 leading-relaxed">
+                    <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
                       {proj.description}
                     </p>
                   </div>
@@ -504,78 +493,84 @@ export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
   return (
     <section
       id="team"
-      className={`bg-[#ECF0F7] ${isHomepage ? 'border-t border-slate-200' : 'flex-1 w-full flex flex-col min-h-0'}`}
+      className={`bg-background ${isHomepage ? 'border-t border-border' : 'flex-1 w-full flex flex-col min-h-0'}`}
     >
-      <div className={isHomepage ? "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-50" : "w-full flex-1 flex flex-col min-h-0 px-4 sm:px-8 lg:px-12 py-4 max-w-[100vw] relative z-50"}>
-        <div className="relative z-50 bg-[#ECF0F7]/50 backdrop-blur-sm rounded-2xl p-2 -mx-2 mb-2">
-          <h2 className={`font-serif ${isHomepage ? 'text-3xl sm:text-5xl mb-2' : 'text-2xl sm:text-3xl mb-1'} font-bold tracking-tight text-slate-900`}>
-            The team
-          </h2>
-          <p className={`font-sans text-slate-500 ${isHomepage ? 'text-base mb-6' : 'text-sm mb-4'}`}>
-            Students who keep the Wednesday sessions running.
-          </p>
+      <div className={isHomepage ? "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-50" : "w-full flex-1 flex flex-col min-h-0 px-4 sm:px-8 lg:px-12 pt-3 pb-3 max-w-[100vw] relative z-50"}>
+        {isHomepage ? (
+          <div className="mb-8">
+            <h2 className="font-serif text-3xl sm:text-5xl mb-2 font-bold tracking-tight text-foreground">
+              The team
+            </h2>
+            <p className="font-sans text-muted-foreground text-base">
+              Students who keep the Wednesday sessions running.
+            </p>
+          </div>
+        ) : (
+          <div className="relative z-50 bg-background/80 dark:bg-slate-950/60 backdrop-blur-md rounded-2xl p-4 mb-3 border border-border/40 dark:border-white/5 shadow-sm">
+            <p className="font-sans text-muted-foreground text-xs sm:text-sm mb-3.5">
+              Students who keep the Wednesday sessions running.
+            </p>
 
-          {/* Search + Filters for full page */}
-          {!isHomepage && (
+            {/* Search + Filters for full page */}
             <div className="flex gap-4 flex-wrap items-center">
               <div className="relative flex-1 min-w-[200px] max-w-xs">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search by name or role..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-1.5 text-xs bg-white border border-slate-350 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-800 placeholder-slate-400"
-              />
-            </div>
-            <div className="flex gap-1.5 flex-wrap">
-              {[
-                { id: 'all', label: 'All' },
-                { id: 'convenor', label: 'Leadership' },
-                { id: 'core', label: 'Core' },
-                { id: 'extended', label: 'Extended Core' },
-                { id: 'member', label: 'Members' },
-                { id: 'alumni', label: 'Alumni' },
-              ].map((pill) => (
-                <button
-                  key={pill.id}
-                  onClick={() => setRoleFilter(pill.id)}
-                  className={`px-3 py-1 rounded-lg border text-[10px] uppercase tracking-wider font-bold transition-all duration-200 ${
-                    roleFilter === pill.id 
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-150' 
-                      : 'bg-transparent text-slate-500 border-slate-200 hover:bg-slate-100'
-                  }`}
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search by name or role..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 text-xs bg-secondary/50 dark:bg-slate-900/70 border border-border/80 dark:border-slate-700/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary transition-all font-medium text-foreground placeholder:text-muted-foreground shadow-inner"
+                />
+              </div>
+              <div className="flex gap-1.5 flex-wrap">
+                {[
+                  { id: 'all', label: 'All' },
+                  { id: 'convenor', label: 'Leadership' },
+                  { id: 'core', label: 'Core' },
+                  { id: 'extended', label: 'Extended Core' },
+                  { id: 'member', label: 'Members' },
+                  { id: 'alumni', label: 'Alumni' },
+                ].map((pill) => (
+                  <button
+                    key={pill.id}
+                    onClick={() => setRoleFilter(pill.id)}
+                    className={`px-3.5 py-1.5 rounded-xl border text-[10px] uppercase tracking-wider font-bold transition-all duration-200 ${
+                      roleFilter === pill.id 
+                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white border-indigo-400/50 shadow-[0_0_16px_rgba(99,102,241,0.4)]' 
+                        : 'bg-secondary/40 dark:bg-slate-900/50 text-muted-foreground border-border/70 dark:border-slate-800 hover:bg-secondary/80 dark:hover:bg-slate-800 hover:text-foreground hover:border-slate-700'
+                    }`}
+                  >
+                    {pill.label}
+                  </button>
+                ))}
+              </div>
+              {/* View Mode Toggle */}
+              <div className="flex bg-secondary/70 dark:bg-slate-900/80 p-1 rounded-xl w-fit ml-auto border border-border/80 dark:border-slate-700/60">
+                <button 
+                  onClick={() => setViewMode('globe')}
+                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${viewMode === 'globe' ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                 >
-                  {pill.label}
+                  Globe
                 </button>
-              ))}
-            </div>
-            {/* View Mode Toggle */}
-            <div className="flex bg-slate-200/50 p-1 rounded-lg w-fit ml-auto">
-              <button 
-                onClick={() => setViewMode('globe')}
-                className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${viewMode === 'globe' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                Globe
-              </button>
-              <button 
-                onClick={() => setViewMode('grid')}
-                className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                Grid
-              </button>
+                <button 
+                  onClick={() => setViewMode('grid')}
+                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${viewMode === 'grid' ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  Grid
+                </button>
+              </div>
             </div>
           </div>
         )}
-        </div>
 
         {loading ? (
           <div className="flex flex-col items-center py-12 flex-1 justify-center">
-            <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-3"></div>
-            <span className="text-sm font-semibold text-slate-400">Loading team...</span>
+            <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-3"></div>
+            <span className="text-sm font-semibold text-muted-foreground">Loading team...</span>
           </div>
         ) : displayMembers.length === 0 ? (
-          <p className="font-sans text-sm text-slate-400 py-10 flex-1 flex items-center justify-center">No members found.</p>
+          <p className="font-sans text-sm text-muted-foreground py-10 flex-1 flex items-center justify-center">No members found.</p>
         ) : viewMode === 'globe' ? (
           <div className="team-globe-scroll">
             <TeamWorldBox
@@ -590,8 +585,8 @@ export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
             </p>
           </div>
         ) : (
-          <div className="flex-1 min-h-0 overflow-y-auto w-full mt-2 rounded-lg border border-slate-200">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 bg-[#ECF0F7]">
+          <div className="flex-1 min-h-0 overflow-y-auto w-full mt-2 rounded-2xl border border-border/80 dark:border-white/10 overflow-hidden shadow-xl bg-card dark:bg-slate-950/70">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
               {displayMembers.map((m) => (
                 <TeamMemberCard 
                   key={m.id} 
@@ -612,39 +607,39 @@ export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+                className="absolute inset-0 bg-background/80 backdrop-blur-sm"
                 onClick={() => setSelectedGlobeMember(null)}
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative bg-white rounded-3xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col z-10 p-6"
+                className="relative bg-card text-card-foreground border border-border rounded-3xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col z-10 p-6"
               >
                 <div className="flex justify-end">
-                  <button onClick={() => setSelectedGlobeMember(null)} className="text-slate-400 hover:text-slate-700 p-1">
+                  <button onClick={() => setSelectedGlobeMember(null)} className="text-muted-foreground hover:text-foreground p-1">
                     <X size={20} />
                   </button>
                 </div>
                 <div className="flex flex-col items-center mt-2">
                   <MemberAvatar name={selectedGlobeMember.name} photo={selectedGlobeMember.photo || ''} />
-                  <h4 className="font-bold text-lg text-slate-900 mt-3 text-center">{selectedGlobeMember.name}</h4>
+                  <h4 className="font-bold text-lg text-foreground mt-3 text-center">{selectedGlobeMember.name}</h4>
                   <RoleBadge role={selectedGlobeMember.role} />
                   
                   {selectedGlobeMember.description && (
-                    <p className="text-sm text-slate-500 text-center mt-4 leading-relaxed">
+                    <p className="text-sm text-muted-foreground text-center mt-4 leading-relaxed">
                       {selectedGlobeMember.description}
                     </p>
                   )}
                   
                   <div className="flex gap-3 justify-center mt-6">
                     {selectedGlobeMember.github && (
-                      <a href={selectedGlobeMember.github} target="_blank" rel="noopener noreferrer" className="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-600 transition-colors">
+                      <a href={selectedGlobeMember.github} target="_blank" rel="noopener noreferrer" className="p-2.5 bg-secondary hover:bg-secondary/80 rounded-full text-foreground transition-colors">
                         <GitHubIcon />
                       </a>
                     )}
                     {selectedGlobeMember.linkedin && (
-                      <a href={selectedGlobeMember.linkedin} target="_blank" rel="noopener noreferrer" className="p-2.5 bg-slate-100 hover:bg-indigo-100 text-slate-600 hover:text-indigo-600 rounded-full transition-colors">
+                      <a href={selectedGlobeMember.linkedin} target="_blank" rel="noopener noreferrer" className="p-2.5 bg-secondary hover:bg-secondary/80 text-foreground hover:text-primary rounded-full transition-colors">
                         <LinkedInIcon />
                       </a>
                     )}
@@ -660,7 +655,7 @@ export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
           <div className="mt-10">
             <Link
               to="/team"
-              className="inline-flex items-center gap-1.5 font-mono text-sm text-indigo-600 hover:text-indigo-800 transition-colors group"
+              className="inline-flex items-center gap-1.5 font-mono text-sm text-primary hover:text-primary/80 transition-colors group"
             >
               <span className="group-hover:underline">Meet the full team</span>
               <ArrowRight size={13} className="transform group-hover:translate-x-0.5 transition-transform" />

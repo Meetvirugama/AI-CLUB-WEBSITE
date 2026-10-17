@@ -102,15 +102,14 @@ export default function BackgroundCanvas() {
 
   return (
     <>
-      <div className="fixed inset-0 z-[-2] bg-background" />
-      <div className="fixed inset-0 z-[-1] opacity-40 animate-[aurora-shift_15s_ease-in-out_infinite]" style={{
-        background: 'radial-gradient(circle at 15% 50%, hsl(var(--primary) / 0.25), transparent 35%), radial-gradient(circle at 85% 30%, hsl(var(--accent-2) / 0.25), transparent 35%), radial-gradient(circle at 50% 80%, hsl(var(--accent-3) / 0.15), transparent 35%)',
-        backgroundSize: '200% 200%'
+      <div className="fixed inset-0 z-[-2] bg-background transition-colors duration-200" />
+      <div className="fixed inset-0 z-[-1] opacity-20 dark:opacity-5 pointer-events-none transition-opacity duration-300" style={{
+        background: 'radial-gradient(circle at 15% 50%, hsl(var(--primary) / 0.15), transparent 45%), radial-gradient(circle at 85% 30%, hsl(var(--accent) / 0.12), transparent 45%)',
       }} />
       <canvas
         ref={canvasRef}
-        className="fixed inset-0 z-0 pointer-events-none"
-        style={{ opacity: 0.15 }}
+        className="fixed inset-0 z-0 pointer-events-none transition-opacity duration-300"
+        style={{ opacity: 0.07 }}
       />
     </>
   );

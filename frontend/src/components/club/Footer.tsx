@@ -49,8 +49,8 @@ export default function Footer({ short = false }: { short?: boolean }) {
   return (
     <footer
       style={{
-        background: 'hsl(228, 25%, 88%)',
-        borderTop: '1px solid hsl(228, 20%, 78%)',
+        background: 'hsl(var(--surface))',
+        borderTop: '1px solid hsl(var(--border))',
       }}
     >
       <div
@@ -76,15 +76,15 @@ export default function Footer({ short = false }: { short?: boolean }) {
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', marginBottom: '1rem' }}
               >
                 <img src={aiClubLogo} alt="AI Club DAU" style={{ width: 26, height: 26, borderRadius: 3, objectFit: 'contain' }} />
-                <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.95rem', color: 'hsl(230, 25%, 12%)' }}>
-                  AI Club <span style={{ fontWeight: 400, color: 'hsl(230, 15%, 45%)' }}>DA-IICT</span>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.95rem', color: 'hsl(var(--foreground))' }}>
+                  AI Club <span style={{ fontWeight: 400, color: 'hsl(var(--muted-foreground))' }}>DA-IICT</span>
                 </span>
               </Link>
               <p
                 style={{
                   fontFamily: 'Inter, sans-serif',
                   fontSize: '0.85rem',
-                  color: 'hsl(230, 15%, 42%)',
+                  color: 'hsl(var(--muted-foreground))',
                   lineHeight: 1.65,
                   maxWidth: 240,
                   marginBottom: '1rem',
@@ -100,12 +100,12 @@ export default function Footer({ short = false }: { short?: boolean }) {
                   gap: 6,
                   fontFamily: 'JetBrains Mono, monospace',
                   fontSize: '0.72rem',
-                  color: 'hsl(230, 15%, 42%)',
+                  color: 'hsl(var(--muted-foreground))',
                   textDecoration: 'none',
                   transition: 'color 0.15s',
                 }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(243, 75%, 59%)'}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230, 15%, 42%)'}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(var(--primary))'}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'}
               >
                 <Mail size={12} /> ai_club@dau.ac.in
               </a>
@@ -119,7 +119,7 @@ export default function Footer({ short = false }: { short?: boolean }) {
                   fontSize: '0.65rem',
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',
-                  color: 'hsl(230, 15%, 50%)',
+                  color: 'hsl(var(--muted-foreground))',
                   marginBottom: '1rem',
                 }}
               >
@@ -133,12 +133,12 @@ export default function Footer({ short = false }: { short?: boolean }) {
                       style={{
                         fontFamily: 'Inter, sans-serif',
                         fontSize: '0.88rem',
-                        color: 'hsl(230, 15%, 38%)',
+                        color: 'hsl(var(--muted-foreground))',
                         textDecoration: 'none',
                         transition: 'color 0.15s',
                       }}
-                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230, 25%, 12%)'}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230, 15%, 38%)'}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(var(--foreground))'}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'}
                     >
                       {l.label}
                     </a>
@@ -155,7 +155,7 @@ export default function Footer({ short = false }: { short?: boolean }) {
                   fontSize: '0.65rem',
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',
-                  color: 'hsl(230, 15%, 50%)',
+                  color: 'hsl(var(--muted-foreground))',
                   marginBottom: '1rem',
                 }}
               >
@@ -174,12 +174,12 @@ export default function Footer({ short = false }: { short?: boolean }) {
                       gap: 8,
                       fontFamily: 'Inter, sans-serif',
                       fontSize: '0.85rem',
-                      color: 'hsl(230, 15%, 38%)',
+                      color: 'hsl(var(--muted-foreground))',
                       textDecoration: 'none',
                       transition: 'color 0.15s',
                     }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(243, 75%, 59%)'}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230, 15%, 38%)'}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(var(--primary))'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'}
                   >
                     <Icon /> {label}
                   </a>
@@ -192,7 +192,7 @@ export default function Footer({ short = false }: { short?: boolean }) {
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4,
                   fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem',
-                  color: 'hsl(243, 75%, 59%)', textDecoration: 'none',
+                  color: 'hsl(var(--primary))', textDecoration: 'none',
                 }}
               >
                 Read our blog on Medium <ArrowUpRight size={11} />
@@ -203,17 +203,17 @@ export default function Footer({ short = false }: { short?: boolean }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem' }}>
             <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
               <img src={aiClubLogo} alt="AI Club DAU" style={{ width: 26, height: 26, borderRadius: 3, objectFit: 'contain' }} />
-              <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.95rem', color: 'hsl(230, 25%, 12%)' }}>
-                AI Club <span style={{ fontWeight: 400, color: 'hsl(230, 15%, 45%)' }}>DA-IICT</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.95rem', color: 'hsl(var(--foreground))' }}>
+                AI Club <span style={{ fontWeight: 400, color: 'hsl(var(--muted-foreground))' }}>DA-IICT</span>
               </span>
             </Link>
             <div style={{ display: 'flex', gap: '1rem' }}>
               {socials.map(({ Icon, href, label }) => (
                 <a
                   key={label} href={href} target="_blank" rel="noopener noreferrer"
-                  style={{ color: 'hsl(230, 15%, 45%)', transition: 'color 0.15s', display: 'flex', alignItems: 'center' }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(243, 75%, 59%)'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(230, 15%, 45%)'}
+                  style={{ color: 'hsl(var(--muted-foreground))', transition: 'color 0.15s', display: 'flex', alignItems: 'center' }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(var(--primary))'}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'}
                   aria-label={label}
                 >
                   <Icon />
@@ -227,7 +227,7 @@ export default function Footer({ short = false }: { short?: boolean }) {
         <div
           style={{
             paddingTop: '1.5rem',
-            borderTop: '1px solid hsl(228, 20%, 78%)',
+            borderTop: '1px solid hsl(var(--border))',
             display: 'flex',
             flexWrap: 'wrap',
             justifyContent: 'space-between',
@@ -238,7 +238,7 @@ export default function Footer({ short = false }: { short?: boolean }) {
             style={{
               fontFamily: 'JetBrains Mono, monospace',
               fontSize: '0.68rem',
-              color: 'hsl(230, 15%, 52%)',
+              color: 'hsl(var(--muted-foreground))',
             }}
           >
             © 2026 AI Club DA-IICT · Dhirubhai Ambani University, Gandhinagar
@@ -247,7 +247,7 @@ export default function Footer({ short = false }: { short?: boolean }) {
             style={{
               fontFamily: 'JetBrains Mono, monospace',
               fontSize: '0.68rem',
-              color: 'hsl(230, 15%, 58%)',
+              color: 'hsl(var(--muted-foreground))',
             }}
           >
             Built with ❤️ by the core team

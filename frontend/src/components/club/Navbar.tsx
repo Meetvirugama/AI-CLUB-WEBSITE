@@ -2,16 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { Menu, X, LogOut, Shield, ChevronDown, ClipboardList, User } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
-import { getApiUrl } from '../../lib/api';
 import aiClubLogo from '@/assets/ai-club-logo.png';
 import FireworkLauncher, { type FireworkLauncherHandle } from './FireworkLauncher';
 import { useAuth } from '../../contexts/AuthContext';
-
-interface NavCounts {
-  events: number;
-  projects: number;
-  members: number;
-}
+import ThemeToggle from '../ThemeToggle';
 
 const navItems = [
   { label: 'About', href: '/#hero' },
@@ -31,10 +25,10 @@ const linkStyle = (active: boolean) => ({
   fontFamily: 'Inter, sans-serif',
   fontSize: '0.83rem',
   fontWeight: active ? 600 : 400,
-  color: active ? 'hsl(243, 75%, 59%)' : 'hsl(230, 15%, 35%)',
+  color: active ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
   textDecoration: 'none',
   borderRadius: '8px',
-  background: active ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+  background: active ? 'hsl(var(--primary) / 0.12)' : 'transparent',
   transition: 'all 0.15s ease',
   whiteSpace: 'nowrap' as const,
 });
@@ -44,7 +38,6 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const { user, isAuthenticated, isLoading: authLoading, login, logout } = useAuth();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [counts, setCounts] = useState<NavCounts>({ events: 0, projects: 0, members: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fireworkRef = useRef<FireworkLauncherHandle | null>(null);
   const venezaButtonRef = useRef<HTMLAnchorElement>(null);
@@ -71,25 +64,6 @@ export default function Navbar() {
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  useEffect(() => {
-    const fetchCounts = async () => {
-      try {
-        const res = await fetch(getApiUrl('/api/stats'));
-        if (res.ok) {
-          const data = await res.json();
-          setCounts({
-            events: data.events ?? 0,
-            projects: data.projects ?? 0,
-            members: data.members ?? 0,
-          });
-        }
-      } catch (err) {
-        console.error("Failed to fetch stats", err);
-      }
-    };
-    fetchCounts();
   }, []);
 
   // We now use the <GoogleLogin /> component directly which returns an ID Token
@@ -122,9 +96,8 @@ export default function Navbar() {
   const dropdownItem = (href: string, icon: React.ReactNode, label: string) => (
     <Link
       to={href}
-      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', fontSize: '0.8rem', color: 'hsl(230,25%,12%)', textDecoration: 'none', transition: 'background 0.15s' }}
-      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'hsl(228,20%,96%)'}
-      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+      className="flex items-center gap-2 px-3.5 py-2.5 text-xs text-foreground hover:bg-secondary transition-colors"
+      style={{ textDecoration: 'none' }}
     >
       {icon} {label}
     </Link>
@@ -139,18 +112,20 @@ export default function Navbar() {
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           height: '56px', padding: '0 2rem',
-          backgroundColor: 'hsl(228, 30%, 93%)',
-          borderBottom: '1px solid hsl(228, 20%, 80%)',
-          transition: 'box-shadow 0.3s ease',
-          boxShadow: scrolled ? '0 1px 12px rgba(0,0,0,0.06)' : 'none',
+          backgroundColor: 'hsl(var(--background) / 0.96)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          borderBottom: '1px solid hsl(var(--border))',
+          transition: 'box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease',
+          boxShadow: scrolled ? '0 1px 16px rgba(0,0,0,0.2)' : 'none',
         }}
       >
         {/* Logo */}
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', flexShrink: 0 }}>
           <img src={aiClubLogo} alt="AI Club DAU" style={{ width: 26, height: 26, borderRadius: 3, objectFit: 'contain' }} />
-          <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.95rem', color: 'hsl(230, 25%, 12%)' }}>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.95rem', color: 'hsl(var(--foreground))' }}>
             AI Club{' '}
-            <span style={{ fontWeight: 400, color: 'hsl(230, 15%, 45%)' }}>DA-IICT</span>
+            <span style={{ fontWeight: 400, color: 'hsl(var(--muted-foreground))' }}>DA-IICT</span>
           </span>
         </Link>
 
@@ -160,7 +135,6 @@ export default function Navbar() {
           <ul style={{ display: 'flex', alignItems: 'center', gap: '4px', listStyle: 'none', margin: 0, padding: 0 }}>
           {navItems.map((item) => {
             const active = isActive(item);
-            const badgeCount = item.label === 'Events' ? counts.events : item.label === 'Projects' ? counts.projects : item.label === 'Team' ? counts.members : 0;
             
             if (item.label === 'Weekly Veneza') {
               return (
@@ -231,10 +205,7 @@ export default function Navbar() {
                 <a
                   href={item.pagePath || item.href}
                   onClick={(e) => handleNavClick(e, item.pagePath || item.href)}
-                  style={{
-                    ...linkStyle(active),
-                    gap: '6px',
-                  }}
+                  style={linkStyle(active)}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
                     if (!active) {
@@ -251,21 +222,6 @@ export default function Navbar() {
                   }}
                 >
                   <span>{item.label}</span>
-                  {badgeCount > 0 && (
-                    <span
-                      style={{
-                        fontFamily: 'JetBrains Mono, monospace',
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        padding: '2px 7px',
-                        borderRadius: '12px',
-                        background: active ? 'hsl(243, 75%, 59%)' : 'hsl(228, 20%, 82%)',
-                        color: active ? 'white' : 'hsl(230, 25%, 30%)',
-                      }}
-                    >
-                      {badgeCount}
-                    </span>
-                  )}
                 </a>
               </li>
             );
@@ -301,26 +257,25 @@ export default function Navbar() {
               {showUserDropdown && (
                 <div style={{
                   position: 'absolute', right: 0, marginTop: '6px', width: '210px',
-                  background: 'white', border: '1px solid hsl(228,20%,80%)', borderRadius: '6px',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.10)', zIndex: 100, overflow: 'hidden',
+                  background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.35)', zIndex: 100, overflow: 'hidden',
                 }}>
-                  <div style={{ padding: '12px 14px', borderBottom: '1px solid hsl(228,20%,88%)' }}>
-                    <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'hsl(230,25%,12%)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</p>
-                    <p style={{ fontSize: '0.7rem', color: 'hsl(230,15%,50%)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>
+                  <div style={{ padding: '12px 14px', borderBottom: '1px solid hsl(var(--border))' }}>
+                    <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</p>
+                    <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>
                     {user.is_admin && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 4, fontSize: '0.65rem', fontWeight: 600, color: 'hsl(243,75%,59%)', background: 'hsl(243,75%,96%)', border: '1px solid hsl(243,75%,80%)', borderRadius: 99, padding: '2px 7px' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 4, fontSize: '0.65rem', fontWeight: 600, color: 'hsl(var(--primary))', background: 'hsl(var(--primary) / 0.12)', border: '1px solid hsl(var(--primary) / 0.25)', borderRadius: 99, padding: '2px 7px' }}>
                         <Shield size={8} /> Admin
                       </span>
                     )}
                   </div>
-                  {dropdownItem('/my-registrations', <ClipboardList size={13} style={{ color: 'hsl(243,75%,59%)' }} />, 'My Registrations')}
-                  {user.is_admin && dropdownItem('/admin', <Shield size={13} style={{ color: 'hsl(243,75%,59%)' }} />, 'Admin Dashboard')}
-                  <div style={{ borderTop: '1px solid hsl(228,20%,88%)' }}>
+                  {dropdownItem('/my-registrations', <ClipboardList size={13} style={{ color: 'hsl(var(--primary))' }} />, 'My Registrations')}
+                  {user.is_admin && dropdownItem('/admin', <Shield size={13} style={{ color: 'hsl(var(--primary))' }} />, 'Admin Dashboard')}
+                  <div style={{ borderTop: '1px solid hsl(var(--border))' }}>
                     <button
                       onClick={handleLogout}
-                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', width: '100%', border: 'none', background: 'transparent', fontSize: '0.8rem', color: 'hsl(0,70%,50%)', cursor: 'pointer', transition: 'background 0.15s' }}
-                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'hsl(0,70%,97%)'}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+                      className="flex items-center gap-2 px-3.5 py-2.5 w-full text-xs text-destructive hover:bg-destructive/10 transition-colors"
+                      style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
                     >
                       <LogOut size={13} /> Sign Out
                     </button>
@@ -344,17 +299,21 @@ export default function Navbar() {
               />
             </div>
           )}
+          <ThemeToggle />
         </div>
         </div>
 
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(230, 25%, 12%)', padding: 4 }}
-        >
-          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        {/* Mobile toggle + hamburger */}
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 4 }}
+            aria-label="Toggle navigation menu"
+          >
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
 
         {/* Mobile menu */}
         {mobileOpen && (
@@ -362,20 +321,21 @@ export default function Navbar() {
             className="md:hidden"
             style={{
               position: 'absolute', top: '56px', left: 0, right: 0,
-              background: 'hsl(228, 30%, 93%)',
-              borderBottom: '1px solid hsl(228, 20%, 80%)',
+              background: 'hsl(var(--background))',
+              borderBottom: '1px solid hsl(var(--border))',
               padding: '1rem 2rem 1.5rem', zIndex: 49,
             }}
           >
             <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+
               {navItems.map((item) => {
                 const active = isActive(item);
                 return (
-                  <li key={item.label} style={{ borderBottom: '1px solid hsl(228, 20%, 85%)' }}>
+                  <li key={item.label} style={{ borderBottom: '1px solid hsl(var(--border))' }}>
                     <a
                       href={item.pagePath || item.href}
                       onClick={(e) => { handleNavClick(e, item.pagePath || item.href); setMobileOpen(false); }}
-                      style={{ display: 'block', padding: '12px 0', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', fontWeight: active ? 600 : 400, color: active ? 'hsl(243, 75%, 59%)' : 'hsl(230, 20%, 25%)', textDecoration: 'none' }}
+                      style={{ display: 'block', padding: '12px 0', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', fontWeight: active ? 600 : 400, color: active ? 'hsl(var(--primary))' : 'hsl(var(--foreground))', textDecoration: 'none' }}
                     >
                       {item.label}
                     </a>
@@ -388,7 +348,7 @@ export default function Navbar() {
               {user ? (
                 <button
                   onClick={async () => { await logout(); }}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'transparent', color: 'hsl(0,70%,50%)', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', border: '1px solid hsl(228, 20%, 80%)', borderRadius: 2, cursor: 'pointer' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'transparent', color: 'hsl(var(--destructive))', fontFamily: 'Inter, sans-serif', fontSize: '0.82rem', border: '1px solid hsl(var(--border))', borderRadius: 4, cursor: 'pointer' }}
                 >
                   <LogOut size={14} /> Sign Out
                 </button>
@@ -412,25 +372,25 @@ export default function Navbar() {
             </div>
 
             {user && (
-              <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: 10, padding: '10px', background: 'white', border: '1px solid hsl(228,20%,80%)', borderRadius: 4 }}>
+              <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: 10, padding: '10px', background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}>
                 {user.profile_image ? (
                   <img src={user.profile_image} alt={user.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'hsl(243,75%,90%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'hsl(243,75%,59%)' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'hsl(var(--primary) / 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'hsl(var(--primary))' }}>
                     {user.name[0]}
                   </div>
                 )}
                 <div>
-                  <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, color: 'hsl(230,25%,12%)' }}>{user.name}</p>
-                  <p style={{ margin: 0, fontSize: '0.7rem', color: 'hsl(230,15%,50%)' }}>{user.email}</p>
+                  <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, color: 'hsl(var(--foreground))' }}>{user.name}</p>
+                  <p style={{ margin: 0, fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>{user.email}</p>
                 </div>
                 <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {user.is_admin && (
-                    <Link to="/admin" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', color: 'hsl(243,75%,59%)', textDecoration: 'none' }}>
+                    <Link to="/admin" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', color: 'hsl(var(--primary))', textDecoration: 'none' }}>
                       <Shield size={12} /> Admin
                     </Link>
                   )}
-                  <Link to="/my-registrations" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', color: 'hsl(230,20%,40%)', textDecoration: 'none' }}>
+                  <Link to="/my-registrations" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', textDecoration: 'none' }}>
                     <ClipboardList size={12} /> My Regs
                   </Link>
                 </div>
