@@ -22,6 +22,7 @@ import ScrollToTop from "./components/ScrollToTop.tsx";
 import AppErrorBoundary from "./components/AppErrorBoundary.tsx";
 import { AuthProvider } from "./contexts/AuthContext.tsx";
 import { ThemeProvider } from "./contexts/ThemeContext.tsx";
+import { ChatbotProvider } from "./contexts/ChatbotContext.tsx";
 import { useLocation } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { startSession, trackPageView } from "./lib/analytics";
@@ -85,7 +86,8 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ThemeProvider>
-            <TooltipProvider>
+            <ChatbotProvider>
+              <TooltipProvider>
               <NeuralAwakening onComplete={() => {}} />
               <Toaster />
               <Sonner />
@@ -142,7 +144,8 @@ const App = () => {
                 </Routes>
               </BrowserRouter>
             </TooltipProvider>
-          </ThemeProvider>
+          </ChatbotProvider>
+        </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>
     </GoogleOAuthProvider>

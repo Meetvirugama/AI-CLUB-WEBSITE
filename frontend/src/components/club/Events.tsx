@@ -6,6 +6,8 @@ import { getApiUrl } from '../../lib/api';
 import { api } from '../../lib/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { normalizeBannerUrl } from '../../lib/utils';
+import { CtaCard } from '@/components/ui/cta-card';
+import EventDetailModal from './EventDetailModal';
 
 // Auth travels in the HttpOnly session cookie (credentials: 'include'), so no
 // Authorization header is built here. Never move the token into localStorage:
@@ -108,6 +110,7 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
   const [userProfile, setUserProfile] = useState<any>(null);
   const [registeredEventIds, setRegisteredEventIds] = useState<(number | string)[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<EventModel | null>(null);
+  const [detailEvent, setDetailEvent] = useState<EventModel | null>(null);
 
   // Team Registration state
   const [teamName, setTeamName] = useState('');
@@ -617,147 +620,110 @@ const resultCount = displayedUpcomingEvents.length;
                 No upcoming events at the moment. Check back soon.
               </p>
             ) : (
-              displayedUpcomingEvents.map((ev) => {
-                const hasDate = Boolean(ev.event_start_date || ev.event_date);
-                const dateObj = hasDate ? new Date((ev.event_start_date || ev.event_date)!) : null;
-                const day = dateObj ? dateObj.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase() : 'TBA';
-                const month = dateObj ? dateObj.toLocaleDateString('en-US', { month: 'short' }) : '';
-                const date = dateObj ? dateObj.getDate() : '';
-                
-                const metaParts = [];
-                if (ev.venue) metaParts.push(ev.venue);
-                if (ev.start_time) metaParts.push(ev.start_time);
-                if (ev.event_type) metaParts.push(ev.event_type);
-                return (
-                  <div
-                    key={ev.id}
-                    style={{
-                      display: 'flex',
-                      gap: '2rem',
-                      padding: '1.5rem',
-                      borderRadius: '16px',
-                      background: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      alignItems: 'flex-start',
-                      marginBottom: '1rem',
-                      transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={e => {
-                      (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px) scale(1.01)';
-                      (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 24px -6px rgba(121, 101, 255, 0.15)';
-                      (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--primary))';
-                    }}
-                    onMouseLeave={e => {
-                      (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)';
-                      (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-                      (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--border))';
-                    }}
-                  >
-                    {/* Date column */}
-                    <div style={{ minWidth: 70, flexShrink: 0 }}>
-                      <p
-                        style={{
-                          fontFamily: 'JetBrains Mono, monospace',
-                          fontSize: '0.65rem',
-                          letterSpacing: '0.1em',
-                          color: 'hsl(230, 15%, 50%)',
-                          marginBottom: 2,
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        {day}
-                      </p>
-                      <p
-                        style={{
-                          fontFamily: 'Playfair Display, Georgia, serif',
-                          fontSize: '1.15rem',
-                          fontWeight: 700,
-                          color: 'hsl(243, 75%, 59%)',
-                          lineHeight: 1.1,
-                        }}
-                      >
-                        {month ? `${month} ${date}` : 'TBA'}
-                      </p>
-                    </div>
+              <div className="flex flex-col gap-6">
+                {displayedUpcomingEvents.map((ev) => {
+                  const hasDate = Boolean(ev.event_start_date || ev.event_date);
+                  const dateObj = hasDate ? new Date((ev.event_start_date || ev.event_date)!) : null;
+                  const day = dateObj ? dateObj.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase() : 'TBA';
+                  const month = dateObj ? dateObj.toLocaleDateString('en-US', { month: 'short' }).toUpperCase() : '';
+                  const date = dateObj ? dateObj.getDate() : '';
 
-                    {/* Content */}
-                    <div style={{ flex: 1 }}>
-                      <h3
-                        style={{
-                          fontFamily: 'Playfair Display, Georgia, serif',
-                          fontSize: '1.1rem',
-                          fontWeight: 700,
-                          color: 'hsl(var(--foreground))',
-                          marginBottom: '0.35rem',
-                          letterSpacing: '-0.01em',
-                        }}
-                      >
-                        {ev.title}
-                      </h3>
-                      <p
-                        style={{
-                          fontFamily: 'Inter, sans-serif',
-                          fontSize: '0.88rem',
-                          color: 'hsl(var(--muted-foreground))',
-                          lineHeight: 1.6,
-                          marginBottom: '0.75rem',
-                          maxWidth: 600,
-                        }}
-                      >
-                        {ev.description}
-                      </p>
-                      <p
-                        style={{
-                          fontFamily: 'JetBrains Mono, monospace',
-                          fontSize: '0.75rem',
-                          color: 'hsl(var(--muted-foreground))',
-                        }}
-                      >
-                        {metaParts.join(' · ')}
-                        {ev.status === 'registration_open' && (
-                          <span style={{ color: 'hsl(var(--primary))', marginLeft: metaParts.length > 0 ? 8 : 0 }}>· Open for registration</span>
-                        )}
-                      </p>
+                  const dateString = dateObj
+                    ? `${day}, ${month} ${date}${ev.start_time ? ` · ${ev.start_time}` : ''}${ev.venue ? ` · ${ev.venue}` : ''}`
+                    : (ev.date_label || 'Date TBA');
 
-                      {/* Register button + View Details */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
-                        {ev.status === 'registration_open' && !authLoading && (
-                          registeredEventIds.includes(Number(ev.id)) ? (
-                            <span style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(var(--primary))', padding: '4px 12px', border: '1px solid hsl(var(--primary) / 0.4)', borderRadius: 2 }}>
-                              Registered ✓
+                  const isRegistered = registeredEventIds.includes(Number(ev.id));
+                  const isRegistrationOpen = ev.status === 'registration_open';
+
+                  const defaultBanner = 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80';
+                  const imageSrc = normalizeBannerUrl(ev.banner) || defaultBanner;
+
+                  let primaryButtonText = 'View Details';
+                  let onPrimaryClick: () => void = () => setDetailEvent(ev);
+                  let secondaryButtonText: string | undefined = undefined;
+                  let onSecondaryClick: (() => void) | undefined = undefined;
+
+                  if (isRegistrationOpen && !authLoading) {
+                    if (isRegistered) {
+                      primaryButtonText = 'Registered ✓';
+                      onPrimaryClick = () => navigate('/my-registrations');
+                      secondaryButtonText = 'View Details';
+                      onSecondaryClick = () => setDetailEvent(ev);
+                    } else if (ev.registration_link) {
+                      primaryButtonText = 'Register Now';
+                      onPrimaryClick = () => window.open(ev.registration_link!, '_blank');
+                      secondaryButtonText = 'View Details';
+                      onSecondaryClick = () => setDetailEvent(ev);
+                    } else {
+                      primaryButtonText = 'Register Now';
+                      onPrimaryClick = () => navigate(`/events/${ev.id}`);
+                      secondaryButtonText = 'View Details';
+                      onSecondaryClick = () => setDetailEvent(ev);
+                    }
+                  }
+
+                  return (
+                    <CtaCard
+                      key={ev.id}
+                      className="cursor-pointer"
+                      onClick={() => setDetailEvent(ev)}
+                      imageSrc={imageSrc}
+                      imageAlt={ev.title}
+                      title={dateString}
+                      subtitle={
+                        <div className="flex flex-col gap-1">
+                          <span className="font-serif font-bold text-foreground hover:text-primary transition-colors">
+                            {ev.title}
+                          </span>
+                          {ev.speaker && (
+                            <span className="text-xs font-normal text-muted-foreground flex items-center gap-1.5 font-sans mt-0.5">
+                              <Mic size={12} className="text-primary" /> Speaker: {ev.speaker}
                             </span>
-                          ) : ev.registration_link ? (
-                            <a
-                              href={ev.registration_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(var(--primary-foreground))', background: 'hsl(var(--primary))', padding: '5px 14px', borderRadius: 4, textDecoration: 'none', border: '1px solid hsl(var(--primary))' }}
-                            >
-                              Register now
-                            </a>
-                          ) : (
-                            <button
-                              onClick={() => navigate(`/events/${ev.id}`)}
-                              style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(var(--primary-foreground))', background: 'hsl(var(--primary))', padding: '5px 14px', borderRadius: 4, border: '1px solid hsl(var(--primary))', cursor: 'pointer' }}
-                            >
-                              Register now
-                            </button>
-                          )
+                          )}
+                        </div>
+                      }
+                      description={ev.description}
+                      buttonText={primaryButtonText}
+                      onButtonClick={onPrimaryClick}
+                      secondaryButtonText={secondaryButtonText}
+                      onSecondaryButtonClick={onSecondaryClick}
+                      badge={
+                        <div className="flex flex-wrap gap-1.5">
+                          {isRegistrationOpen ? (
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider bg-emerald-500/90 text-white backdrop-blur-md shadow-sm">
+                              Open for Registration
+                            </span>
+                          ) : ev.status === 'upcoming' ? (
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider bg-primary/90 text-white backdrop-blur-md shadow-sm">
+                              Upcoming
+                            </span>
+                          ) : null}
+                          {ev.category && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider bg-black/60 text-white/90 backdrop-blur-md border border-white/20">
+                              {ev.category}
+                            </span>
+                          )}
+                        </div>
+                      }
+                    >
+                      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground font-mono">
+                        {ev.event_type && (
+                          <span className="capitalize px-2 py-0.5 rounded bg-muted/80 border border-border">
+                            {ev.event_type === 'team' ? (
+                              <span className="flex items-center gap-1"><UsersRound size={11} /> Team Event</span>
+                            ) : (
+                              'Individual'
+                            )}
+                          </span>
                         )}
-                        <button
-                          onClick={() => navigate(`/events/${ev.id}`)}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(var(--primary))', background: 'transparent', padding: '4px 10px', border: '1px solid hsl(var(--border))', borderRadius: 4, cursor: 'pointer' }}
-                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--primary))'}
-                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--border))'}
-                        >
-                          <ArrowRight size={11} /> View Details
-                        </button>
+                        {ev.venue && (
+                          <span className="flex items-center gap-1">📍 {ev.venue}</span>
+                        )}
                       </div>
-                    </div>
-                  </div>
-                );
-              })
+                    </CtaCard>
+                  );
+                })}
+              </div>
             )}
 
             {/* Footnote */}
@@ -830,6 +796,14 @@ const resultCount = displayedUpcomingEvents.length;
           </div>
         </div>
       </section>
+
+      {/* Event Detail Modal (follows Achievement modal pattern) */}
+      <EventDetailModal
+        event={detailEvent}
+        isOpen={Boolean(detailEvent)}
+        onClose={() => setDetailEvent(null)}
+        isRegistered={detailEvent ? registeredEventIds.includes(Number(detailEvent.id)) : false}
+      />
 
       {/* Registration Modal Overlay (shared with full page) */}
       <AnimatePresence>
@@ -1349,7 +1323,7 @@ const resultCount = displayedUpcomingEvents.length;
               ease: 'easeOut',
             },
           }}
-          onClick={() => navigate(`/events/${card.id}`)}
+          onClick={() => setDetailEvent(card)}
           className="group relative overflow-hidden rounded-2xl cursor-pointer bg-card border border-border transition-all duration-300 hover:border-primary/40 hover:-translate-y-1 shadow-sm"
         >
           {/* Hover glow */}
@@ -1584,6 +1558,21 @@ const resultCount = displayedUpcomingEvents.length;
                     />
                   </button>
                 )}
+              </div>
+            )}
+
+            {card.status !== 'registration_open' && (
+              <div className="mt-5">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDetailEvent(card);
+                  }}
+                  className="w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border border-border hover:bg-secondary text-foreground transition-colors cursor-pointer"
+                >
+                  View Details
+                </button>
               </div>
             )}
           </div>
@@ -1877,6 +1866,14 @@ const resultCount = displayedUpcomingEvents.length;
           </div>
         )}
       </AnimatePresence>
+
+      {/* Event Detail Modal (full page fallback) */}
+      <EventDetailModal
+        event={detailEvent}
+        isOpen={Boolean(detailEvent)}
+        onClose={() => setDetailEvent(null)}
+        isRegistered={detailEvent ? registeredEventIds.includes(Number(detailEvent.id)) : false}
+      />
       </div>
     </section>
   );
