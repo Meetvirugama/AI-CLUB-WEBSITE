@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Menu, X, LogOut, Shield, ChevronDown, ClipboardList, User, Sparkles } from 'lucide-react';
+import { Menu, X, LogOut, Shield, ChevronDown, ClipboardList, User, Sparkles, MessageSquare } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { getApiUrl } from '../../lib/api';
@@ -286,7 +286,7 @@ export default function Navbar() {
                 }`}
                 title="Open AURA AI Chat (Cmd/Ctrl + K)"
               >
-                <Sparkles size={13} className="text-primary animate-pulse" />
+                <MessageSquare size={13} className="text-primary" />
                 <span>AI Chat</span>
                 <span className="text-[9px] uppercase font-mono px-1.5 py-0.2 rounded bg-primary/20 text-primary font-bold">
                   AI
@@ -405,7 +405,7 @@ export default function Navbar() {
                   className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-primary/10 border border-primary/25 text-primary text-sm font-semibold transition-all active:scale-98 cursor-pointer"
                 >
                   <span className="flex items-center gap-2">
-                    <Sparkles size={16} className="text-primary animate-pulse" />
+                    <MessageSquare size={16} className="text-primary" />
                     <span>AI Chat Assistant</span>
                   </span>
                   <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-primary/20 border border-primary/30">

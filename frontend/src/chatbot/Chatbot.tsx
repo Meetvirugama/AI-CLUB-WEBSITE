@@ -642,22 +642,31 @@ export default function Chatbot() {
         )}
       </AnimatePresence>
 
-      {/* ── Floating Launcher on Left Side (when bar is closed) ─────────── */}
+      {/* ── Floating Launcher on Left Side (matching Photo 2 with ambient halo) ── */}
       <motion.button
         id="aura-chat-fab"
         onClick={toggleChat}
-        className={`fixed bottom-6 left-6 z-40 rounded-full btn-glow flex items-center gap-2.5 px-4 py-3 text-primary-foreground transition-all shadow-xl cursor-pointer ${
+        className={`fixed bottom-6 left-6 z-40 rounded-full flex items-center justify-center transition-all cursor-pointer group ${
           isOpen ? 'opacity-0 pointer-events-none scale-75' : 'opacity-100 scale-100'
         }`}
         whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.95 }}
+        whileTap={{ scale: 0.93 }}
         title="Open AURA AI Chat (Cmd/Ctrl + K)"
         aria-label="Open AURA AI Chat"
       >
-        <Sparkles size={18} className="animate-pulse text-amber-300" />
-        <span className="text-xs font-bold font-sans tracking-wide">
-          AI Chat
-        </span>
+        {/* Soft Radial Ambient Halo Glow - distinct in light mode, subtle & restrained in dark mode */}
+        <div
+          className="absolute -inset-2.5 sm:-inset-3 rounded-full blur-lg pointer-events-none transition-all duration-300 opacity-75 group-hover:opacity-90 group-hover:scale-105 bg-indigo-500/30 dark:bg-primary/10 dark:opacity-20 dark:blur-md dark:-inset-1 dark:group-hover:opacity-35"
+        />
+
+        {/* Circular Dark Button Disc */}
+        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center bg-[#13141F] text-white border border-slate-700/40 dark:border-white/10 shadow-[0_8px_20px_rgba(0,0,0,0.25)] dark:shadow-[0_4px_14px_rgba(0,0,0,0.6)] transition-all duration-300 group-hover:border-primary/50 dark:group-hover:border-white/20 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.35)] dark:group-hover:shadow-[0_0_12px_rgba(99,102,241,0.18)]">
+          <MessageSquare
+            size={22}
+            className="text-white transition-transform duration-300 group-hover:scale-105"
+            strokeWidth={2}
+          />
+        </div>
       </motion.button>
     </>
   );
