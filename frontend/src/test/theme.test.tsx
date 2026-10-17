@@ -45,6 +45,22 @@ describe("ThemeContext and ThemeToggle", () => {
     expect(document.documentElement.classList.contains("dark")).toBe(false);
   });
 
+  it("initializes with dark theme by default when no preference is stored", () => {
+    const TestComponent = () => {
+      const { theme } = useTheme();
+      return <div data-testid="current-theme">{theme}</div>;
+    };
+
+    render(
+      <ThemeProvider>
+        <TestComponent />
+      </ThemeProvider>
+    );
+
+    expect(screen.getByTestId("current-theme").textContent).toBe("dark");
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+  });
+
   it("toggles theme and updates localStorage and document root when button is clicked", () => {
     localStorage.setItem("ai-club-theme", "dark");
 

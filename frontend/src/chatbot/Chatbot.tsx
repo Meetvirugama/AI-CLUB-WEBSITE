@@ -13,7 +13,7 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import {
   MessageSquare, X, Send, Bot, User, Loader2, Sparkles,
-  ExternalLink, Navigation, Lock, RotateCcw, ChevronRight, ArrowLeft
+  ExternalLink, Navigation, Lock, RotateCcw, ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -193,7 +193,7 @@ export default function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: 'bot',
-      text: "Hey there! 👋 I'm **AURA**, AI Club DA-IICT's intelligent companion. Ask me anything about the club — upcoming events, projects, learning roadmaps — or say **\"take me to [page]\"** to navigate anywhere!",
+      text: "Hey there! 👋 I'm **NeuralNode**, AI Club DAU's assistant. Ask me anything about the club — events, projects, members, resources — or say **\"take me to [page]\"** to navigate anywhere on the site!",
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -409,7 +409,7 @@ export default function Chatbot() {
               }}
               role="dialog"
               aria-modal="true"
-              aria-label="AURA AI Chat Assistant"
+              aria-label="NeuralNode AI Chat Assistant"
             >
               {/* Atmospheric Glow Overlays */}
               <div className="absolute top-0 left-0 w-72 h-72 bg-primary/20 rounded-full blur-[90px] pointer-events-none" />
@@ -424,22 +424,18 @@ export default function Chatbot() {
               />
 
               {/* ── Top Header ────────────────────────────────────────────── */}
-              <div className="px-5 pt-4 pb-2 flex items-center justify-between border-b border-white/10 shrink-0 relative z-10">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary shadow-sm">
-                    <Sparkles size={15} className="text-primary animate-pulse" />
+              <div className="px-5 pt-4 pb-3 flex items-center justify-between border-b border-white/10 shrink-0 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-[#DDE1FF]/90 dark:bg-primary/25 border border-indigo-200/50 dark:border-primary/40 flex items-center justify-center text-primary shadow-sm shrink-0">
+                    <Bot size={18} className="text-primary" strokeWidth={2.2} />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-white tracking-wide flex items-center gap-1.5">
-                      AURA AI
-                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-primary/20 text-primary border border-primary/30">
-                        v2.0
-                      </span>
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-[10px] text-emerald-400 font-mono">DAU Live Companion</span>
-                    </div>
+                    <h3 className="text-xs sm:text-sm font-bold text-white tracking-wide leading-tight">
+                      NeuralNode
+                    </h3>
+                    <p className="text-[10px] text-white/60 font-mono leading-tight mt-0.5">
+                      AI Club DAU · Knowledge + Navigation
+                    </p>
                   </div>
                 </div>
 
@@ -462,7 +458,7 @@ export default function Chatbot() {
                 </div>
               </div>
 
-              {/* ── Greeting Hero (matching reference image) ──────────────── */}
+              {/* ── Greeting Hero ─────────────────────────────────────────── */}
               <div className="px-5 pt-4 pb-2 relative z-10 shrink-0">
                 <p className="font-display text-xl sm:text-2xl font-bold tracking-tight text-white/90">
                   Hello {userFirstName},
@@ -470,29 +466,6 @@ export default function Chatbot() {
                 <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-purple-200 to-amber-200 bg-clip-text text-transparent leading-tight">
                   Can I help you?
                 </h2>
-              </div>
-
-              {/* ── Daily Insights Feature Card (matching reference image) ─── */}
-              <div
-                onClick={() => sendMessage("Give me a quick update on current AI Club events and roadmaps.")}
-                className="mx-5 my-2.5 p-3.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.10] border border-white/10 backdrop-blur-xl transition-all cursor-pointer shadow-lg group relative overflow-hidden shrink-0"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/30 to-accent/30 border border-primary/40 flex items-center justify-center text-primary flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
-                    <Sparkles size={16} className="text-amber-300" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-white/90 tracking-wider uppercase font-mono">
-                        Daily Insights
-                      </span>
-                      <ChevronRight size={14} className="text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-                    </div>
-                    <p className="text-xs text-white/70 mt-0.5 leading-relaxed line-clamp-2">
-                      GenAI Roadmaps, Weekly Veneza resources, and upcoming Hackathons are live!
-                    </p>
-                  </div>
-                </div>
               </div>
 
               {/* ── Scrollable Chat Messages Stream ────────────────────────── */}
@@ -620,7 +593,7 @@ export default function Chatbot() {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKey}
-                    placeholder="Ask AURA anything or navigate…"
+                    placeholder="Ask NeuralNode anything or navigate…"
                     disabled={isLoading}
                     maxLength={1000}
                     className="flex-1 bg-transparent border-none text-xs sm:text-sm text-white placeholder:text-white/40 outline-none px-1 py-1.5 disabled:opacity-50"
@@ -651,8 +624,8 @@ export default function Chatbot() {
         }`}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.93 }}
-        title="Open AURA AI Chat (Cmd/Ctrl + K)"
-        aria-label="Open AURA AI Chat"
+        title="Open NeuralNode AI Chat (Cmd/Ctrl + K)"
+        aria-label="Open NeuralNode AI Chat"
       >
         {/* Soft Radial Ambient Halo Glow - distinct in light mode, subtle & restrained in dark mode */}
         <div
