@@ -497,10 +497,7 @@ export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
     >
       <div className={isHomepage ? "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-50" : "w-full flex-1 flex flex-col min-h-0 px-4 sm:px-8 lg:px-12 pt-3 pb-3 max-w-[100vw] relative z-50"}>
         <div className="relative z-50 bg-background/80 dark:bg-slate-950/60 backdrop-blur-md rounded-2xl p-4 mb-3 border border-border/40 dark:border-white/5 shadow-sm">
-          <h2 className={`font-serif ${isHomepage ? 'text-3xl sm:text-5xl mb-2' : 'text-2xl sm:text-3xl mb-1'} font-bold tracking-tight text-foreground`}>
-            The team
-          </h2>
-          <p className={`font-sans text-muted-foreground ${isHomepage ? 'text-base mb-6' : 'text-sm mb-4'}`}>
+          <p className={`font-sans text-muted-foreground ${isHomepage ? 'text-base mb-6' : 'text-xs sm:text-sm mb-3.5'}`}>
             Students who keep the Wednesday sessions running.
           </p>
 

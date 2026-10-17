@@ -115,7 +115,7 @@ interface NetworkPoint {
    CYLINDRICAL NEURAL NETWORK
 ============================================================ */
 
-function NeuralNetwork({
+const NeuralNetwork = React.memo(function NeuralNetwork({
   radius,
   height,
 }: {
@@ -304,7 +304,7 @@ function NeuralNetwork({
       ))}
     </>
   );
-}
+});
 
 /* ============================================================
    MAIN CYLINDER
@@ -315,29 +315,17 @@ export default function TeamGlobe({
   onSelectMember,
   isHomepage = false,
 }: TeamGlobeProps) {
-  const containerRef =
-    useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cylinderRef = useRef<HTMLDivElement>(null);
 
   /* ----------------------------------------------------------
-     ONLY Y ROTATION
+     DIRECT GPU TRANSFORM REFS (ZERO REACT RE-RENDER OVERHEAD)
   ---------------------------------------------------------- */
-
-  const [rotationY, setRotationY] =
-    useState(0);
-
-  const [isDragging, setIsDragging] =
-    useState(false);
-
-  const dragStart = useRef({
-    x: 0,
-    rotation: 0,
-  });
-
-  const autoRotateRef =
-    useRef<number | null>(null);
-
-  const lastTimeRef =
-    useRef<number>(0);
+  const rotationYRef = useRef(0);
+  const isDraggingRef = useRef(false);
+  const lastPointerX = useRef(0);
+  const velocityRef = useRef(0);
+  const lastTimeRef = useRef<number>(0);
 
   /* ----------------------------------------------------------
      RESPONSIVE CONTAINER SIZE
@@ -566,56 +554,46 @@ export default function TeamGlobe({
   }, [items]);
 
   /* ----------------------------------------------------------
-     AUTO ROTATION
+     ULTRA-SMOOTH HARDWARE-ACCELERATED AUTO ROTATION & INERTIA
   ---------------------------------------------------------- */
 
   useEffect(() => {
-    if (isDragging) {
-      if (autoRotateRef.current !== null) {
-        cancelAnimationFrame(
-          autoRotateRef.current
-        );
-      }
-
-      autoRotateRef.current = null;
-
-      return;
-    }
+    let animId: number;
 
     const animate = (time: number) => {
       if (!lastTimeRef.current) {
         lastTimeRef.current = time;
       }
 
-      const delta =
-        time - lastTimeRef.current;
-
+      // Clamp delta to avoid leaps on tab switch
+      const delta = Math.min(time - lastTimeRef.current, 64);
       lastTimeRef.current = time;
 
-      setRotationY(
-        (previous) =>
-          previous + delta * 0.009
-      );
+      if (!isDraggingRef.current) {
+        // Smooth physics inertia if user just dragged and flung
+        if (Math.abs(velocityRef.current) > 0.005) {
+          rotationYRef.current += velocityRef.current;
+          velocityRef.current *= 0.94; // exponential damping friction
+        } else {
+          velocityRef.current = 0;
+          // Constant butter-smooth auto-rotation (~0.7 deg/sec)
+          rotationYRef.current += delta * 0.012;
+        }
 
-      autoRotateRef.current =
-        requestAnimationFrame(
-          animate
-        );
+        if (cylinderRef.current) {
+          cylinderRef.current.style.transform = `translate3d(0, 0, 0) rotateY(${rotationYRef.current}deg)`;
+        }
+      }
+
+      animId = requestAnimationFrame(animate);
     };
 
-    autoRotateRef.current =
-      requestAnimationFrame(animate);
+    animId = requestAnimationFrame(animate);
 
     return () => {
-      if (
-        autoRotateRef.current !== null
-      ) {
-        cancelAnimationFrame(
-          autoRotateRef.current
-        );
-      }
+      cancelAnimationFrame(animId);
     };
-  }, [isDragging]);
+  }, []);
 
   /* ----------------------------------------------------------
      POINTER DOWN
@@ -624,11 +602,6 @@ export default function TeamGlobe({
   const handlePointerDown = (
     event: React.PointerEvent
   ) => {
-    /*
-     * Don't start cylinder dragging when
-     * clicking directly on a member card.
-     */
-
     const target =
       event.target as HTMLElement;
 
@@ -640,12 +613,9 @@ export default function TeamGlobe({
       return;
     }
 
-    setIsDragging(true);
-
-    dragStart.current = {
-      x: event.clientX,
-      rotation: rotationY,
-    };
+    isDraggingRef.current = true;
+    lastPointerX.current = event.clientX;
+    velocityRef.current = 0;
 
     containerRef.current?.setPointerCapture(
       event.pointerId
@@ -653,26 +623,27 @@ export default function TeamGlobe({
   };
 
   /* ----------------------------------------------------------
-     POINTER MOVE
-     
-     ONLY X IS USED.
-     
-     Y movement is completely ignored.
+     POINTER MOVE (DIRECT GPU UPDATE, NO REACT RE-RENDERS)
   ---------------------------------------------------------- */
 
   const handlePointerMove = (
     event: React.PointerEvent
   ) => {
-    if (!isDragging) return;
+    if (!isDraggingRef.current) return;
 
-    const delta =
+    const deltaX =
       event.clientX -
-      dragStart.current.x;
+      lastPointerX.current;
 
-    setRotationY(
-      dragStart.current.rotation +
-        delta * 0.30
-    );
+    lastPointerX.current = event.clientX;
+
+    // Track fling velocity for smooth kinetic inertia
+    velocityRef.current = deltaX * 0.25;
+    rotationYRef.current += deltaX * 0.30;
+
+    if (cylinderRef.current) {
+      cylinderRef.current.style.transform = `translate3d(0, 0, 0) rotateY(${rotationYRef.current}deg)`;
+    }
   };
 
   /* ----------------------------------------------------------
@@ -682,7 +653,7 @@ export default function TeamGlobe({
   const handlePointerUp = (
     event: React.PointerEvent
   ) => {
-    setIsDragging(false);
+    isDraggingRef.current = false;
 
     if (
       containerRef.current?.hasPointerCapture(
@@ -694,7 +665,7 @@ export default function TeamGlobe({
       );
     }
 
-    lastTimeRef.current = 0;
+    lastTimeRef.current = performance.now();
   };
 
   /* ----------------------------------------------------------
@@ -922,29 +893,19 @@ export default function TeamGlobe({
       ====================================================== */}
 
       <div
+        ref={cylinderRef}
         className="
           absolute
-
           left-1/2
           top-1/2
-
           z-20
-
           h-0
           w-0
+          will-change-transform
         "
         style={{
-          transformStyle:
-            'preserve-3d',
-
-          transform: `
-            translate3d(0, 0, 0)
-            rotateY(${rotationY}deg)
-          `,
-
-          transition: isDragging
-            ? 'none'
-            : 'transform 0.08s linear',
+          transformStyle: 'preserve-3d',
+          transform: `translate3d(0, 0, 0) rotateY(${rotationYRef.current}deg)`,
         }}
       >
         {/* ===================================================
