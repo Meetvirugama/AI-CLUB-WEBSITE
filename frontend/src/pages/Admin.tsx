@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Loader2, Calendar, Users, Newspaper, Clipboard, Edit, FileText,
   Archive, Plus, ArrowUp, ArrowDown, LayoutDashboard, LogOut,
-  Bot, BarChart2, Clock, Trash2,
+  Bot, BarChart2, Clock, Trash2, Sparkles,
 } from 'lucide-react';
 
 import Navbar from '@/components/club/Navbar';
@@ -35,6 +35,7 @@ import ManageMembersProjectsTab from './admin/ManageMembersProjectsTab';
 import PastEventsAchievementsTab from './admin/PastEventsAchievementsTab';
 import ManageNewsResourcesTab from './admin/ManageNewsResourcesTab';
 import ManageWeeklyVenezaTab from './admin/ManageWeeklyVenezaTab';
+import ManageHomepageTab from './admin/ManageHomepageTab';
 import ChatbotAnalytics from '../chatbot/ChatbotAnalytics';
 import AnalyticsTab from './admin/AnalyticsTab';
 import { useAdminEvents } from './admin/queries';
@@ -44,7 +45,7 @@ import { useAdminEvents } from './admin/queries';
 type ActiveTab =
   | 'dashboard' | 'registrations' | 'createEvent' | 'formBuilder'
   | 'manageEvents' | 'manageMembers' | 'pastEvents'
-  | 'manageNews' | 'manageWeeklyVeneza' | 'chatbotAnalytics' | 'analytics';
+  | 'manageNews' | 'manageWeeklyVeneza' | 'manageHomepage' | 'chatbotAnalytics' | 'analytics';
 
 interface NavItem {
   id: ActiveTab;
@@ -65,6 +66,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'pastEvents',        label: 'Past Events & Achievements', icon: <Archive size={16} />,   section: 'Content' },
   { id: 'manageNews',        label: 'News & Resources',    icon: <Newspaper size={16} />,        section: 'Content' },
   { id: 'manageWeeklyVeneza',label: 'Weekly Veneza',       icon: <Clock size={16} />,            section: 'Content' },
+  { id: 'manageHomepage',    label: 'Homepage Strip',      icon: <Sparkles size={16} />,         section: 'Content' },
   { id: 'chatbotAnalytics',  label: 'Chatbot Analytics',   icon: <Bot size={16} />,             section: 'Analytics' },
   { id: 'analytics',         label: 'Site Analytics',      icon: <BarChart2 size={16} />,        section: 'Analytics' },
 ];
@@ -589,6 +591,10 @@ const Admin = () => {
 
               {activeTab === 'manageWeeklyVeneza' && (
                 <ManageWeeklyVenezaTab showToast={showToast} openConfirm={openConfirm} />
+              )}
+
+              {activeTab === 'manageHomepage' && (
+                <ManageHomepageTab showToast={showToast} openConfirm={openConfirm} />
               )}
 
               {activeTab === 'chatbotAnalytics' && (

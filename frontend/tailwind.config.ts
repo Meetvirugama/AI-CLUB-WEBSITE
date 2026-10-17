@@ -20,6 +20,16 @@ export default {
         serif: ['Playfair Display', 'Georgia', 'serif'],
       },
       colors: {
+        rd: {
+          bg: "hsl(var(--rd-bg) / <alpha-value>)",
+          bg2: "hsl(var(--rd-bg-2) / <alpha-value>)",
+          card: "hsl(var(--rd-card) / <alpha-value>)",
+          fg: "hsl(var(--rd-fg) / <alpha-value>)",
+          muted: "hsl(var(--rd-muted) / <alpha-value>)",
+          faint: "hsl(var(--rd-faint) / <alpha-value>)",
+          line: "hsl(var(--rd-line) / <alpha-value>)",
+          accent: "hsl(var(--rd-accent) / <alpha-value>)",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

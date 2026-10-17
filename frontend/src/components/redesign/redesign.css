@@ -1,0 +1,140 @@
+/* Redesign tokens. Follows the `.dark` class on <html>, same switch as the site theme. */
+:root {
+  --rd-bg: 40 20% 97%;
+  --rd-bg-2: 40 14% 93%;
+  --rd-card: 0 0% 100%;
+  --rd-fg: 240 12% 7%;
+  --rd-muted: 240 5% 38%;
+  --rd-faint: 240 4% 58%;
+  --rd-line: 240 8% 86%;
+  --rd-accent: 252 88% 60%;
+
+  --rd-blue: #1f4bff;
+  --rd-cyan: #00c8f0;
+  --rd-green: #18c75a;
+  --rd-yellow: #f5c800;
+  --rd-orange: #ff7a00;
+  --rd-red: #ff2a4d;
+  --rd-magenta: #f224c8;
+  --rd-violet: #6d2bff;
+
+  --rd-spectrum: linear-gradient(90deg, var(--rd-blue), var(--rd-cyan), var(--rd-green), var(--rd-yellow), var(--rd-orange), var(--rd-red), var(--rd-magenta), var(--rd-violet));
+}
+
+.dark {
+  --rd-bg: 240 10% 3.5%;
+  --rd-bg-2: 240 8% 6%;
+  --rd-card: 240 7% 7.5%;
+  --rd-fg: 0 0% 97%;
+  --rd-muted: 240 5% 66%;
+  --rd-faint: 240 4% 46%;
+  --rd-line: 240 6% 15%;
+  --rd-accent: 252 100% 72%;
+
+  --rd-blue: #3d6bff;
+  --rd-cyan: #22e0ff;
+  --rd-green: #3ef07a;
+  --rd-yellow: #ffe53d;
+  --rd-orange: #ff9a2e;
+  --rd-red: #ff4d6a;
+  --rd-magenta: #ff4be0;
+  --rd-violet: #9a6bff;
+}
+
+.rd-root {
+  background: hsl(var(--rd-bg));
+  color: hsl(var(--rd-fg));
+  font-family: 'Inter', system-ui, sans-serif;
+  font-feature-settings: 'ss01', 'cv11';
+}
+
+.rd-root :is(h1, h2, h3, h4, h5, h6) {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.rd-display {
+  font-family: 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+}
+
+.rd-mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rd-spectrum-text {
+  background: var(--rd-spectrum);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rd-spectrum-pan 8s linear infinite;
+}
+
+@keyframes rd-spectrum-pan {
+  to { background-position: -200% 0; }
+}
+
+.rd-spectrum-bg {
+  background: var(--rd-spectrum);
+  background-size: 200% 100%;
+  animation: rd-spectrum-pan 16s linear infinite;
+}
+
+.rd-dots {
+  background-image: radial-gradient(circle, hsl(var(--rd-fg) / 0.14) 1px, transparent 1.4px);
+  background-size: 18px 18px;
+}
+
+.rd-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: rd-marquee var(--rd-marquee-duration, 40s) linear infinite;
+}
+.rd-marquee-track[data-reverse='true'] { animation-direction: reverse; }
+.rd-marquee:hover .rd-marquee-track { animation-play-state: paused; }
+
+@keyframes rd-marquee {
+  to { transform: translateX(-50%); }
+}
+
+.rd-live-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: inherit;
+  animation: rd-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes rd-ping {
+  75%, 100% { transform: scale(2.4); opacity: 0; }
+}
+
+@keyframes rd-shimmer {
+  to { transform: translateX(100%); }
+}
+.rd-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: hsl(var(--rd-line) / 0.6);
+}
+.rd-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, hsl(var(--rd-fg) / 0.06), transparent);
+  animation: rd-shimmer 1.4s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rd-spectrum-text,
+  .rd-spectrum-bg,
+  .rd-marquee-track,
+  .rd-live-dot::after,
+  .rd-skeleton::after {
+    animation: none;
+  }
+}

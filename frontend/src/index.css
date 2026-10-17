@@ -62,7 +62,72 @@
       --sidebar-border: 228 20% 80%;
       --sidebar-ring: 243 75% 59%;
     }
+
+    .dark {
+      --background: 240 10% 4%;
+      --foreground: 0 0% 96%;
+
+      --card: 240 7% 8%;
+      --card-foreground: 0 0% 96%;
+
+      --popover: 240 7% 9%;
+      --popover-foreground: 0 0% 96%;
+
+      --aura-cream-base: #0b0a09;
+      --aura-cream-deep: #15120f;
+      --aura-surface: #121010;
+      --aura-ink: #f4efe8;
+      --aura-slate: #a7a39c;
+      --aura-accent: #ff9a3d;
+      --aura-accent-deep: #e8792e;
+      --aura-outline-soft: #5a3a1c;
+
+      --primary: 248 92% 72%;
+      --primary-foreground: 0 0% 100%;
+
+      --secondary: 240 6% 13%;
+      --secondary-foreground: 0 0% 92%;
+
+      --muted: 240 6% 12%;
+      --muted-foreground: 240 5% 64%;
+
+      --accent: 330 70% 68%;
+      --accent-foreground: 0 0% 100%;
+
+      --destructive: 0 75% 60%;
+      --destructive-foreground: 0 0% 100%;
+
+      --border: 240 6% 17%;
+      --input: 240 6% 15%;
+      --ring: 248 92% 72%;
+
+      --surface: 240 8% 6%;
+      --surface-2: 240 7% 10%;
+
+      --sidebar-background: 240 9% 5%;
+      --sidebar-foreground: 0 0% 94%;
+      --sidebar-primary: 248 92% 72%;
+      --sidebar-primary-foreground: 0 0% 100%;
+      --sidebar-accent: 240 6% 13%;
+      --sidebar-accent-foreground: 0 0% 94%;
+      --sidebar-border: 240 6% 17%;
+      --sidebar-ring: 248 92% 72%;
+    }
   }
+
+  /* Redesigned pages: clip (not hidden) so position: sticky keeps working against the viewport. */
+  html.rd-route,
+  html.rd-route body {
+    overflow-x: clip;
+  }
+
+  /* Theme switch: the new theme is revealed by a growing circle (see ThemeToggle). */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+  ::view-transition-new(root) { z-index: 2; }
 
   @layer base {
     * {
@@ -327,6 +392,10 @@
     /* btn-glow fallback */
     .btn-glow {
       @apply btn-primary;
+    }
+    .dark .btn-glow {
+      background: hsl(var(--primary));
+      border-color: hsl(var(--primary));
     }
 
     /* Tags fallback */
