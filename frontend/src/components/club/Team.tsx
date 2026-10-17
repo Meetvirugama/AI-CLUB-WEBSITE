@@ -27,17 +27,17 @@ import TeamWorldBox from './TeamWorldBox';
 import { Search, ArrowRight, Sparkles, X, FolderGit2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// Role badge colours — restrained palette
+// Role badge colours — restrained palette with high-contrast dark theme glow
 const roleMeta: Record<MemberRole, { label: string; classes: string }> = {
-  'Convenor':             { label: 'Convenor',             classes: 'bg-amber-500/10 text-amber-500 border border-amber-500/20' },
-  'Deputy Convenor':      { label: 'Deputy Convenor',      classes: 'bg-blue-500/10 text-blue-500 border border-blue-500/20' },
-  'Core Member':          { label: 'Core Member',          classes: 'bg-primary/10 text-primary border border-primary/20' },
-  'Extended Core Member': { label: 'Extended Core Member', classes: 'bg-purple-500/10 text-purple-400 border border-purple-500/20' },
-  'Member':               { label: 'Member',               classes: 'bg-secondary text-muted-foreground border border-border' },
-  'Ex Convenor':          { label: 'Ex Convenor',          classes: 'bg-amber-500/15 text-amber-500 border border-amber-500/30' },
-  'Ex Deputy Convenor':     { label: 'Ex Deputy Convenor',     classes: 'bg-blue-500/15 text-blue-500 border border-blue-500/30' },
-  'Ex Core Member':         { label: 'Ex Core Member',         classes: 'bg-primary/15 text-primary border border-primary/30' },
-  'Alumni':                 { label: 'Alumni',                 classes: 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' },
+  'Convenor':             { label: 'Convenor',      classes: 'bg-amber-400/15 text-amber-600 dark:text-amber-300 border border-amber-400/30 dark:border-amber-400/40 shadow-[0_0_8px_rgba(245,158,11,0.15)]' },
+  'Deputy Convenor':      { label: 'Deputy Convenor', classes: 'bg-sky-400/15 text-sky-600 dark:text-sky-300 border border-sky-400/30 dark:border-sky-400/40 shadow-[0_0_8px_rgba(56,189,248,0.15)]' },
+  'Core Member':          { label: 'Core Member',   classes: 'bg-indigo-400/15 text-indigo-600 dark:text-indigo-300 border border-indigo-400/30 dark:border-indigo-400/40 shadow-[0_0_8px_rgba(99,102,241,0.15)]' },
+  'Extended Core Member': { label: 'Extended Core', classes: 'bg-purple-400/15 text-purple-600 dark:text-purple-300 border border-purple-400/30 dark:border-purple-400/40 shadow-[0_0_8px_rgba(168,85,247,0.15)]' },
+  'Member':               { label: 'Member',        classes: 'bg-slate-400/10 text-slate-700 dark:text-slate-200 border border-slate-300/80 dark:border-white/10' },
+  'Ex Convenor':          { label: 'Ex Convenor',   classes: 'bg-amber-400/15 text-amber-600 dark:text-amber-300 border border-amber-400/30 dark:border-amber-400/40 shadow-[0_0_8px_rgba(245,158,11,0.15)]' },
+  'Ex Deputy Convenor':     { label: 'Ex Deputy',     classes: 'bg-sky-400/15 text-sky-600 dark:text-sky-300 border border-sky-400/30 dark:border-sky-400/40 shadow-[0_0_8px_rgba(56,189,248,0.15)]' },
+  'Ex Core Member':         { label: 'Ex Core',       classes: 'bg-indigo-400/15 text-indigo-600 dark:text-indigo-300 border border-indigo-400/30 dark:border-indigo-400/40 shadow-[0_0_8px_rgba(99,102,241,0.15)]' },
+  'Alumni':                 { label: 'Alumni',        classes: 'bg-emerald-400/15 text-emerald-600 dark:text-emerald-300 border border-emerald-400/30 dark:border-emerald-400/40 shadow-[0_0_8px_rgba(16,185,129,0.15)]' },
 };
 
 const RoleBadge = ({ role }: { role: MemberRole }) => {
@@ -105,7 +105,7 @@ function MemberAvatar({ name, photo }: { name: string; photo: string }) {
 
   if (currentUrl && urlIndex < urls.length) {
     return (
-      <div className="w-[84px] h-[84px] rounded-full mx-auto mb-3 overflow-hidden ring-2 ring-primary/20 ring-offset-2 ring-offset-card">
+      <div className="w-[84px] h-[84px] rounded-full mx-auto mb-3 overflow-hidden ring-2 ring-indigo-500/20 dark:ring-indigo-400/30 ring-offset-2 ring-offset-card shadow-md">
         <img
           src={currentUrl}
           alt={name}
@@ -118,17 +118,7 @@ function MemberAvatar({ name, photo }: { name: string; photo: string }) {
   }
 
   return (
-    <div
-      style={{
-        width: 80, height: 80, borderRadius: '50%',
-        background: 'var(--secondary)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '1.1rem',
-        color: 'var(--primary)',
-        margin: '0 auto 0.75rem',
-        border: '1.5px solid var(--border)',
-      }}
-    >
+    <div className="w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center font-bold text-lg font-sans text-indigo-600 dark:text-indigo-300 bg-gradient-to-br from-indigo-500/15 to-purple-500/20 border-2 border-indigo-400/30 shadow-md">
       {initials}
     </div>
   );
@@ -184,7 +174,7 @@ function TeamMemberCard({ member, projects, achievements }: TeamMemberCardProps)
         >
           {/* FRONT SIDE */}
           <div 
-            className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-4 bg-card text-center border-r border-b border-border transition-colors duration-300"
+            className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-4 bg-card/85 dark:bg-slate-900/80 backdrop-blur-sm text-center border-r border-b border-border/80 dark:border-white/10 hover:border-indigo-500/40 transition-colors duration-300"
             style={{ 
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
@@ -224,7 +214,7 @@ function TeamMemberCard({ member, projects, achievements }: TeamMemberCardProps)
             </div>
             
             {hasStats && (
-              <div className="mt-4 flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] font-bold text-primary uppercase tracking-widest">
+              <div className="mt-4 flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] font-bold text-primary uppercase tracking-widest shadow-sm">
                 <Sparkles className="w-2.5 h-2.5 text-primary animate-pulse" />
                 <span>Details</span>
               </div>
@@ -233,7 +223,7 @@ function TeamMemberCard({ member, projects, achievements }: TeamMemberCardProps)
 
           {/* BACK SIDE */}
           <div 
-            className="absolute inset-0 w-full h-full flex flex-col justify-between p-4 bg-slate-950 text-white border-r border-b border-slate-900 text-left selection:bg-indigo-500/30 selection:text-white"
+            className="absolute inset-0 w-full h-full flex flex-col justify-between p-4 bg-slate-900/95 dark:bg-[#111425] text-white border-r border-b border-indigo-500/20 text-left selection:bg-indigo-500/30 selection:text-white backdrop-blur-md"
             style={{ 
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
@@ -505,8 +495,8 @@ export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
       id="team"
       className={`bg-background ${isHomepage ? 'border-t border-border' : 'flex-1 w-full flex flex-col min-h-0'}`}
     >
-      <div className={isHomepage ? "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-50" : "w-full flex-1 flex flex-col min-h-0 px-4 sm:px-8 lg:px-12 py-4 max-w-[100vw] relative z-50"}>
-        <div className="relative z-50 bg-background/80 backdrop-blur-sm rounded-2xl p-2 -mx-2 mb-2">
+      <div className={isHomepage ? "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-50" : "w-full flex-1 flex flex-col min-h-0 px-4 sm:px-8 lg:px-12 pt-3 pb-3 max-w-[100vw] relative z-50"}>
+        <div className="relative z-50 bg-background/80 dark:bg-slate-950/60 backdrop-blur-md rounded-2xl p-4 mb-3 border border-border/40 dark:border-white/5 shadow-sm">
           <h2 className={`font-serif ${isHomepage ? 'text-3xl sm:text-5xl mb-2' : 'text-2xl sm:text-3xl mb-1'} font-bold tracking-tight text-foreground`}>
             The team
           </h2>
@@ -519,53 +509,53 @@ export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
             <div className="flex gap-4 flex-wrap items-center">
               <div className="relative flex-1 min-w-[200px] max-w-xs">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search by name or role..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-1.5 text-xs bg-secondary/50 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-            <div className="flex gap-1.5 flex-wrap">
-              {[
-                { id: 'all', label: 'All' },
-                { id: 'convenor', label: 'Leadership' },
-                { id: 'core', label: 'Core' },
-                { id: 'extended', label: 'Extended Core' },
-                { id: 'member', label: 'Members' },
-                { id: 'alumni', label: 'Alumni' },
-              ].map((pill) => (
-                <button
-                  key={pill.id}
-                  onClick={() => setRoleFilter(pill.id)}
-                  className={`px-3 py-1 rounded-lg border text-[10px] uppercase tracking-wider font-bold transition-all duration-200 ${
-                    roleFilter === pill.id 
-                      ? 'bg-primary text-primary-foreground border-primary shadow-sm' 
-                      : 'bg-transparent text-muted-foreground border-border hover:bg-secondary hover:text-foreground'
-                  }`}
+                <input
+                  type="text"
+                  placeholder="Search by name or role..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 text-xs bg-secondary/50 dark:bg-slate-900/70 border border-border/80 dark:border-slate-700/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary transition-all font-medium text-foreground placeholder:text-muted-foreground shadow-inner"
+                />
+              </div>
+              <div className="flex gap-1.5 flex-wrap">
+                {[
+                  { id: 'all', label: 'All' },
+                  { id: 'convenor', label: 'Leadership' },
+                  { id: 'core', label: 'Core' },
+                  { id: 'extended', label: 'Extended Core' },
+                  { id: 'member', label: 'Members' },
+                  { id: 'alumni', label: 'Alumni' },
+                ].map((pill) => (
+                  <button
+                    key={pill.id}
+                    onClick={() => setRoleFilter(pill.id)}
+                    className={`px-3.5 py-1.5 rounded-xl border text-[10px] uppercase tracking-wider font-bold transition-all duration-200 ${
+                      roleFilter === pill.id 
+                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white border-indigo-400/50 shadow-[0_0_16px_rgba(99,102,241,0.4)]' 
+                        : 'bg-secondary/40 dark:bg-slate-900/50 text-muted-foreground border-border/70 dark:border-slate-800 hover:bg-secondary/80 dark:hover:bg-slate-800 hover:text-foreground hover:border-slate-700'
+                    }`}
+                  >
+                    {pill.label}
+                  </button>
+                ))}
+              </div>
+              {/* View Mode Toggle */}
+              <div className="flex bg-secondary/70 dark:bg-slate-900/80 p-1 rounded-xl w-fit ml-auto border border-border/80 dark:border-slate-700/60">
+                <button 
+                  onClick={() => setViewMode('globe')}
+                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${viewMode === 'globe' ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                 >
-                  {pill.label}
+                  Globe
                 </button>
-              ))}
+                <button 
+                  onClick={() => setViewMode('grid')}
+                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${viewMode === 'grid' ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  Grid
+                </button>
+              </div>
             </div>
-            {/* View Mode Toggle */}
-            <div className="flex bg-secondary p-1 rounded-lg w-fit ml-auto border border-border">
-              <button 
-                onClick={() => setViewMode('globe')}
-                className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${viewMode === 'globe' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                Globe
-              </button>
-              <button 
-                onClick={() => setViewMode('grid')}
-                className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${viewMode === 'grid' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                Grid
-              </button>
-            </div>
-          </div>
-        )}
+          )}
         </div>
 
         {loading ? (
@@ -589,8 +579,8 @@ export default function Team({ isHomepage = false }: { isHomepage?: boolean }) {
             </p>
           </div>
         ) : (
-          <div className="flex-1 min-h-0 overflow-y-auto w-full mt-2 rounded-lg border border-border">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 bg-card">
+          <div className="flex-1 min-h-0 overflow-y-auto w-full mt-2 rounded-2xl border border-border/80 dark:border-white/10 overflow-hidden shadow-xl bg-card dark:bg-slate-950/70">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
               {displayMembers.map((m) => (
                 <TeamMemberCard 
                   key={m.id} 
