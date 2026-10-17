@@ -1026,12 +1026,6 @@ const resultCount = displayedUpcomingEvents.length;
   transition={{ duration: 0.5 }}
   className="mb-10"
 >
-  <div
-    className="text-xs font-semibold uppercase tracking-[0.2em] mb-3 text-primary"
-  >
-    AI CLUB · EVENTS
-  </div>
-
   <h1
     className="font-display font-bold text-foreground"
     style={{
