@@ -14,6 +14,7 @@ import { normalizeBannerUrl } from '../lib/utils';
 import { api } from '../lib/apiClient';
 import { useAuth } from '../contexts/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
+import { toast } from 'sonner';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -977,21 +978,24 @@ export default function EventDetailPage() {
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <AlertCircle size={18} style={{ flexShrink: 0, color: 'hsl(35,85%,45%)' }} />
-                          <span>Login required to register.</span>
+                          <span>Login with your @dau.ac.in account to register.</span>
                         </div>
                         <GoogleLogin
                           onSuccess={async (credentialResponse) => {
                             if (credentialResponse.credential) {
                               try {
                                 await login(credentialResponse.credential);
-                              } catch (err) {
+                                toast.success('Logged in successfully');
+                              } catch (err: any) {
                                 console.error('Login error:', err);
+                                toast.error(err.message || 'Access restricted. Only @dau.ac.in accounts are permitted to sign in.');
                               }
                             }
                           }}
-                          onError={() => console.error('Google login error')}
+                          onError={() => toast.error('Google sign-in was cancelled or failed.')}
                           size="medium"
                           text="signin"
+                          hosted_domain="dau.ac.in"
                         />
                       </div>
                     )}

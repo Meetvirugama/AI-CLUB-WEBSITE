@@ -79,6 +79,15 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    from core.config import settings  # noqa: PLC0415
+    if not settings.is_email_allowed(user.email):
+        logger.warning("User id=%d email=%s rejected by domain policy.", user.id, user.email)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access restricted. Only @dau.ac.in accounts are permitted.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     return user
 
 
@@ -101,9 +110,13 @@ async def get_optional_user(
 
     try:
         from db import async_session   # noqa: PLC0415
+        from core.config import settings  # noqa: PLC0415
 
         async with async_session() as session:
-            return await get_user_by_id(session, user_id)
+            user = await get_user_by_id(session, user_id)
+            if user and not settings.is_email_allowed(user.email):
+                return None
+            return user
     except Exception as exc:
         import logging
         logging.getLogger(__name__).error(f"Failed to fetch user from DB in auth middleware: {exc}")

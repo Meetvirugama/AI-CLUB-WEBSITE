@@ -72,20 +72,24 @@ export default function AuthBarrier({ children, requireAdmin = false }: AuthBarr
           <h2 className="text-2xl font-bold tracking-tight text-foreground font-display text-center mb-2">
             Welcome to AI Club <span className="text-primary">DAU</span>
           </h2>
-          <p className="text-sm text-muted-foreground text-center mb-8 max-w-xs leading-relaxed">
-            Please sign in with your Google account to access events, projects, resources, and the AI chatbot.
+          <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary">
+            <span>Restricted to @dau.ac.in</span>
+          </div>
+          <p className="text-sm text-muted-foreground text-center mb-6 max-w-xs leading-relaxed">
+            Please sign in with your official <span className="font-semibold text-foreground">@dau.ac.in</span> Google account to access events, projects, resources, and the AI chatbot.
           </p>
 
           {/* Login button container */}
           <div className="w-full flex justify-center py-2 px-1 relative z-10">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => setErrorMsg("Google OAuth sign-in failed.")}
+              onError={() => setErrorMsg("Google OAuth sign-in failed or was cancelled.")}
               theme="filled_blue"
               size="large"
               shape="pill"
               text="signin_with"
               logo_alignment="left"
+              hosted_domain="dau.ac.in"
             />
           </div>
 
