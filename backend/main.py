@@ -33,7 +33,8 @@ from db import Base, async_session, engine, get_db
 
 # ── Auth module ────────────────────────────────────────────────────────────
 from core.config import settings
-from core.middleware import RequestSizeLimitMiddleware
+from core.middleware import RequestSizeLimitMiddleware, RequestIDMiddleware
+from core.errors import register_error_handlers
 from auth.models import User
 from auth.routes import router as auth_router
 
@@ -143,20 +144,24 @@ app = FastAPI(
     openapi_url=None if _is_production else "/openapi.json",
 )
 
-# --- SECURITY MIDDLEWARE ---
+# --- CENTRALIZED ERROR HANDLERS ---
+register_error_handlers(app)
+
+# --- SECURITY & UTILITY MIDDLEWARE ---
 origins = settings.cors_origins
 
 # Size limit middleware (default 50MB max body)
 app.add_middleware(RequestSizeLimitMiddleware, max_upload_size=50 * 1024 * 1024)
 
 # Middleware runs in reverse registration order, so register the outermost
-# concern last: headers wrap CSRF wraps CORS.
+# concern last: request_id wraps headers wrap CSRF wraps CORS.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Accept"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Request-ID", "X-Correlation-ID"],
+    expose_headers=["X-Request-ID"],
     max_age=600,
 )
 
@@ -167,6 +172,19 @@ app.add_middleware(
 )
 
 app.add_middleware(SecurityHeadersMiddleware, is_production=_is_production)
+app.add_middleware(RequestIDMiddleware)
+
+# --- HEALTH CHECK ENDPOINTS ---
+@app.get("/health", tags=["Health"])
+@app.get("/api/health", tags=["Health"])
+async def health_check(request: Request):
+    req_id = getattr(request.state, "request_id", None)
+    return {
+        "status": "ok",
+        "version": "1.0.0",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "request_id": req_id,
+    }
 
 # --- UPLOADS DIRECTORY SETUP ---
 uploads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "private_uploads")

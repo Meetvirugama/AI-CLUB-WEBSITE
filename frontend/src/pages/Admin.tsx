@@ -26,6 +26,8 @@ import Footer from '@/components/club/Footer';
 import { useAuth } from '../contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { getApiUrl, getAuthHeaders } from '../lib/api';
+import { notify } from '../lib/notifications';
+import { ComponentErrorBoundary } from '../components/common/ComponentErrorBoundary';
 
 import DashboardTab from './admin/DashboardTab';
 import RegistrationsTab from './admin/RegistrationsTab';
@@ -96,8 +98,13 @@ const Admin = () => {
   });
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    setToast({ isOpen: true, message, type });
-    setTimeout(() => setToast(prev => ({ ...prev, isOpen: false })), 4000);
+    if (type === 'success') {
+      notify.success(message);
+    } else if (type === 'error') {
+      notify.error(message);
+    } else {
+      notify.info(message);
+    }
   };
 
   // ── Confirm modal ───────────────────────────────────────────────────────────
@@ -399,6 +406,7 @@ const Admin = () => {
           {/* Tab content */}
           <main className="flex-1 bg-background">
             <div className="p-5 md:p-7 lg:p-8">
+            <ComponentErrorBoundary fallbackTitle="This tab encountered an error while rendering">
             <AnimatePresence mode="wait">
               {activeTab === 'dashboard' && (
                 <DashboardTab
@@ -607,6 +615,7 @@ const Admin = () => {
                 </motion.div>
               )}
             </AnimatePresence>
+            </ComponentErrorBoundary>
             </div>
           </main>
         </div>
