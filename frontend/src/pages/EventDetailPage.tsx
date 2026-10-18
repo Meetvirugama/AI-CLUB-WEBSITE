@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -15,6 +15,9 @@ import { api } from '../lib/apiClient';
 import { useAuth } from '../contexts/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
 import { toast } from 'sonner';
+import { notify } from '../lib/notifications';
+import { ErrorState } from '../components/common/ErrorState';
+import { InlineFieldError } from '../components/common/InlineFieldError';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -159,7 +162,7 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown | null>(null);
   const [responses, setResponses] = useState<Record<number, any>>({});
   const [uploadedFiles, setUploadedFiles] = useState<Record<number, File>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -225,75 +228,72 @@ export default function EventDetailPage() {
     }
   }, [authUser?.id, id]);
 
-  useEffect(() => {
+  const fetchAll = useCallback(async () => {
     if (!id) return;
-    const fetchAll = async () => {
-      setLoading(true);
+    setLoading(true);
+    setError(null);
+    try {
+      const ev = await api.get<EventDetail>(`/api/events/${id}`);
+      setEvent(ev);
+
       try {
-        const evRes = await fetch(getApiUrl(`/api/events/${id}`));
-        if (!evRes.ok) throw new Error('Event not found');
-        const ev: EventDetail = await evRes.json();
-        setEvent(ev);
-
+        const formData = await api.get<{ fields: FormField[] }>(`/api/events/${id}/form-schema`);
+        const fields: FormField[] = formData.fields || [];
+        setFormFields(fields);
+        const init: Record<number, any> = {};
+        const existingFlat: Record<string, any> = (window as any).__existingFlat || {};
+        // Pre-fill from existing registration responses if available,
+        // otherwise fall back to user profile fields
+        // Try restoring saved form data from sessionStorage (saved before login redirect)
+        let savedResponses: Record<number, any> | null = null;
         try {
-          const formRes = await fetch(getApiUrl(`/api/events/${id}/form-schema`));
-          if (formRes.ok) {
-            const formData = await formRes.json();
-            const fields: FormField[] = formData.fields || [];
-            setFormFields(fields);
-            const init: Record<number, any> = {};
-            const existingFlat: Record<string, any> = (window as any).__existingFlat || {};
-            // Pre-fill from existing registration responses if available,
-            // otherwise fall back to user profile fields
-            // Try restoring saved form data from sessionStorage (saved before login redirect)
-            let savedResponses: Record<number, any> | null = null;
-            try {
-              const saved = sessionStorage.getItem(`event-reg-draft-${id}`);
-              if (saved) {
-                savedResponses = JSON.parse(saved);
-                sessionStorage.removeItem(`event-reg-draft-${id}`);
-              }
-            } catch (_) {}
-
-            let savedTeam: { teamName?: string; teamMembers?: { name: string; email: string }[] } | null = null;
-            try {
-              const saved = sessionStorage.getItem(`event-reg-team-${id}`);
-              if (saved) {
-                savedTeam = JSON.parse(saved);
-                sessionStorage.removeItem(`event-reg-team-${id}`);
-              }
-            } catch (_) {}
-
-            fields.forEach(f => {
-              if (savedResponses && savedResponses[f.id] !== undefined) {
-                init[f.id] = savedResponses[f.id];
-              } else if (existingFlat[f.label] !== undefined) {
-                let val = existingFlat[f.label];
-                if (typeof val === 'string') {
-                  val = val.replace(/^(\d+)\.0$/, '$1');
-                }
-                init[f.id] = val;
-              } else {
-                init[f.id] = f.field_type === 'checkbox' ? [] : '';
-              }
-            });
-            setResponses(init);
-            delete (window as any).__existingFlat;
-
-            if (savedTeam) {
-              if (savedTeam.teamName) setTeamName(savedTeam.teamName);
-              if (savedTeam.teamMembers?.length) setTeamMembers(savedTeam.teamMembers);
-            }
+          const saved = sessionStorage.getItem(`event-reg-draft-${id}`);
+          if (saved) {
+            savedResponses = JSON.parse(saved);
+            sessionStorage.removeItem(`event-reg-draft-${id}`);
           }
         } catch (_) {}
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
+
+        let savedTeam: { teamName?: string; teamMembers?: { name: string; email: string }[] } | null = null;
+        try {
+          const saved = sessionStorage.getItem(`event-reg-team-${id}`);
+          if (saved) {
+            savedTeam = JSON.parse(saved);
+            sessionStorage.removeItem(`event-reg-team-${id}`);
+          }
+        } catch (_) {}
+
+        fields.forEach(f => {
+          if (savedResponses && savedResponses[f.id] !== undefined) {
+            init[f.id] = savedResponses[f.id];
+          } else if (existingFlat[f.label] !== undefined) {
+            let val = existingFlat[f.label];
+            if (typeof val === 'string') {
+              val = val.replace(/^(\d+)\.0$/, '$1');
+            }
+            init[f.id] = val;
+          } else {
+            init[f.id] = f.field_type === 'checkbox' ? [] : '';
+          }
+        });
+        setResponses(init);
+        delete (window as any).__existingFlat;
+
+        if (savedTeam) {
+          if (savedTeam.teamName) setTeamName(savedTeam.teamName);
+          if (savedTeam.teamMembers?.length) setTeamMembers(savedTeam.teamMembers);
+        }
+      } catch (_) {}
+    } catch (err: any) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
   const handleInputChange = (fieldId: number, value: any) => {
     setResponses(prev => ({ ...prev, [fieldId]: value }));
@@ -323,7 +323,9 @@ export default function EventDetailPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!event || !userProfile) {
-      setSubmitMsg({ type: 'error', text: 'You must be signed in to register.' });
+      const msg = 'You must be signed in to register.';
+      setSubmitMsg({ type: 'error', text: msg });
+      notify.error(msg);
       return;
     }
     setIsSubmitting(true);
@@ -332,29 +334,25 @@ export default function EventDetailPage() {
       const teamInput = buildPayload();
       const hasFiles = Object.keys(uploadedFiles).length > 0;
       const apiPath = `/api/events/${event.id}/register`;
-      let res;
 
       if (hasFiles) {
         const fd = new FormData();
         fd.append('data', JSON.stringify({ responses, team: teamInput }));
         Object.entries(uploadedFiles).forEach(([fid, file]) => fd.append(fid, file));
-        res = await fetch(getApiUrl(apiPath), { method: 'POST', body: fd, credentials: 'include' });
+        await api.post(apiPath, fd);
       } else {
-        res = await fetch(getApiUrl(apiPath), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ responses, team: teamInput }),
-        });
+        await api.post(apiPath, { responses, team: teamInput });
       }
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Registration failed');
-      setSubmitMsg({ type: 'success', text: 'Registered successfully! See you at the event 🎉' });
+      const successText = 'Registered successfully! See you at the event 🎉';
+      setSubmitMsg({ type: 'success', text: successText });
+      notify.success(successText);
       setIsRegistered(true);
       setIsEditMode(false);
     } catch (err: any) {
-      setSubmitMsg({ type: 'error', text: err.message });
+      const errorMsg = err.message || 'Registration failed';
+      setSubmitMsg({ type: 'error', text: errorMsg });
+      notify.error(err, { retry: () => handleSubmit(e) });
     } finally {
       setIsSubmitting(false);
     }
@@ -369,28 +367,24 @@ export default function EventDetailPage() {
       const teamInput = buildPayload();
       const hasFiles = Object.keys(uploadedFiles).length > 0;
       const apiPath = `/api/events/${event.id}/registration`;
-      let res;
 
       if (hasFiles) {
         const fd = new FormData();
         fd.append('data', JSON.stringify({ responses, team: teamInput }));
         Object.entries(uploadedFiles).forEach(([fid, file]) => fd.append(fid, file));
-        res = await fetch(getApiUrl(apiPath), { method: 'PUT', body: fd, credentials: 'include' });
+        await api.put(apiPath, fd);
       } else {
-        res = await fetch(getApiUrl(apiPath), {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ responses, team: teamInput }),
-        });
+        await api.put(apiPath, { responses, team: teamInput });
       }
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Update failed');
-      setSubmitMsg({ type: 'success', text: 'Registration updated successfully! ✏️' });
+      const successText = 'Registration updated successfully! ✏️';
+      setSubmitMsg({ type: 'success', text: successText });
+      notify.success(successText);
       setIsEditMode(false);
     } catch (err: any) {
-      setSubmitMsg({ type: 'error', text: err.message });
+      const errorMsg = err.message || 'Update failed';
+      setSubmitMsg({ type: 'error', text: errorMsg });
+      notify.error(err, { retry: () => handleUpdate(e) });
     } finally {
       setIsUpdating(false);
     }
@@ -400,21 +394,18 @@ export default function EventDetailPage() {
     if (!event) return;
     setIsWithdrawing(true);
     try {
-      const res = await fetch(getApiUrl(`/api/events/${event.id}/registration`), {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || 'Could not withdraw registration');
-      }
+      await api.delete(`/api/events/${event.id}/registration`);
       setIsRegistered(false);
       setExistingRegistrationId(null);
       setShowWithdrawConfirm(false);
       setIsEditMode(false);
-      setSubmitMsg({ type: 'success', text: 'Your registration has been withdrawn.' });
+      const successText = 'Your registration has been withdrawn.';
+      setSubmitMsg({ type: 'success', text: successText });
+      notify.info(successText);
     } catch (err: any) {
-      setSubmitMsg({ type: 'error', text: err.message });
+      const errorMsg = err.message || 'Could not withdraw registration';
+      setSubmitMsg({ type: 'error', text: errorMsg });
+      notify.error(err);
       setShowWithdrawConfirm(false);
     } finally {
       setIsWithdrawing(false);
@@ -423,10 +414,10 @@ export default function EventDetailPage() {
 
   // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) return (
-    <div style={{ background: 'hsl(228,28%,95%)', minHeight: '100vh' }}>
+    <div style={{ background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', minHeight: '100vh', paddingTop: '56px' }}>
       <Navbar />
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', fontFamily: 'Inter, sans-serif', color: 'hsl(230,15%,45%)', gap: 12 }}>
-        <Loader2 size={22} style={{ animation: 'spin 1s linear infinite', color: 'hsl(243,75%,59%)' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', fontFamily: 'Inter, sans-serif', color: 'hsl(var(--muted-foreground))', gap: 12 }}>
+        <Loader2 size={22} style={{ animation: 'spin 1s linear infinite', color: 'hsl(var(--primary))' }} />
         Loading event…
       </div>
     </div>
@@ -434,14 +425,15 @@ export default function EventDetailPage() {
 
   // ── Error ──────────────────────────────────────────────────────────────────
   if (error || !event) return (
-    <div style={{ background: 'hsl(228,28%,95%)', minHeight: '100vh', paddingTop: '56px' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', gap: 16, fontFamily: 'Inter, sans-serif' }}>
-        <AlertCircle size={40} style={{ color: 'hsl(0,70%,50%)' }} />
-        <h2 style={{ color: 'hsl(230,25%,12%)', fontFamily: 'Playfair Display, Georgia, serif' }}>Event not found</h2>
-        <Link to="/events" style={{ color: 'hsl(243,75%,59%)', textDecoration: 'none', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <ArrowLeft size={14} /> Back to Events
-        </Link>
-      </div>
+    <div style={{ background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', minHeight: '100vh', paddingTop: '56px' }}>
+      <Navbar />
+      <ErrorState
+        error={error}
+        title={!event && !error ? 'Event not found' : undefined}
+        onRetry={fetchAll}
+        onBack={() => navigate('/events')}
+        className="my-20"
+      />
     </div>
   );
 

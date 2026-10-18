@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getApiUrl } from "@/lib/api";
+import { api } from "@/lib/apiClient";
 
 export interface WeeklyResource {
   id: number;
@@ -28,12 +28,9 @@ export function useWeeklyVenezaData() {
   return useQuery<WeeklyVenezaWeek[]>({
     queryKey: ["weekly-veneza"],
     queryFn: async () => {
-      const res = await fetch(getApiUrl("/api/weekly-veneza"));
-      if (!res.ok) {
-        throw new Error("Failed to fetch Weekly Veneza curriculum");
-      }
-      return res.json();
+      return await api.get<WeeklyVenezaWeek[]>("/api/weekly-veneza");
     },
+    retry: 1,
   });
 }
 
@@ -41,14 +38,13 @@ export function useWeeklyVenezaProgress() {
   return useQuery<number[]>({
     queryKey: ["weekly-veneza-progress"],
     queryFn: async () => {
-      const res = await fetch(getApiUrl("/api/weekly-veneza/progress"), {
-        credentials: "include",
-      });
-      if (!res.ok) {
+      try {
+        return await api.get<number[]>("/api/weekly-veneza/progress");
+      } catch {
         return [];
       }
-      return res.json();
     },
+    retry: 1,
   });
 }
 
@@ -57,17 +53,7 @@ export function useToggleWeeklyProgress() {
 
   return useMutation({
     mutationFn: async ({ resourceId }: { resourceId: number }) => {
-      const res = await fetch(getApiUrl(`/api/weekly-veneza/${resourceId}/toggle`), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-      if (!res.ok) {
-        throw new Error("Failed to toggle progress");
-      }
-      return res.json();
+      return await api.post(`/api/weekly-veneza/${resourceId}/toggle`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["weekly-veneza-progress"] });
@@ -80,17 +66,7 @@ export function useResetWeeklyProgress() {
 
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch(getApiUrl("/api/weekly-veneza/reset"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-      if (!res.ok) {
-        throw new Error("Failed to reset progress");
-      }
-      return res.json();
+      return await api.post("/api/weekly-veneza/reset");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["weekly-veneza-progress"] });

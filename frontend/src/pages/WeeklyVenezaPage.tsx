@@ -9,6 +9,9 @@ import {
 } from "@/hooks/useWeeklyVeneza";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { notify } from "@/lib/notifications";
+import { ErrorState } from "@/components/common/ErrorState";
+import { EmptyState } from "@/components/common/EmptyState";
 import {
   ArrowUpRight,
   BookOpen,
@@ -570,7 +573,7 @@ function WeekNode({
 /* ─── Page ──────────────────────────────────────────────────────────────── */
 
 export default function WeeklyVenezaPage() {
-  const { data: weeks = [], isLoading: loadingWeeks } = useWeeklyVenezaData();
+  const { data: weeks = [], isLoading: loadingWeeks, isError, error, refetch } = useWeeklyVenezaData();
   const { data: remoteProgress = [], isLoading: loadingProgress } = useWeeklyVenezaProgress();
   const toggleProgressMutation = useToggleWeeklyProgress();
   const resetProgressMutation = useResetWeeklyProgress();
@@ -648,12 +651,13 @@ export default function WeeklyVenezaPage() {
       try {
         await toggleProgressMutation.mutateAsync({ resourceId });
         const nowDone = !progress.includes(resourceId);
-        toast({
-          title: nowDone ? "Resource Completed! 🎉" : "Resource Unchecked",
+        notify.success(nowDone ? "Resource Completed! 🎉" : "Resource Unchecked", {
           description: nowDone ? "Your weekly progress has been saved." : "Progress updated.",
         });
-      } catch {
-        toast({ title: "Error", description: "Failed to update progress.", variant: "destructive" });
+      } catch (err) {
+        notify.error(err, {
+          retry: () => handleToggleResource(resourceId),
+        });
       }
     } else {
       const wasDone = localProgress.includes(resourceId);
@@ -896,11 +900,18 @@ export default function WeeklyVenezaPage() {
               <div key={i} className="rd-skeleton h-28 rounded-[22px]" />
             ))}
           </div>
+        ) : isError ? (
+          <ErrorState
+            error={error}
+            onRetry={() => refetch()}
+            className="my-16"
+          />
         ) : timelineWeeks.length === 0 ? (
-          <div className="mt-16 rounded-[22px] border border-dashed border-rd-line p-12 text-center">
-            <div className="rd-mono text-[10.5px] text-rd-faint">No weeks published yet</div>
-            <p className="mt-2 text-sm text-rd-muted">The first week of resources will appear here soon.</p>
-          </div>
+          <EmptyState
+            title="No weeks published yet"
+            description="The first week of resources will appear here soon."
+            className="my-16"
+          />
         ) : (
           <div ref={timelineRef} className="relative mt-8">
             <div aria-hidden className="absolute bottom-6 left-5 top-6 w-px bg-rd-line sm:left-7" />

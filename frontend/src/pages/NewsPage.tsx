@@ -6,8 +6,11 @@ import SlicedWaves from '@/components/reactbits/SlicedWaves';
 import { useTheme } from '@/components/redesign/theme';
 import Footer from '@/components/redesign/SiteFooter';
 import { getApiUrl } from '@/lib/api';
+import { api } from '@/lib/apiClient';
 import { normalizeBannerUrl } from '@/lib/utils';
 import { Marquee, Reveal, SectionLabel, SplitWords } from '@/components/redesign/motion';
+import { ErrorState } from '@/components/common/ErrorState';
+import { EmptyState } from '@/components/common/EmptyState';
 
 interface NewsModel {
   id: number;
@@ -362,6 +365,7 @@ function StoryReader({ item, onClose }: { item: NewsModel; onClose: () => void }
 const NewsPage = () => {
   const [newsList, setNewsList] = useState<NewsModel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown | null>(null);
   const [selected, setSelected] = useState<NewsModel | null>(null);
   const [source, setSource] = useState('All');
   const [params, setParams] = useSearchParams();
@@ -413,22 +417,23 @@ const NewsPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const res = await fetch(getApiUrl('/api/news'));
-        if (res.ok) {
-          const data: NewsModel[] = await res.json();
-          setNewsList(data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
-        }
-      } catch (err) {
-        console.error('Failed to fetch news:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchNews();
+  const fetchNews = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.get<NewsModel[]>('/api/news');
+      setNewsList(data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+    } catch (err) {
+      console.error('Failed to fetch news:', err);
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchNews();
+  }, [fetchNews]);
 
   const sources = useMemo(() => {
     const set = new Set<string>();
@@ -552,12 +557,19 @@ const NewsPage = () => {
                 ))}
               </div>
             </div>
+          ) : error ? (
+            <ErrorState
+              error={error}
+              onRetry={fetchNews}
+              className="my-16"
+            />
           ) : !featured ? (
-            <div className="rounded-[24px] border border-dashed border-rd-line px-6 py-20 text-center">
-              <Newspaper size={30} className="mx-auto text-rd-faint" />
-              <h3 className="rd-display mt-5 text-2xl font-medium text-rd-fg">No stories yet</h3>
-              <p className="mt-2 text-sm text-rd-muted">Check back soon for club updates and AI news.</p>
-            </div>
+            <EmptyState
+              title="No stories yet"
+              description="Check back soon for club updates and AI news."
+              icon={Newspaper}
+              className="my-16"
+            />
           ) : view === 'list' ? (
             <ul className="border-t border-rd-line">
               {visible.map((item, i) => (
