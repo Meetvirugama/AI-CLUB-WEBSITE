@@ -86,6 +86,10 @@ from past_events.routes import router as past_events_router
 from news.models import ClubNews
 from news.routes import router as news_router
 
+# ── Homepage topics strip ──────────────────────────────────────────────────
+from home_topics.models import HomeTopic  # noqa: registers table
+from home_topics.routes import router as home_topics_router
+
 # ── Weekly Veneza module ───────────────────────────────────────────────────
 from weekly_veneza.models import WeeklyVenezaWeek, WeeklyVenezaResource, UserWeeklyVenezaProgress
 from weekly_veneza.routes import router as weekly_veneza_router
@@ -183,6 +187,7 @@ app.include_router(roadmaps_router)
 app.include_router(tracks_router)
 app.include_router(past_events_router)
 app.include_router(news_router)
+app.include_router(home_topics_router)
 app.include_router(weekly_veneza_router)
 app.include_router(chatbot_analytics_router)
 app.include_router(chatbot_rag_router)

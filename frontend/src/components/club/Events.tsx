@@ -6,8 +6,6 @@ import { getApiUrl } from '../../lib/api';
 import { api } from '../../lib/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { normalizeBannerUrl } from '../../lib/utils';
-import { CtaCard } from '@/components/ui/cta-card';
-import EventDetailModal from './EventDetailModal';
 
 // Auth travels in the HttpOnly session cookie (credentials: 'include'), so no
 // Authorization header is built here. Never move the token into localStorage:
@@ -110,7 +108,6 @@ export default function Events({ isHomepage = false }: { isHomepage?: boolean })
   const [userProfile, setUserProfile] = useState<any>(null);
   const [registeredEventIds, setRegisteredEventIds] = useState<(number | string)[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<EventModel | null>(null);
-  const [detailEvent, setDetailEvent] = useState<EventModel | null>(null);
 
   // Team Registration state
   const [teamName, setTeamName] = useState('');
@@ -582,8 +579,8 @@ const resultCount = displayedUpcomingEvents.length;
       <section
         id="events"
         style={{
-          background: 'hsl(var(--background))',
-          borderTop: '1px solid hsl(var(--border))',
+          background: 'hsl(228, 28%, 91%)',
+          borderTop: '1px solid hsl(228, 20%, 80%)',
         }}
       >
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '5rem 2rem' }}>
@@ -594,7 +591,7 @@ const resultCount = displayedUpcomingEvents.length;
               fontSize: 'clamp(2rem, 4vw, 3.5rem)',
               fontWeight: 700,
               letterSpacing: '-0.025em',
-              color: 'hsl(var(--foreground))',
+              color: 'hsl(230, 25%, 10%)',
               marginBottom: '0.6rem',
             }}
           >
@@ -604,7 +601,7 @@ const resultCount = displayedUpcomingEvents.length;
             style={{
               fontFamily: 'Inter, sans-serif',
               fontSize: '1rem',
-              color: 'hsl(var(--muted-foreground))',
+              color: 'hsl(230, 15%, 45%)',
               marginBottom: '2.5rem',
             }}
           >
@@ -614,116 +611,153 @@ const resultCount = displayedUpcomingEvents.length;
           {/* Event list */}
           <div>
             {loadingEvents ? (
-              <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Loading events...</p>
+              <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.8rem', color: 'hsl(230, 15%, 50%)' }}>Loading events...</p>
             ) : displayedUpcomingEvents.length === 0 ? (
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'hsl(var(--muted-foreground))', padding: '2rem 0', borderTop: '1px solid hsl(var(--border))' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: 'hsl(230, 15%, 50%)', padding: '2rem 0', borderTop: '1px solid hsl(228, 20%, 80%)' }}>
                 No upcoming events at the moment. Check back soon.
               </p>
             ) : (
-              <div className="flex flex-col gap-6">
-                {displayedUpcomingEvents.map((ev) => {
-                  const hasDate = Boolean(ev.event_start_date || ev.event_date);
-                  const dateObj = hasDate ? new Date((ev.event_start_date || ev.event_date)!) : null;
-                  const day = dateObj ? dateObj.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase() : 'TBA';
-                  const month = dateObj ? dateObj.toLocaleDateString('en-US', { month: 'short' }).toUpperCase() : '';
-                  const date = dateObj ? dateObj.getDate() : '';
+              displayedUpcomingEvents.map((ev) => {
+                const hasDate = Boolean(ev.event_start_date || ev.event_date);
+                const dateObj = hasDate ? new Date((ev.event_start_date || ev.event_date)!) : null;
+                const day = dateObj ? dateObj.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase() : 'TBA';
+                const month = dateObj ? dateObj.toLocaleDateString('en-US', { month: 'short' }) : '';
+                const date = dateObj ? dateObj.getDate() : '';
+                
+                const metaParts = [];
+                if (ev.venue) metaParts.push(ev.venue);
+                if (ev.start_time) metaParts.push(ev.start_time);
+                if (ev.event_type) metaParts.push(ev.event_type);
+                return (
+                  <div
+                    key={ev.id}
+                    style={{
+                      display: 'flex',
+                      gap: '2rem',
+                      padding: '1.5rem',
+                      borderRadius: '16px',
+                      background: 'white',
+                      border: '1px solid hsl(228, 20%, 84%)',
+                      alignItems: 'flex-start',
+                      marginBottom: '1rem',
+                      transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px) scale(1.01)';
+                      (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 24px -6px rgba(99, 102, 241, 0.18)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'hsl(243, 75%, 59%)';
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)';
+                      (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'hsl(228, 20%, 84%)';
+                    }}
+                  >
+                    {/* Date column */}
+                    <div style={{ minWidth: 70, flexShrink: 0 }}>
+                      <p
+                        style={{
+                          fontFamily: 'JetBrains Mono, monospace',
+                          fontSize: '0.65rem',
+                          letterSpacing: '0.1em',
+                          color: 'hsl(230, 15%, 50%)',
+                          marginBottom: 2,
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        {day}
+                      </p>
+                      <p
+                        style={{
+                          fontFamily: 'Playfair Display, Georgia, serif',
+                          fontSize: '1.15rem',
+                          fontWeight: 700,
+                          color: 'hsl(243, 75%, 59%)',
+                          lineHeight: 1.1,
+                        }}
+                      >
+                        {month ? `${month} ${date}` : 'TBA'}
+                      </p>
+                    </div>
 
-                  const dateString = dateObj
-                    ? `${day}, ${month} ${date}${ev.start_time ? ` · ${ev.start_time}` : ''}${ev.venue ? ` · ${ev.venue}` : ''}`
-                    : (ev.date_label || 'Date TBA');
-
-                  const isRegistered = registeredEventIds.includes(Number(ev.id));
-                  const isRegistrationOpen = ev.status === 'registration_open';
-
-                  const defaultBanner = 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80';
-                  const imageSrc = normalizeBannerUrl(ev.banner) || defaultBanner;
-
-                  let primaryButtonText = 'View Details';
-                  let onPrimaryClick: () => void = () => setDetailEvent(ev);
-                  let secondaryButtonText: string | undefined = undefined;
-                  let onSecondaryClick: (() => void) | undefined = undefined;
-
-                  if (isRegistrationOpen && !authLoading) {
-                    if (isRegistered) {
-                      primaryButtonText = 'Registered ✓';
-                      onPrimaryClick = () => navigate('/my-registrations');
-                      secondaryButtonText = 'View Details';
-                      onSecondaryClick = () => setDetailEvent(ev);
-                    } else if (ev.registration_link) {
-                      primaryButtonText = 'Register Now';
-                      onPrimaryClick = () => window.open(ev.registration_link!, '_blank');
-                      secondaryButtonText = 'View Details';
-                      onSecondaryClick = () => setDetailEvent(ev);
-                    } else {
-                      primaryButtonText = 'Register Now';
-                      onPrimaryClick = () => navigate(`/events/${ev.id}`);
-                      secondaryButtonText = 'View Details';
-                      onSecondaryClick = () => setDetailEvent(ev);
-                    }
-                  }
-
-                  return (
-                    <CtaCard
-                      key={ev.id}
-                      className="cursor-pointer"
-                      onClick={() => setDetailEvent(ev)}
-                      imageSrc={imageSrc}
-                      imageAlt={ev.title}
-                      title={dateString}
-                      subtitle={
-                        <div className="flex flex-col gap-1">
-                          <span className="font-serif font-bold text-foreground hover:text-primary transition-colors">
-                            {ev.title}
-                          </span>
-                          {ev.speaker && (
-                            <span className="text-xs font-normal text-muted-foreground flex items-center gap-1.5 font-sans mt-0.5">
-                              <Mic size={12} className="text-primary" /> Speaker: {ev.speaker}
-                            </span>
-                          )}
-                        </div>
-                      }
-                      description={ev.description}
-                      buttonText={primaryButtonText}
-                      onButtonClick={onPrimaryClick}
-                      secondaryButtonText={secondaryButtonText}
-                      onSecondaryButtonClick={onSecondaryClick}
-                      badge={
-                        <div className="flex flex-wrap gap-1.5">
-                          {isRegistrationOpen ? (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider bg-emerald-500/90 text-white backdrop-blur-md shadow-sm">
-                              Open for Registration
-                            </span>
-                          ) : ev.status === 'upcoming' ? (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider bg-primary/90 text-white backdrop-blur-md shadow-sm">
-                              Upcoming
-                            </span>
-                          ) : null}
-                          {ev.category && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider bg-black/60 text-white/90 backdrop-blur-md border border-white/20">
-                              {ev.category}
-                            </span>
-                          )}
-                        </div>
-                      }
-                    >
-                      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground font-mono">
-                        {ev.event_type && (
-                          <span className="capitalize px-2 py-0.5 rounded bg-muted/80 border border-border">
-                            {ev.event_type === 'team' ? (
-                              <span className="flex items-center gap-1"><UsersRound size={11} /> Team Event</span>
-                            ) : (
-                              'Individual'
-                            )}
-                          </span>
+                    {/* Content */}
+                    <div style={{ flex: 1 }}>
+                      <h3
+                        style={{
+                          fontFamily: 'Playfair Display, Georgia, serif',
+                          fontSize: '1.1rem',
+                          fontWeight: 700,
+                          color: 'hsl(230, 25%, 12%)',
+                          marginBottom: '0.35rem',
+                          letterSpacing: '-0.01em',
+                        }}
+                      >
+                        {ev.title}
+                      </h3>
+                      <p
+                        style={{
+                          fontFamily: 'Inter, sans-serif',
+                          fontSize: '0.88rem',
+                          color: 'hsl(230, 15%, 40%)',
+                          lineHeight: 1.6,
+                          marginBottom: '0.75rem',
+                          maxWidth: 600,
+                        }}
+                      >
+                        {ev.description}
+                      </p>
+                      <p
+                        style={{
+                          fontFamily: 'JetBrains Mono, monospace',
+                          fontSize: '0.75rem',
+                          color: 'hsl(230, 15%, 48%)',
+                        }}
+                      >
+                        {metaParts.join(' · ')}
+                        {ev.status === 'registration_open' && (
+                          <span style={{ color: 'hsl(243, 75%, 59%)', marginLeft: metaParts.length > 0 ? 8 : 0 }}>· Open for registration</span>
                         )}
-                        {ev.venue && (
-                          <span className="flex items-center gap-1">📍 {ev.venue}</span>
+                      </p>
+
+                      {/* Register button + View Details */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+                        {ev.status === 'registration_open' && !authLoading && (
+                          registeredEventIds.includes(Number(ev.id)) ? (
+                            <span style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(243,75%,59%)', padding: '4px 12px', border: '1px solid hsl(243,75%,80%)', borderRadius: 2 }}>
+                              Registered ✓
+                            </span>
+                          ) : ev.registration_link ? (
+                            <a
+                              href={ev.registration_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(228,30%,93%)', background: 'hsl(230,25%,12%)', padding: '5px 14px', borderRadius: 2, textDecoration: 'none', border: '1px solid hsl(230,25%,12%)' }}
+                            >
+                              Register now
+                            </a>
+                          ) : (
+                            <button
+                              onClick={() => navigate(`/events/${ev.id}`)}
+                              style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(228,30%,93%)', background: 'hsl(230,25%,12%)', padding: '5px 14px', borderRadius: 2, border: '1px solid hsl(230,25%,12%)', cursor: 'pointer' }}
+                            >
+                              Register now
+                            </button>
+                          )
                         )}
+                        <button
+                          onClick={() => navigate(`/events/${ev.id}`)}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'hsl(243,75%,59%)', background: 'transparent', padding: '4px 10px', border: '1px solid hsl(243,75%,75%)', borderRadius: 2, cursor: 'pointer' }}
+                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'hsl(243,75%,97%)'}
+                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+                        >
+                          <ArrowRight size={11} /> View Details
+                        </button>
                       </div>
-                    </CtaCard>
-                  );
-                })}
-              </div>
+                    </div>
+                  </div>
+                );
+              })
             )}
 
             {/* Footnote */}
@@ -731,9 +765,9 @@ const resultCount = displayedUpcomingEvents.length;
               style={{
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: '0.72rem',
-                color: 'hsl(var(--muted-foreground))',
+                color: 'hsl(230, 15%, 55%)',
                 marginTop: '1.5rem',
-                borderTop: '1px solid hsl(var(--border))',
+                borderTop: '1px solid hsl(228, 20%, 80%)',
                 paddingTop: '1rem',
               }}
             >
@@ -743,13 +777,13 @@ const resultCount = displayedUpcomingEvents.length;
 
           {/* Past Events Highlights (2 Past Events on Homepage) */}
           {pastEvents.length > 0 && (
-            <div style={{ marginTop: '3rem', paddingTop: '2.5rem', borderTop: '1px solid hsl(var(--border))' }}>
+            <div style={{ marginTop: '3rem', paddingTop: '2.5rem', borderTop: '1px solid hsl(228, 20%, 80%)' }}>
               <h3
                 style={{
                   fontFamily: 'Playfair Display, Georgia, serif',
                   fontSize: '1.5rem',
                   fontWeight: 700,
-                  color: 'hsl(var(--foreground))',
+                  color: 'hsl(230, 25%, 10%)',
                   marginBottom: '1.25rem',
                 }}
               >
@@ -760,12 +794,12 @@ const resultCount = displayedUpcomingEvents.length;
                   <div
                     key={pe.id}
                     onClick={() => navigate(`/events/${pe.id}`)}
-                    className="glass-card relative overflow-hidden p-6 flex flex-col justify-between cursor-pointer group bg-card border border-border rounded-2xl hover:border-primary/40 hover:shadow-xl transition-all"
+                    className="glass-card relative overflow-hidden p-6 flex flex-col justify-between cursor-pointer group bg-white border border-slate-200 rounded-2xl hover:border-indigo-400 hover:shadow-xl transition-all"
                   >
                     <div>
                       {pe.image_url && (
                         <div className="w-full mb-4 rounded-xl overflow-hidden bg-secondary">
-                          <img src={pe.image_url} alt={pe.title} className="w-full object-contain group-hover:scale-105 transition-transform duration-500" style={{ maxHeight: '220px' }} />
+                          <img src={normalizeBannerUrl(pe.image_url)} referrerPolicy="no-referrer" alt={pe.title} className="w-full object-contain group-hover:scale-105 transition-transform duration-500" style={{ maxHeight: '220px' }} />
                         </div>
                       )}
                       <span className="font-mono text-[10px] tracking-widest uppercase px-3 py-1 rounded bg-primary/10 text-primary border border-primary/20">{pe.category || 'Workshop'}</span>
@@ -786,7 +820,7 @@ const resultCount = displayedUpcomingEvents.length;
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 fontFamily: 'JetBrains Mono, monospace', fontSize: '0.8rem',
-                color: 'hsl(var(--primary))', textDecoration: 'none', letterSpacing: '0.02em',
+                color: 'hsl(243, 75%, 59%)', textDecoration: 'none', letterSpacing: '0.02em',
               }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.textDecoration = 'underline'; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.textDecoration = 'none'; }}
@@ -796,14 +830,6 @@ const resultCount = displayedUpcomingEvents.length;
           </div>
         </div>
       </section>
-
-      {/* Event Detail Modal (follows Achievement modal pattern) */}
-      <EventDetailModal
-        event={detailEvent}
-        isOpen={Boolean(detailEvent)}
-        onClose={() => setDetailEvent(null)}
-        isRegistered={detailEvent ? registeredEventIds.includes(Number(detailEvent.id)) : false}
-      />
 
       {/* Registration Modal Overlay (shared with full page) */}
       <AnimatePresence>
@@ -835,6 +861,7 @@ const resultCount = displayedUpcomingEvents.length;
                 <div className="w-full mb-4 rounded-xl overflow-hidden bg-secondary border border-border/50">
                   <img
                     src={normalizeBannerUrl(selectedEvent.banner || (selectedEvent as any).image_url)}
+                    referrerPolicy="no-referrer"
                     alt={selectedEvent.title}
                     className="w-full object-contain"
                     style={{ maxHeight: '320px' }}
@@ -1016,9 +1043,33 @@ const resultCount = displayedUpcomingEvents.length;
     );
   }
 
-  // ── Full page: original detailed view ────────────────────────────
+  
+  // ── Full page: premium dark events page ──────────────────────────
   return (
-    <section id="events" className="bg-background text-foreground transition-colors duration-200">
+    <section
+      id="events"
+      style={{
+        position: 'relative',
+        isolation: 'isolate',
+        minHeight: '100vh',
+        overflow: 'hidden',
+        color: '#F4F5FF',
+        background: `
+          radial-gradient(
+            ellipse at 12% 4%,
+            rgba(124, 58, 237, 0.20),
+            transparent 34%
+          ),
+          radial-gradient(
+            ellipse at 92% 18%,
+            rgba(6, 182, 212, 0.12),
+            transparent 30%
+          ),
+          #080A12
+        `,
+      }}
+    >
+
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '4rem 2rem' }}>
           <motion.div
   initial={{ opacity: 0, y: 20 }}
@@ -1026,38 +1077,63 @@ const resultCount = displayedUpcomingEvents.length;
   transition={{ duration: 0.5 }}
   className="mb-10"
 >
-  <h1
-    className="font-display font-bold text-foreground"
-    style={{
-      fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
-      lineHeight: 1,
-      letterSpacing: '-0.045em',
-    }}
-  >
-    Discover what&apos;s
-    <br />
-    <span
-      style={{
-        background:
-          'linear-gradient(90deg, hsl(var(--primary)), hsl(270 80% 62%))',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-      }}
-    >
-      happening next.
-    </span>
-  </h1>
+  <div
+  className="text-xs font-semibold uppercase tracking-[0.2em] mb-3"
+  data-events-style="events-inline-31"
+  style={{
+    color: '#A78BFA',
+    fontSize: '0.72rem',
+    fontWeight: 700,
+    letterSpacing: '0.22em',
+    textTransform: 'uppercase',
+  }}
+>
+  AI CLUB · EVENTS
+</div>
 
-  <p
-    className="mt-5 max-w-2xl text-muted-foreground"
+  
+<h1
+  className="font-display font-bold"
+  data-events-style="events-inline-32"
+  style={{
+    fontSize: 'clamp(2.6rem, 6vw, 5rem)',
+    lineHeight: 1.02,
+    letterSpacing: '-0.055em',
+    fontWeight: 800,
+    color: '#F8FAFC',
+    margin: 0,
+  }}
+>
+  Discover what's
+  <br />
+  <span
+    data-events-style="events-inline-33"
     style={{
-      fontSize: '1rem',
-      lineHeight: 1.7,
+      background: 'linear-gradient(90deg, #A78BFA 0%, #818CF8 45%, #67E8F9 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
     }}
   >
-    Workshops, hackathons, seminars, and AI events organized
-    by the AI Club community.
-  </p>
+    happening next.
+  </span>
+</h1>
+
+
+  
+<p
+  className="mt-5 max-w-2xl"
+  style={{
+    fontSize: '1rem',
+    lineHeight: 1.8,
+    color: '#A1A1B5',
+    maxWidth: '42rem',
+  }}
+>
+  Workshops, hackathons, seminars, and AI events organized
+  by the AI Club community.
+</p>
+
 </motion.div>
         <motion.div
           initial={{ opacity: 0 }}
@@ -1068,19 +1144,24 @@ const resultCount = displayedUpcomingEvents.length;
         {/* Highlight banner */}
         {featured && (
           <motion.div
-            className="rounded-2xl p-8 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-card border border-border"
+            className="rounded-2xl p-8 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
+            style={{
+              background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.16) 0%, rgba(6, 182, 212, 0.08) 100%)',
+              border: '1px solid rgba(167, 139, 250, 0.25)',
+              boxShadow: '0 12px 35px rgba(0, 0, 0, 0.3)',
+            }}
             initial={{ opacity: 0, scale: 0.97 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.15 }}
           >
             <div>
-              <span className="text-xs font-mono text-primary tracking-widest uppercase">Next Up</span>
-              <h3 className="font-display font-bold text-xl text-foreground mt-2">{featured.title}</h3>
-              <p className="text-sm text-muted-foreground mt-2 max-w-md">{featured.description}</p>
+              <span className="text-xs font-mono tracking-widest uppercase font-semibold text-[#A78BFA]">Next Up</span>
+              <h3 className="font-display font-bold text-2xl text-[#F8FAFC] mt-2">{featured.title}</h3>
+              <p className="text-sm text-[#94A3B8] mt-2 max-w-md leading-relaxed">{featured.description}</p>
               {featured.status === 'registration_open' && !authLoading && (
                 registeredEventIds.includes(Number(featured.id)) ? (
-                  <button disabled className="mt-4 px-4 py-2 text-xs font-semibold rounded-lg bg-primary/20 text-primary border border-primary/20 cursor-not-allowed">
+                  <button disabled className="mt-4 px-4 py-2 text-xs font-semibold rounded-lg bg-violet-500/20 text-violet-300 border border-violet-500/30 cursor-not-allowed">
                     Already Registered
                   </button>
                 ) : featured.registration_link ? (
@@ -1088,14 +1169,14 @@ const resultCount = displayedUpcomingEvents.length;
                     href={featured.registration_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-4 px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/95 hover:scale-105 transition-all duration-300 inline-flex items-center gap-2"
+                    className="mt-4 px-5 py-2.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:opacity-95 hover:scale-105 transition-all duration-300 inline-flex items-center gap-2 shadow-lg shadow-violet-500/25"
                   >
                     Register Now
                   </a>
                 ) : (
                   <button
                     onClick={() => navigate(`/events/${featured.id}`)}
-                    className="mt-4 px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/95 hover:scale-105 transition-all duration-300"
+                    className="mt-4 px-5 py-2.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:opacity-95 hover:scale-105 transition-all duration-300 shadow-lg shadow-violet-500/25"
                   >
                     Register Now
                   </button>
@@ -1104,7 +1185,7 @@ const resultCount = displayedUpcomingEvents.length;
             </div>
             <div className="flex gap-5">
               {timeLeft.d === '00' && timeLeft.h === '00' && timeLeft.m === '00' && timeLeft.s === '00' ? (
-                <div className="flex items-center justify-center bg-primary/10 border border-primary/20 px-4 py-2 rounded-xl text-primary font-mono text-sm font-semibold tracking-wider animate-pulse self-center">
+                <div className="flex items-center justify-center bg-violet-500/15 border border-violet-500/30 px-4 py-2 rounded-xl text-violet-300 font-mono text-sm font-semibold tracking-wider animate-pulse self-center">
                   COMING SOON
                 </div>
               ) : (
@@ -1114,11 +1195,11 @@ const resultCount = displayedUpcomingEvents.length;
                       key={value}
                       initial={{ y: -8, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
-                      className="font-mono text-3xl font-bold text-primary block"
+                      className="font-mono text-3xl font-bold text-cyan-300 block"
                     >
                       {value}
                     </motion.span>
-                    <span className="text-[10px] text-muted-foreground tracking-widest uppercase mt-1 block">
+                    <span className="text-[10px] text-[#94A3B8] tracking-widest uppercase mt-1 block font-mono">
                       {unit === 'd' ? 'Days' : unit === 'h' ? 'Hours' : unit === 'm' ? 'Mins' : 'Secs'}
                     </span>
                   </div>
@@ -1134,7 +1215,13 @@ const resultCount = displayedUpcomingEvents.length;
     initial={{ opacity: 0, y: 15 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4 }}
-    className="rounded-2xl p-4 md:p-5 mb-8 bg-card border border-border shadow-sm backdrop-blur-md"
+    className="rounded-2xl p-4 md:p-5 mb-8"
+    style={{
+      background: 'rgba(17, 21, 38, 0.75)',
+      border: '1px solid rgba(167, 139, 250, 0.18)',
+      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.35)',
+      backdropFilter: 'blur(16px)',
+    }}
   >
     <div className="flex flex-col xl:flex-row gap-5 xl:items-center">
 
@@ -1153,8 +1240,8 @@ const resultCount = displayedUpcomingEvents.length;
             className={`
               px-5 py-2 rounded-xl text-[13px] font-semibold transition-all duration-300 relative overflow-hidden
               ${activeTab === tab.value
-                ? 'bg-primary text-primary-foreground shadow-md'
-                : 'bg-transparent text-muted-foreground hover:bg-primary/10 hover:text-primary hover:-translate-y-0.5 hover:shadow-sm'
+                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-600/30'
+                : 'bg-transparent text-slate-400 hover:bg-white/5 hover:text-white hover:-translate-y-0.5'
               }
             `}
           >
@@ -1165,7 +1252,7 @@ const resultCount = displayedUpcomingEvents.length;
                 className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full"
                 style={{
                   background:
-                    activeTab === 'live' ? 'currentColor' : 'rgb(34,197,94)',
+                    activeTab === 'live' ? 'white' : 'rgb(34,197,94)',
                 }}
               />
             )}
@@ -1174,11 +1261,11 @@ const resultCount = displayedUpcomingEvents.length;
       </div>
 
       {/* Divider */}
-      <div className="hidden xl:block w-px h-7 bg-border" />
+      <div className="hidden xl:block w-px h-7 bg-white/10" />
 
       {/* Categories */}
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-xs font-semibold text-muted-foreground mr-1">
+        <span className="text-xs font-semibold text-slate-400 mr-1">
           Category
         </span>
 
@@ -1195,8 +1282,8 @@ const resultCount = displayedUpcomingEvents.length;
             className={`
               px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all duration-300
               ${categoryFilter === category.value
-                ? 'bg-primary/15 text-primary border-primary/30 shadow-sm'
-                : 'bg-transparent text-muted-foreground border-border hover:border-primary/40 hover:text-primary hover:bg-primary/5 hover:-translate-y-0.5 hover:shadow-sm'
+                ? 'bg-violet-500/20 text-violet-300 border-violet-400/40 shadow-sm'
+                : 'bg-white/[0.03] text-slate-400 border-white/10 hover:border-violet-400/30 hover:text-white hover:bg-white/5 hover:-translate-y-0.5'
               }
             `}
           >
@@ -1215,7 +1302,7 @@ const resultCount = displayedUpcomingEvents.length;
         >
           <Search
             size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
           />
 
           <input
@@ -1223,13 +1310,13 @@ const resultCount = displayedUpcomingEvents.length;
             placeholder="Search events..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-9 py-2.5 rounded-xl text-xs outline-none bg-secondary/60 border border-border text-foreground hover:border-primary/40 hover:shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 placeholder:text-muted-foreground"
+            className="w-full pl-9 pr-9 py-2.5 rounded-xl text-xs outline-none bg-[#0a0c18]/90 border border-violet-400/20 text-white placeholder:text-slate-500 hover:border-violet-400/40 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20 transition-all duration-300"
           />
 
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
             >
               <X size={14} />
             </button>
@@ -1246,9 +1333,9 @@ const resultCount = displayedUpcomingEvents.length;
     animate={{ opacity: 1 }}
     className="flex items-center justify-between mb-5"
   >
-    <div className="text-xs text-muted-foreground">
+    <div className="text-xs text-slate-400">
       Showing{' '}
-      <span className="font-semibold text-foreground">
+      <span className="font-semibold text-white">
         {displayedUpcomingEvents.length}
       </span>{' '}
       {displayedUpcomingEvents.length === 1 ? 'event' : 'events'}
@@ -1261,7 +1348,7 @@ const resultCount = displayedUpcomingEvents.length;
           setCategoryFilter('');
           setActiveTab('all');
         }}
-        className="text-xs font-medium text-primary hover:underline"
+        className="text-xs font-medium text-violet-300 hover:text-violet-200 hover:underline"
       >
         Clear filters
       </button>
@@ -1317,16 +1404,25 @@ const resultCount = displayedUpcomingEvents.length;
               ease: 'easeOut',
             },
           }}
-          onClick={() => setDetailEvent(card)}
-          className="group relative overflow-hidden rounded-2xl cursor-pointer bg-card border border-border transition-all duration-300 hover:border-primary/40 hover:-translate-y-1 shadow-sm"
+          onClick={() => navigate(`/events/${card.id}`)}
+          className="group relative flex h-full flex-col overflow-hidden rounded-3xl cursor-pointer"
+          style={{
+            background:
+              'linear-gradient(155deg, rgba(24,27,48,0.98) 0%, rgba(13,15,29,0.99) 58%, rgba(19,15,37,0.99) 100%)',
+            border: '1px solid rgba(167,139,250,0.20)',
+            boxShadow:
+              '0 12px 35px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.045)',
+            transition:
+              'box-shadow 300ms ease, border-color 300ms ease',
+          }}
         >
           {/* Hover glow */}
           <div
             className="absolute -top-24 -right-24 w-48 h-48 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
             style={{
               background:
-                'radial-gradient(circle, rgba(121,101,255,0.15), transparent 70%)',
-              filter: 'blur(10px)',
+                'radial-gradient(circle, rgba(139,92,246,0.24), rgba(34,211,238,0.08) 45%, transparent 72%)',
+              filter: 'blur(14px)',
             }}
           />
 
@@ -1336,12 +1432,13 @@ const resultCount = displayedUpcomingEvents.length;
             style={{
               height: '210px',
               background:
-                'linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(270 80% 65% / 0.08))',
+                'linear-gradient(135deg, hsl(243,75%,59%,0.12), hsl(270,80%,65%,0.08))',
             }}
           >
             {eventImage ? (
               <motion.img
-                src={eventImage}
+                src={normalizeBannerUrl(eventImage)}
+                referrerPolicy="no-referrer"
                 alt={card.title}
                 loading="lazy"
                 className="w-full h-full object-cover"
@@ -1362,14 +1459,20 @@ const resultCount = displayedUpcomingEvents.length;
               className="absolute inset-0 pointer-events-none"
               style={{
                 background:
-                  'linear-gradient(to top, rgba(10,12,30,0.8) 0%, rgba(10,12,30,0.1) 55%, transparent 100%)',
+                  'linear-gradient(to top, rgba(10,12,30,0.72) 0%, rgba(10,12,30,0.08) 55%, transparent 100%)',
               }}
             />
 
             {/* Category */}
             <div className="absolute top-4 left-4">
               <span
-                className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-[0.14em] uppercase bg-card/90 text-primary border border-border backdrop-blur-md"
+                className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-[0.14em] uppercase"
+                style={{
+                  background: 'rgba(10, 12, 24, 0.85)',
+                  color: '#C4B5FD',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(167, 139, 250, 0.35)',
+                }}
               >
                 {card.category}
               </span>
@@ -1379,22 +1482,40 @@ const resultCount = displayedUpcomingEvents.length;
             <div className="absolute top-4 right-4">
               {isLive ? (
                 <span
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-500 text-white shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase"
+                  style={{
+                    background: 'rgba(34,197,94,0.92)',
+                    color: 'white',
+                    boxShadow: '0 4px 15px rgba(34,197,94,0.3)',
+                  }}
                 >
                   <span
-                    className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"
+                    className="w-1.5 h-1.5 rounded-full bg-white"
+                    style={{
+                      animation: 'pulse 1.5s infinite',
+                    }}
                   />
                   Live
                 </span>
               ) : isPast ? (
                 <span
-                  className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-secondary/80 text-muted-foreground backdrop-blur-md border border-border"
+                  className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-wider uppercase"
+                  style={{
+                    background: 'rgba(15,23,42,0.72)',
+                    color: 'white',
+                    backdropFilter: 'blur(8px)',
+                  }}
                 >
                   Past
                 </span>
               ) : (
                 <span
-                  className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-primary text-primary-foreground backdrop-blur-md"
+                  className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-wider uppercase"
+                  style={{
+                    background: 'rgba(99,102,241,0.9)',
+                    color: 'white',
+                    backdropFilter: 'blur(8px)',
+                  }}
                 >
                   Upcoming
                 </span>
@@ -1418,8 +1539,9 @@ const resultCount = displayedUpcomingEvents.length;
           {/* Card content */}
           <div className="p-6">
             <h4
-              className="font-display font-bold text-xl leading-tight mb-3 text-card-foreground"
+              className="font-display font-bold text-xl leading-tight mb-3"
               style={{
+                color: '#F8FAFC',
                 letterSpacing: '-0.02em',
               }}
             >
@@ -1427,8 +1549,9 @@ const resultCount = displayedUpcomingEvents.length;
             </h4>
 
             <p
-              className="text-sm leading-relaxed mb-5 text-muted-foreground"
+              className="text-sm leading-relaxed mb-5"
               style={{
+                color: '#94A3B8',
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
@@ -1440,26 +1563,42 @@ const resultCount = displayedUpcomingEvents.length;
 
             {/* Event information */}
             <div
-              className="space-y-2.5 pt-4 border-t border-border"
+              className="space-y-2.5 pt-4"
+              style={{
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              }}
             >
               {(card.venue || card.event_type) && (
                 <div className="flex items-center gap-2 text-xs">
                   <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center bg-primary/10 text-primary"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    style={{
+                      background: 'rgba(124, 58, 237, 0.18)',
+                      color: '#A78BFA',
+                    }}
                   >
                     <CalendarDays size={13} />
                   </div>
 
-                  <span className="text-muted-foreground">
+                  <span
+                    style={{
+                      color: '#CBD5E1',
+                    }}
+                  >
                     {card.venue || 'Online'}
                   </span>
 
                   {card.event_type && (
                     <>
-                      <span className="text-muted-foreground/40">
+                      <span className="text-slate-500">
                         •
                       </span>
-                      <span className="capitalize text-muted-foreground">
+                      <span
+                        className="capitalize"
+                        style={{
+                          color: '#CBD5E1',
+                        }}
+                      >
                         {card.event_type} event
                       </span>
                     </>
@@ -1470,12 +1609,20 @@ const resultCount = displayedUpcomingEvents.length;
               {card.speaker && (
                 <div className="flex items-center gap-2 text-xs">
                   <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center bg-accent/10 text-accent"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    style={{
+                      background: 'rgba(6, 182, 212, 0.18)',
+                      color: '#22D3EE',
+                    }}
                   >
                     <Mic size={13} />
                   </div>
 
-                  <span className="text-muted-foreground">
+                  <span
+                    style={{
+                      color: '#CBD5E1',
+                    }}
+                  >
                     {card.speaker}
                   </span>
                 </div>
@@ -1487,14 +1634,24 @@ const resultCount = displayedUpcomingEvents.length;
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20"
+                className="mt-4 p-3 rounded-xl"
+                style={{
+                  background:
+                    'linear-gradient(135deg, rgba(234,179,8,0.12), rgba(245,158,11,0.05))',
+                  border: '1px solid rgba(234,179,8,0.25)',
+                }}
               >
-                <div className="flex items-center gap-2 text-xs font-semibold text-amber-500 mb-1">
+                <div className="flex items-center gap-2 text-xs font-semibold text-yellow-400 mb-1">
                   <span>🏆</span>
                   Winners
                 </div>
 
-                <div className="text-xs leading-relaxed text-muted-foreground">
+                <div
+                  className="text-xs leading-relaxed"
+                  style={{
+                    color: '#FEF08A',
+                  }}
+                >
                   {card.winners}
                 </div>
 
@@ -1504,7 +1661,7 @@ const resultCount = displayedUpcomingEvents.length;
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-primary hover:underline"
+                    className="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-cyan-300 hover:text-cyan-200 hover:underline"
                   >
                     View results
                     <ExternalLink size={11} />
@@ -1519,7 +1676,12 @@ const resultCount = displayedUpcomingEvents.length;
                 {registeredEventIds.includes(Number(card.id)) ? (
                   <button
                     disabled
-                    className="w-full py-2.5 rounded-xl text-xs font-semibold bg-primary/20 text-primary border border-primary/20 cursor-not-allowed"
+                    className="w-full py-2.5 rounded-xl text-xs font-semibold"
+                    style={{
+                      background: 'rgba(124, 58, 237, 0.15)',
+                      color: '#A78BFA',
+                      border: '1px solid rgba(167, 139, 250, 0.25)',
+                    }}
                   >
                     Already Registered
                   </button>
@@ -1529,7 +1691,14 @@ const resultCount = displayedUpcomingEvents.length;
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="group/button w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                    className="group/button w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, #7C3AED 0%, #6366F1 50%, #06B6D4 100%)',
+                      color: 'white',
+                      boxShadow:
+                        '0 5px 20px rgba(124, 58, 237, 0.35)',
+                    }}
                   >
                     Register Now
                     <ArrowRight
@@ -1543,7 +1712,14 @@ const resultCount = displayedUpcomingEvents.length;
                       e.stopPropagation();
                       navigate(`/events/${card.id}`);
                     }}
-                    className="group/button w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                    className="group/button w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, #7C3AED 0%, #6366F1 50%, #06B6D4 100%)',
+                      color: 'white',
+                      boxShadow:
+                        '0 5px 20px rgba(124, 58, 237, 0.35)',
+                    }}
                   >
                     Register Now
                     <ArrowRight
@@ -1554,26 +1730,15 @@ const resultCount = displayedUpcomingEvents.length;
                 )}
               </div>
             )}
-
-            {card.status !== 'registration_open' && (
-              <div className="mt-5">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDetailEvent(card);
-                  }}
-                  className="w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border border-border hover:bg-secondary text-foreground transition-colors cursor-pointer"
-                >
-                  View Details
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Bottom accent */}
           <div
-            className="absolute bottom-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-primary"
+            className="absolute bottom-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{
+              background:
+                'linear-gradient(90deg, hsl(243,75%,59%), hsl(270,80%,65%))',
+            }}
           />
         </motion.div>
       );
@@ -1618,6 +1783,7 @@ const resultCount = displayedUpcomingEvents.length;
                 <div className="w-full mb-4 rounded-xl overflow-hidden bg-secondary border border-border/50">
                   <img
                     src={normalizeBannerUrl(selectedEvent.banner || (selectedEvent as any).image_url)}
+                    referrerPolicy="no-referrer"
                     alt={selectedEvent.title}
                     className="w-full object-contain"
                     style={{ maxHeight: '320px' }}
@@ -1860,14 +2026,6 @@ const resultCount = displayedUpcomingEvents.length;
           </div>
         )}
       </AnimatePresence>
-
-      {/* Event Detail Modal (full page fallback) */}
-      <EventDetailModal
-        event={detailEvent}
-        isOpen={Boolean(detailEvent)}
-        onClose={() => setDetailEvent(null)}
-        isRegistered={detailEvent ? registeredEventIds.includes(Number(detailEvent.id)) : false}
-      />
       </div>
     </section>
   );

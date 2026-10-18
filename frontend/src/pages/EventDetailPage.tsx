@@ -13,6 +13,7 @@ import { getApiUrl } from '../lib/api';
 import { normalizeBannerUrl } from '../lib/utils';
 import { api } from '../lib/apiClient';
 import { useAuth } from '../contexts/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -174,7 +175,17 @@ export default function EventDetailPage() {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [existingRegistrationId, setExistingRegistrationId] = useState<number | null>(null);
 
-  const { user: authUser } = useAuth();
+  const { user: authUser, login } = useAuth();
+
+  // Auto-save form data while not logged in (restored after login if page reloads)
+  useEffect(() => {
+    if (!userProfile && id && Object.keys(responses).length > 0) {
+      try {
+        sessionStorage.setItem(`event-reg-draft-${id}`, JSON.stringify(responses));
+        sessionStorage.setItem(`event-reg-team-${id}`, JSON.stringify({ teamName, teamMembers }));
+      } catch (_) {}
+    }
+  }, [responses, teamName, teamMembers, userProfile, id]);
 
   useEffect(() => {
     setUserProfile(authUser);
@@ -233,8 +244,29 @@ export default function EventDetailPage() {
             const existingFlat: Record<string, any> = (window as any).__existingFlat || {};
             // Pre-fill from existing registration responses if available,
             // otherwise fall back to user profile fields
+            // Try restoring saved form data from sessionStorage (saved before login redirect)
+            let savedResponses: Record<number, any> | null = null;
+            try {
+              const saved = sessionStorage.getItem(`event-reg-draft-${id}`);
+              if (saved) {
+                savedResponses = JSON.parse(saved);
+                sessionStorage.removeItem(`event-reg-draft-${id}`);
+              }
+            } catch (_) {}
+
+            let savedTeam: { teamName?: string; teamMembers?: { name: string; email: string }[] } | null = null;
+            try {
+              const saved = sessionStorage.getItem(`event-reg-team-${id}`);
+              if (saved) {
+                savedTeam = JSON.parse(saved);
+                sessionStorage.removeItem(`event-reg-team-${id}`);
+              }
+            } catch (_) {}
+
             fields.forEach(f => {
-              if (existingFlat[f.label] !== undefined) {
+              if (savedResponses && savedResponses[f.id] !== undefined) {
+                init[f.id] = savedResponses[f.id];
+              } else if (existingFlat[f.label] !== undefined) {
                 let val = existingFlat[f.label];
                 if (typeof val === 'string') {
                   val = val.replace(/^(\d+)\.0$/, '$1');
@@ -246,6 +278,11 @@ export default function EventDetailPage() {
             });
             setResponses(init);
             delete (window as any).__existingFlat;
+
+            if (savedTeam) {
+              if (savedTeam.teamName) setTeamName(savedTeam.teamName);
+              if (savedTeam.teamMembers?.length) setTeamMembers(savedTeam.teamMembers);
+            }
           }
         } catch (_) {}
       } catch (err: any) {
@@ -926,6 +963,38 @@ export default function EventDetailPage() {
                         <>Register for Event <ArrowRight size={16} /></>
                       )}
                     </button>
+
+                    {/* Login required alert */}
+                    {!isEditMode && !userProfile && (
+                      <div style={{
+                        marginTop: '1rem', padding: '12px 16px', borderRadius: 8,
+                        background: 'hsl(35,100%,96%)',
+                        border: '1px solid hsl(35,90%,75%)',
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        fontFamily: 'Inter, sans-serif', fontSize: '0.85rem',
+                        color: 'hsl(35,70%,28%)',
+                        flexWrap: 'wrap',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <AlertCircle size={18} style={{ flexShrink: 0, color: 'hsl(35,85%,45%)' }} />
+                          <span>Login required to register.</span>
+                        </div>
+                        <GoogleLogin
+                          onSuccess={async (credentialResponse) => {
+                            if (credentialResponse.credential) {
+                              try {
+                                await login(credentialResponse.credential);
+                              } catch (err) {
+                                console.error('Login error:', err);
+                              }
+                            }
+                          }}
+                          onError={() => console.error('Google login error')}
+                          size="medium"
+                          text="signin"
+                        />
+                      </div>
+                    )}
                   </form>
                 )}
               </div>
