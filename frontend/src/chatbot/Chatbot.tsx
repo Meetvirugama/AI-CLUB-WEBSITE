@@ -1,30 +1,25 @@
 /**
- * Chatbot.tsx — NeuralNode: AI Club DAU's global assistant.
+ * Chatbot.tsx — AURA: AI Club DAU's Left-Side AI Assistant.
  *
- * Capabilities:
- *   1. Knowledge assistant — answers questions about members, events, projects,
- *      resources, roadmaps, achievements, news using live DB-backed RAG.
- *   2. Smart navigation — understands "take me to events" style requests and
- *      navigates using React Router, with auth-aware route protection.
- *
- * Security:
- *   - Navigation destination keys are validated by the backend against an
- *     explicit allowlist before being returned in the response.
- *   - Admin routes are RBAC-checked server-side (user.is_admin).
- *   - The frontend does a second independent auth check before calling
- *     useNavigate() — the LLM cannot bypass either check.
- *   - Bearer token is sent with each request so the backend can check admin.
+ * Inspired by the reference design with:
+ *   - Sleek floating/docked left-side panel
+ *   - Luminous dark theme aura gradient and ambient illumination
+ *   - Personal greeting: "Hello {Name}, Can I help you?"
+ *   - Glassmorphic "Daily Insights" card
+ *   - Pill suggestions & frosted capsule input bar
+ *   - Full RAG knowledge streaming & smart navigation allowlist
  */
 
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import {
   MessageSquare, X, Send, Bot, User, Loader2, Sparkles,
-  ExternalLink, Navigation, Lock,
+  ExternalLink, Navigation, Lock, RotateCcw, ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useChatbot } from '../contexts/ChatbotContext';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,9 +46,6 @@ interface Message {
 }
 
 // ── Navigation allowlist (frontend mirror of backend NAVIGATION_ALLOWLIST) ───
-// Keys match the backend exactly. This is the SECOND independent auth check —
-// even if the backend somehow passed a nav action, the frontend re-validates
-// before calling useNavigate().
 
 interface NavEntry {
   path: string;
@@ -83,93 +75,61 @@ const NAVIGATION_ALLOWLIST: Record<string, NavEntry> = {
   'admin':                { path: '/admin',               label: 'Admin Dashboard',             requiresAuth: true,  requiresAdmin: true  },
 };
 
-// ── Suggested questions (knowledge + navigation) ──────────────────────────────
+// ── Suggested quick prompts ──────────────────────────────────────────────────
 
-const SUGGESTED_QUESTIONS = [
+const SUGGESTED_PROMPTS = [
   'What are the upcoming events?',
-  'Take me to the Events page.',
+  'Show me AI Club projects',
+  'Take me to Weekly Veneza',
+  'Open the GenAI roadmap',
   'Who are the AI Club members?',
-  'Show me AI Club projects.',
-  'Open the GenAI roadmap.',
-  'What resources are available to learn ML?',
-  'Take me to the Projects page.',
   'How do I join the club?',
 ];
 
-// ── Source chip styles ────────────────────────────────────────────────────────
+// ── Source chip styling ──────────────────────────────────────────────────────
 
 const SOURCE_TYPE_LABELS: Record<string, { label: string; color: string }> = {
-  events:       { label: 'Events',       color: 'hsl(243 75% 59%)' },
-  members:      { label: 'Members',      color: 'hsl(150 60% 35%)' },
-  projects:     { label: 'Projects',     color: 'hsl(330 45% 50%)' },
-  resources:    { label: 'Resources',    color: 'hsl(40 90% 40%)'  },
-  roadmaps:     { label: 'Roadmaps',     color: 'hsl(200 70% 40%)' },
-  achievements: { label: 'Achievements', color: 'hsl(270 60% 50%)' },
-  news:         { label: 'News',         color: 'hsl(20 80% 45%)'  },
+  member:       { label: 'Member',       color: '#7965FF' },
+  event:        { label: 'Event',        color: '#FF9418' },
+  project:      { label: 'Project',      color: '#35D49A' },
+  resource:     { label: 'Resource',     color: '#60A5FA' },
+  roadmap:      { label: 'Roadmap',      color: '#F472B6' },
+  news:         { label: 'News',         color: '#FBBF24' },
+  achievement:  { label: 'Achievement',  color: '#A78BFA' },
 };
 
-// ── Inline markdown renderer ──────────────────────────────────────────────────
-// Returns JSX — no dangerouslySetInnerHTML (XSS-safe).
+// ── Markdown Parser ──────────────────────────────────────────────────────────
 
-function parseTableRow(row: string): string[] {
-  let cleaned = row.trim();
-  if (cleaned.startsWith('|')) cleaned = cleaned.slice(1);
-  if (cleaned.endsWith('|')) cleaned = cleaned.slice(0, -1);
-  return cleaned.split('|').map(c => c.trim());
-}
-
-function renderMarkdown(text: string): JSX.Element {
-  const lines = text.split('\n');
+function renderFormattedText(text: string): JSX.Element {
+  if (!text) return <></>;
+  const rawLines = text.split('\n');
   const elements: JSX.Element[] = [];
 
   let i = 0;
-  while (i < lines.length) {
-    const line = lines[i];
+  while (i < rawLines.length) {
+    const line = rawLines[i];
     const trimmed = line.trim();
 
     if (!trimmed) {
-      elements.push(<div key={`gap-${i}`} style={{ height: '0.35rem' }} />);
+      elements.push(<div key={`br-${i}`} className="h-2" />);
       i++;
       continue;
     }
 
-    if (trimmed.includes('|') && i + 1 < lines.length) {
-      const nextTrimmed = lines[i + 1].trim();
-      if (nextTrimmed.includes('|') && nextTrimmed.includes('---')) {
-        const tableRows: string[] = [];
-        while (i < lines.length && lines[i].trim().includes('|')) {
-          tableRows.push(lines[i].trim());
-          i++;
-        }
-        
-        elements.push(
-          <div key={`table-${i}`} style={{ overflowX: 'auto', margin: '0.75rem 0', borderRadius: '0.5rem', border: '1px solid hsl(var(--border))' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85em', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ backgroundColor: 'hsl(var(--muted) / 0.5)', borderBottom: '1px solid hsl(var(--border))' }}>
-                  {parseTableRow(tableRows[0]).map((cell, idx) => (
-                    <th key={idx} style={{ padding: '0.5rem 0.75rem', fontWeight: 600 }}>
-                      {renderInline(cell, `th-${idx}`)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {tableRows.slice(2).map((row, rowIdx) => (
-                  <tr key={rowIdx} style={{ borderBottom: rowIdx === tableRows.length - 3 ? 'none' : '1px solid hsl(var(--border))' }}>
-                    {parseTableRow(row).map((cell, idx) => (
-                      <td key={idx} style={{ padding: '0.5rem 0.75rem', verticalAlign: 'top' }}>
-                        {renderInline(cell, `td-${rowIdx}-${idx}`)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-        continue;
+    if (trimmed.startsWith('```')) {
+      const codeLines: string[] = [];
+      i++;
+      while (i < rawLines.length && !rawLines[i].trim().startsWith('```')) {
+        codeLines.push(rawLines[i]);
+        i++;
       }
+      i++;
+      elements.push(
+        <pre key={`code-${i}`} className="my-2 p-3 rounded-xl bg-black/40 border border-white/10 font-mono text-xs overflow-x-auto text-emerald-400">
+          <code>{codeLines.join('\n')}</code>
+        </pre>
+      );
+      continue;
     }
 
     const isBullet = trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ');
@@ -178,15 +138,14 @@ function renderMarkdown(text: string): JSX.Element {
 
     if (isBullet) {
       elements.push(
-        <div key={`li-${i}`} style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-start' }}>
-          <span style={{ color: 'hsl(243 75% 59%)', flexShrink: 0, marginTop: '0.05rem', fontSize: '0.85em' }}>▸</span>
-          <span>{inlineNodes}</span>
+        <div key={`li-${i}`} className="flex gap-2 items-start text-xs sm:text-sm my-1">
+          <span className="text-primary flex-shrink-0 mt-0.5 text-xs">▸</span>
+          <span className="flex-1">{inlineNodes}</span>
         </div>
       );
     } else {
-      elements.push(<div key={`p-${i}`}>{inlineNodes}</div>);
+      elements.push(<div key={`p-${i}`} className="text-xs sm:text-sm my-1 leading-relaxed">{inlineNodes}</div>);
     }
-    
     i++;
   }
 
@@ -203,7 +162,7 @@ function renderInline(text: string, lineKey: number | string): JSX.Element {
           return <br key={`${lineKey}-${i}`} />;
         }
         if (part.startsWith('**') && part.endsWith('**')) {
-          return <strong key={`${lineKey}-${i}`}>{part.slice(2, -2)}</strong>;
+          return <strong key={`${lineKey}-${i}`} className="font-semibold text-white">{part.slice(2, -2)}</strong>;
         }
         if (part.startsWith('*') && part.endsWith('*') && !part.startsWith('**')) {
           return <em key={`${lineKey}-${i}`}>{part.slice(1, -1)}</em>;
@@ -213,8 +172,7 @@ function renderInline(text: string, lineKey: number | string): JSX.Element {
           const trailing = part.slice(url.length);
           return (
             <span key={`${lineKey}-${i}`}>
-              <a href={url} target="_blank" rel="noopener noreferrer"
-                style={{ color: 'hsl(243 75% 59%)', textDecoration: 'underline', wordBreak: 'break-all' }}>
+              <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
                 {url}
               </a>
               {trailing}
@@ -227,10 +185,10 @@ function renderInline(text: string, lineKey: number | string): JSX.Element {
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Main Component ────────────────────────────────────────────────────────────
 
 export default function Chatbot() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, setIsOpen, closeChat, toggleChat } = useChatbot();
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -239,26 +197,44 @@ export default function Chatbot() {
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(true);
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
 
   const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { isAuthenticated, isAdmin, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useAuth();
+
+  const userFirstName = user?.name ? user.name.split(' ')[0] : 'Explorer';
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isLoading]);
 
-  // ── Execute a navigation action from the API response ─────────────────────
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 200);
+    }
+  }, [isOpen]);
+
+  // Keyboard shortcut: Cmd/Ctrl + K to toggle, Escape to close
+  useEffect(() => {
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        toggleChat();
+      } else if (e.key === 'Escape' && isOpen) {
+        closeChat();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, toggleChat, closeChat]);
+
+  // ── Navigation execution ──────────────────────────────────────────────────
   const executeNavigation = (navAction: NavigationAction) => {
     const entry = NAVIGATION_ALLOWLIST[navAction.destination];
+    if (!entry) return;
 
-    // Frontend second-layer security check (independent of backend)
-    if (!entry) {
-      // Key not in frontend allowlist — deny regardless of backend response
-      return;
-    }
     if (entry.requiresAdmin && !isAdmin) {
       setMessages(prev => [...prev, {
         sender: 'bot',
@@ -276,52 +252,49 @@ export default function Chatbot() {
       return;
     }
 
-    // Show navigation confirmation and navigate after brief delay
     setNavigatingTo(entry.label);
     setTimeout(() => {
       setNavigatingTo(null);
       navigate(entry.path);
-      setIsOpen(false);
+      closeChat();
     }, 900);
   };
 
-  // ── Send message to backend ───────────────────────────────────────────────
+  // ── Send message ──────────────────────────────────────────────────────────
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
-    setShowSuggestions(false);
-    
-    // Append user message and empty bot placeholder
+
     setMessages(prev => [
       ...prev,
       { sender: 'user', text },
-      { sender: 'bot', text: '', sources: [], navigation_action: null, messageType: 'knowledge' }
+      { sender: 'bot', text: '', sources: [], navigation_action: null, messageType: 'knowledge' },
     ]);
-    
+
     setInputValue('');
     setIsLoading(true);
 
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-
       const res = await fetch(getApiUrl('/api/club-chat'), {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ message: text }),
       });
 
       if (res.status === 429) {
         setMessages(prev => {
-          const newMsgs = [...prev];
-          newMsgs[newMsgs.length - 1] = {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
             sender: 'bot',
             text: "You're sending messages a little fast! Please wait a moment and try again. 🙏",
             messageType: 'error',
           };
-          return newMsgs;
+          return updated;
         });
+        setIsLoading(false);
         return;
       }
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       if (!res.body) throw new Error("No readable stream");
 
@@ -330,7 +303,7 @@ export default function Chatbot() {
       let done = false;
       let buffer = "";
 
-      setIsLoading(false); // Turn off spinner once stream starts
+      setIsLoading(false);
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
@@ -338,339 +311,336 @@ export default function Chatbot() {
         if (value) {
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
-          
-          // Process all complete lines
-          buffer = lines.pop() || ''; // Keep the last incomplete line in the buffer
-          
+          buffer = lines.pop() || '';
+
           for (const line of lines) {
             if (line.startsWith('data: ')) {
               const dataStr = line.slice(6);
               if (dataStr.trim() === '[DONE]') continue;
-              
+
               try {
-                const data = JSON.parse(dataStr);
-                
+                const parsed = JSON.parse(dataStr);
                 setMessages(prev => {
-                  const newMsgs = [...prev];
-                  const lastMsg = { ...newMsgs[newMsgs.length - 1] };
-                  
-                  if (data.error) {
-                    lastMsg.text = data.error;
-                    lastMsg.messageType = 'error';
-                  } else {
-                    if (data.sources) lastMsg.sources = data.sources;
-                    if (data.text) lastMsg.text += data.text;
-                    if (data.navigation_action) {
-                      lastMsg.navigation_action = data.navigation_action;
-                      lastMsg.messageType = 'navigation';
-                    }
-                  }
-                  
-                  newMsgs[newMsgs.length - 1] = lastMsg;
-                  return newMsgs;
+                  const updated = [...prev];
+                  const last = updated[updated.length - 1];
+                  if (!last || last.sender !== 'bot') return prev;
+
+                  const nextText = parsed.answer !== undefined ? parsed.answer : last.text;
+                  const nextSources = parsed.sources !== undefined ? parsed.sources : last.sources;
+                  const nextNav = parsed.navigation_action !== undefined ? parsed.navigation_action : last.navigation_action;
+
+                  updated[updated.length - 1] = {
+                    ...last,
+                    text: nextText,
+                    sources: nextSources,
+                    navigation_action: nextNav,
+                    messageType: parsed.message_type || last.messageType,
+                  };
+                  return updated;
                 });
-                
-                if (data.navigation_action) {
-                  executeNavigation(data.navigation_action);
+
+                if (parsed.navigation_action) {
+                  executeNavigation(parsed.navigation_action);
                 }
-              } catch (e) {
-                // Ignore parse errors from partial chunks
+              } catch {
+                // partial chunk skip
               }
             }
           }
         }
       }
-
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Chat error:', err);
       setMessages(prev => {
-        const newMsgs = [...prev];
-        newMsgs[newMsgs.length - 1] = {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
           sender: 'bot',
-          text: "Sorry, I couldn't reach the server right now. Please try again in a moment!",
+          text: "I ran into an issue connecting to the AI brain. Please try again in a moment.",
           messageType: 'error',
         };
-        return newMsgs;
+        return updated;
       });
-    } finally {
       setIsLoading(false);
     }
   };
 
-  const handleKey = (e: KeyboardEvent) => {
+  const handleKey = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage(inputValue);
     }
   };
 
+  const clearChat = () => {
+    setMessages([
+      {
+        sender: 'bot',
+        text: `Chat cleared. Hello ${userFirstName}! How can I help you today?`,
+      },
+    ]);
+  };
+
   return (
-    <div
-      className="fixed bottom-6 right-6 z-[200] flex flex-col items-end gap-3"
-      style={{ pointerEvents: 'none' }}
-    >
-      {/* Chat window */}
+    <>
+      {/* ── Left-Side AI Chat Bar Overlay & Drawer ────────────────────────── */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            key="chat-window"
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="w-[370px] rounded-2xl bg-card border border-border flex flex-col overflow-hidden"
-            style={{
-              pointerEvents: 'all',
-              boxShadow: '0 25px 60px -15px hsl(217 91% 60% / 0.25), 0 0 0 1px hsl(217 91% 60% / 0.08)',
-            }}
-          >
-            {/* Header */}
-            <div className="px-5 py-4 border-b border-border flex items-center gap-3 bg-gradient-to-r from-primary/10 to-accent/5">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center ring-1 ring-primary/30">
-                <Bot size={16} className="text-primary" />
-              </div>
-              <div className="flex-1">
-                <span className="font-display font-bold text-sm text-foreground">NeuralNode</span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 2s ease-in-out infinite' }} />
-                  <span className="text-[10px] text-muted-foreground">
-                    AI Club DAU · Knowledge + Navigation
-                  </span>
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeChat}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity"
+              aria-hidden="true"
+            />
+
+            {/* Left-Side AI Panel (matching the reference layout) */}
+            <motion.aside
+              initial={{ x: -460, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -460, opacity: 0 }}
+              transition={{ type: 'spring', damping: 26, stiffness: 280 }}
+              className="fixed top-2 bottom-2 left-2 sm:top-3 sm:bottom-3 sm:left-3 w-[calc(100vw-16px)] sm:w-[420px] md:w-[450px] z-50 rounded-[28px] overflow-hidden flex flex-col shadow-2xl border border-white/10"
+              style={{
+                background: 'linear-gradient(165deg, rgba(22, 18, 48, 0.96) 0%, rgba(13, 16, 26, 0.97) 35%, rgba(10, 13, 22, 0.98) 70%, rgba(32, 20, 18, 0.95) 100%)',
+                boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 35px -5px rgba(121, 101, 255, 0.22)',
+              }}
+              role="dialog"
+              aria-modal="true"
+              aria-label="NeuralNode AI Chat Assistant"
+            >
+              {/* Atmospheric Glow Overlays */}
+              <div className="absolute top-0 left-0 w-72 h-72 bg-primary/20 rounded-full blur-[90px] pointer-events-none" />
+              <div className="absolute bottom-0 right-0 w-72 h-72 bg-accent/15 rounded-full blur-[90px] pointer-events-none" />
+              
+              {/* Subtle wave contours at bottom */}
+              <div
+                className="absolute inset-x-0 bottom-0 h-44 pointer-events-none opacity-20"
+                style={{
+                  background: 'radial-gradient(ellipse 100% 60% at 50% 100%, rgba(255, 148, 24, 0.35) 0%, transparent 80%)',
+                }}
+              />
+
+              {/* ── Top Header ────────────────────────────────────────────── */}
+              <div className="px-5 pt-4 pb-3 flex items-center justify-between border-b border-white/10 shrink-0 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-[#DDE1FF]/90 dark:bg-primary/25 border border-indigo-200/50 dark:border-primary/40 flex items-center justify-center text-primary shadow-sm shrink-0">
+                    <Bot size={18} className="text-primary" strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-bold text-white tracking-wide leading-tight">
+                      NeuralNode
+                    </h3>
+                    <p className="text-[10px] text-white/60 font-mono leading-tight mt-0.5">
+                      AI Club DAU · Knowledge + Navigation
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={clearChat}
+                    className="p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                    title="Clear chat history"
+                    aria-label="Clear chat"
+                  >
+                    <RotateCcw size={15} />
+                  </button>
+                  <button
+                    onClick={closeChat}
+                    className="p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                    aria-label="Close AI Assistant"
+                  >
+                    <X size={18} />
+                  </button>
                 </div>
               </div>
-              {/* Auth status indicator */}
-              {!authLoading && isAdmin && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 font-mono">
-                  ADMIN
-                </span>
-              )}
-              {!authLoading && isAuthenticated && !isAdmin && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/20 font-mono">
-                  SIGNED IN
-                </span>
-              )}
-              <button
-                onClick={() => setIsOpen(false)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                style={{ pointerEvents: 'all' }}
-                aria-label="Close chatbot"
-              >
-                <X size={14} />
-              </button>
-            </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[240px] max-h-[400px]">
-              {messages.map((msg, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className={`flex gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  {msg.sender === 'bot' && (
-                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
-                      {msg.messageType === 'nav-denied' ? (
-                        <Lock size={11} className="text-destructive" />
-                      ) : msg.messageType === 'navigation' ? (
-                        <Navigation size={11} className="text-accent" />
-                      ) : (
-                        <Bot size={11} className="text-primary" />
-                      )}
+              {/* ── Greeting Hero ─────────────────────────────────────────── */}
+              <div className="px-5 pt-4 pb-2 relative z-10 shrink-0">
+                <p className="font-display text-xl sm:text-2xl font-bold tracking-tight text-white/90">
+                  Hello {userFirstName},
+                </p>
+                <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-purple-200 to-amber-200 bg-clip-text text-transparent leading-tight">
+                  Can I help you?
+                </h2>
+              </div>
+
+              {/* ── Scrollable Chat Messages Stream ────────────────────────── */}
+              <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3.5 relative z-10 custom-scrollbar">
+                {messages.map((msg, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                  >
+                    {/* User Bubble */}
+                    {msg.sender === 'user' ? (
+                      <div className="max-w-[85%] rounded-2xl rounded-br-sm px-4 py-2.5 bg-white/15 backdrop-blur-md text-white border border-white/20 text-xs sm:text-sm shadow-sm leading-relaxed">
+                        {msg.text}
+                      </div>
+                    ) : (
+                      /* Bot Bubble */
+                      <div className="max-w-[92%] rounded-2xl rounded-tl-sm p-4 bg-white/[0.07] backdrop-blur-md text-white/95 border border-white/10 text-xs sm:text-sm shadow-sm leading-relaxed space-y-2">
+                        {renderFormattedText(msg.text)}
+
+                        {/* Navigation action feedback */}
+                        {msg.navigation_action && (
+                          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-accent/15 border border-accent/30 mt-2">
+                            <Navigation size={12} className="text-accent animate-pulse" />
+                            <span className="text-xs text-white">
+                              Navigating to <strong className="text-accent">{msg.navigation_action.label}</strong>…
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Source citations */}
+                        {msg.sources && msg.sources.length > 0 && !msg.navigation_action && (
+                          <div className="pt-2 border-t border-white/10 flex flex-wrap gap-1.5 mt-2">
+                            {msg.sources.map((src, si) => {
+                              const meta = SOURCE_TYPE_LABELS[src.type] ?? { label: src.title, color: '#7965FF' };
+                              return (
+                                <a
+                                  key={si}
+                                  href={src.url}
+                                  className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border transition-all hover:scale-105"
+                                  style={{
+                                    color: meta.color,
+                                    borderColor: `${meta.color}50`,
+                                    background: `${meta.color}15`,
+                                    textDecoration: 'none',
+                                  }}
+                                  title={`View ${src.title}`}
+                                >
+                                  <ExternalLink size={9} />
+                                  {meta.label}
+                                </a>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+
+                {/* Typing indicator matching reference image dots */}
+                {isLoading && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2">
+                    <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-white/[0.08] border border-white/10 backdrop-blur-md">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
                     </div>
-                  )}
+                  </motion.div>
+                )}
 
-                  <div className="flex flex-col gap-1.5 max-w-[82%]">
-                    {/* Message bubble */}
-                    <div
-                      className={`rounded-xl px-4 py-2.5 text-sm leading-relaxed ${
-                        msg.sender === 'user'
-                          ? 'bg-primary text-primary-foreground rounded-tr-sm'
-                          : msg.messageType === 'nav-denied'
-                          ? 'bg-destructive/10 text-foreground border border-destructive/20 rounded-tl-sm'
-                          : msg.messageType === 'navigation'
-                          ? 'bg-accent/10 text-foreground border border-accent/20 rounded-tl-sm'
-                          : 'bg-secondary text-foreground rounded-tl-sm'
-                      }`}
+                {/* Navigation Toast */}
+                <AnimatePresence>
+                  {navigatingTo && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="p-3 rounded-xl bg-accent/20 border border-accent/40 flex items-center gap-2"
                     >
-                      {msg.sender === 'bot' ? renderMarkdown(msg.text) : msg.text}
-                    </div>
-
-                    {/* Navigation action chip */}
-                    {msg.navigation_action && (
-                      <div className="flex items-center gap-1.5 px-1">
-                        <Navigation size={9} className="text-accent" />
-                        <span className="text-[10px] text-muted-foreground">
-                          Navigating to <strong className="text-accent">{msg.navigation_action.label}</strong>…
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Source chips */}
-                    {msg.sender === 'bot' && msg.sources && msg.sources.length > 0 && !msg.navigation_action && (
-                      <div className="flex flex-wrap gap-1.5 px-1">
-                        {msg.sources.map((src, si) => {
-                          const meta = SOURCE_TYPE_LABELS[src.type] ?? { label: src.title, color: 'hsl(243 75% 59%)' };
-                          return (
-                            <a
-                              key={si}
-                              href={src.url}
-                              className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border transition-opacity hover:opacity-80"
-                              style={{
-                                color: meta.color,
-                                borderColor: `${meta.color}40`,
-                                background: `${meta.color}12`,
-                                textDecoration: 'none',
-                              }}
-                              title={`View ${src.title}`}
-                            >
-                              <ExternalLink size={8} />
-                              {meta.label}
-                            </a>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {msg.sender === 'user' && (
-                    <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 mt-1">
-                      <User size={12} className="text-muted-foreground" />
-                    </div>
+                      <Navigation size={14} className="text-accent animate-pulse" />
+                      <span className="text-xs text-white font-medium">
+                        Redirecting to <strong className="text-accent">{navigatingTo}</strong>…
+                      </span>
+                    </motion.div>
                   )}
-                </motion.div>
-              ))}
+                </AnimatePresence>
 
-              {/* Typing indicator */}
-              {isLoading && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                    <Loader2 size={12} className="text-primary animate-spin" />
-                  </div>
-                  <div className="bg-secondary rounded-xl rounded-tl-sm px-4 py-2.5">
-                    <div className="flex gap-1 items-center h-4">
-                      {[0, 1, 2].map(j => (
-                        <span key={j} className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60"
-                          style={{ animation: `pulse-dot 1.2s ease-in-out ${j * 0.2}s infinite` }} />
+                {/* Suggested Prompt Pills (matching reference image) */}
+                {messages.length <= 2 && !isLoading && (
+                  <div className="pt-2">
+                    <p className="text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-2 font-mono flex items-center gap-1">
+                      <Sparkles size={11} className="text-primary" /> Suggested prompts
+                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      {SUGGESTED_PROMPTS.map((prompt) => (
+                        <button
+                          key={prompt}
+                          onClick={() => sendMessage(prompt)}
+                          className="text-left text-xs px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-white/80 hover:text-white border border-white/10 backdrop-blur-md transition-all active:scale-98 cursor-pointer"
+                        >
+                          {prompt}
+                        </button>
                       ))}
                     </div>
                   </div>
-                </motion.div>
-              )}
-
-              {/* Navigation toast */}
-              <AnimatePresence>
-                {navigatingTo && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-accent/15 border border-accent/30"
-                  >
-                    <Navigation size={12} className="text-accent animate-pulse" />
-                    <span className="text-xs text-foreground">
-                      Taking you to <strong className="text-accent">{navigatingTo}</strong>…
-                    </span>
-                  </motion.div>
                 )}
-              </AnimatePresence>
 
-              {/* Suggested questions */}
-              {showSuggestions && messages.length === 1 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="flex flex-col gap-1.5 mt-2"
-                >
-                  <p className="text-[10px] text-muted-foreground flex items-center gap-1 px-1">
-                    <Sparkles size={9} />
-                    Try asking or navigating
-                  </p>
-                  {SUGGESTED_QUESTIONS.map(q => (
-                    <button
-                      key={q}
-                      onClick={() => sendMessage(q)}
-                      className="text-left text-xs px-3 py-2 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground hover:bg-secondary transition-all"
-                      style={{ pointerEvents: 'all' }}
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
+                <div ref={endRef} />
+              </div>
 
-              <div ref={endRef} />
-            </div>
-
-            {/* Input */}
-            <div className="p-3 border-t border-border flex gap-2 bg-card">
-              <input
-                id="chatbot-input"
-                value={inputValue}
-                onChange={e => setInputValue(e.target.value)}
-                onKeyDown={handleKey}
-                placeholder="Ask anything or say 'take me to…'"
-                disabled={isLoading}
-                maxLength={1000}
-                className="flex-1 bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/60 disabled:opacity-50"
-                style={{ pointerEvents: 'all' }}
-              />
-              <motion.button
-                id="chatbot-send-btn"
-                onClick={() => sendMessage(inputValue)}
-                disabled={isLoading || !inputValue.trim()}
-                className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-primary-foreground disabled:opacity-40 transition-opacity"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Send message"
-                style={{ pointerEvents: 'all' }}
-              >
-                <Send size={14} />
-              </motion.button>
-            </div>
-          </motion.div>
+              {/* ── Bottom Frosted Capsule Input Bar ──────────────────────── */}
+              <div className="p-4 border-t border-white/10 relative z-10 shrink-0">
+                <div className="rounded-2xl bg-white/[0.08] backdrop-blur-2xl border border-white/15 p-1.5 flex items-center gap-2 shadow-xl focus-within:border-primary/60 transition-colors">
+                  <div className="pl-2 text-white/40">
+                    <Bot size={16} />
+                  </div>
+                  <input
+                    ref={inputRef}
+                    id="aura-chat-input"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKey}
+                    placeholder="Ask NeuralNode anything or navigate…"
+                    disabled={isLoading}
+                    maxLength={1000}
+                    className="flex-1 bg-transparent border-none text-xs sm:text-sm text-white placeholder:text-white/40 outline-none px-1 py-1.5 disabled:opacity-50"
+                  />
+                  <motion.button
+                    onClick={() => sendMessage(inputValue)}
+                    disabled={isLoading || !inputValue.trim()}
+                    className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 disabled:opacity-30 transition-all cursor-pointer shadow-md shrink-0"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    aria-label="Send query"
+                  >
+                    <Send size={13} />
+                  </motion.button>
+                </div>
+              </div>
+            </motion.aside>
+          </>
         )}
       </AnimatePresence>
 
-      {/* Floating Action Button */}
+      {/* ── Floating Launcher on Left Side (matching Photo 2 with ambient halo) ── */}
       <motion.button
-        id="chatbot-fab"
-        onClick={() => setIsOpen(prev => !prev)}
-        className="w-14 h-14 rounded-full btn-glow flex items-center justify-center text-primary-foreground transition-all"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        animate={
-          isOpen
-            ? {}
-            : {
-                boxShadow: [
-                  '0 4px 15px hsl(217 91% 60% / 0.35)',
-                  '0 4px 28px hsl(217 91% 60% / 0.6)',
-                  '0 4px 15px hsl(217 91% 60% / 0.35)',
-                ],
-              }
-        }
-        transition={{ duration: 2, repeat: Infinity }}
-        aria-label={isOpen ? 'Close chatbot' : 'Open AI Club chatbot'}
-        style={{ pointerEvents: 'all' }}
+        id="aura-chat-fab"
+        onClick={toggleChat}
+        className={`fixed bottom-6 left-6 z-40 rounded-full flex items-center justify-center transition-all cursor-pointer group ${
+          isOpen ? 'opacity-0 pointer-events-none scale-75' : 'opacity-100 scale-100'
+        }`}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.93 }}
+        title="Open NeuralNode AI Chat (Cmd/Ctrl + K)"
+        aria-label="Open NeuralNode AI Chat"
       >
-        <AnimatePresence mode="wait">
-          {isOpen ? (
-            <motion.span key="close"
-              initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
-              <X size={22} />
-            </motion.span>
-          ) : (
-            <motion.span key="open"
-              initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
-              <MessageSquare size={22} />
-            </motion.span>
-          )}
-        </AnimatePresence>
+        {/* Soft Radial Ambient Halo Glow - distinct in light mode, subtle & restrained in dark mode */}
+        <div
+          className="absolute -inset-2.5 sm:-inset-3 rounded-full blur-lg pointer-events-none transition-all duration-300 opacity-75 group-hover:opacity-90 group-hover:scale-105 bg-indigo-500/30 dark:bg-primary/10 dark:opacity-20 dark:blur-md dark:-inset-1 dark:group-hover:opacity-35"
+        />
+
+        {/* Circular Dark Button Disc */}
+        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center bg-[#13141F] text-white border border-slate-700/40 dark:border-white/10 shadow-[0_8px_20px_rgba(0,0,0,0.25)] dark:shadow-[0_4px_14px_rgba(0,0,0,0.6)] transition-all duration-300 group-hover:border-primary/50 dark:group-hover:border-white/20 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.35)] dark:group-hover:shadow-[0_0_12px_rgba(99,102,241,0.18)]">
+          <MessageSquare
+            size={22}
+            className="text-white transition-transform duration-300 group-hover:scale-105"
+            strokeWidth={2}
+          />
+        </div>
       </motion.button>
-    </div>
+    </>
   );
 }

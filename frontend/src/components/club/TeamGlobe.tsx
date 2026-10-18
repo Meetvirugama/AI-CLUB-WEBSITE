@@ -21,47 +21,47 @@ interface TeamGlobeProps {
 const roleMeta: Record<string, { label: string; classes: string }> = {
   'Convenor': {
     label: 'Convenor',
-    classes: 'bg-amber-50 text-amber-700 border-amber-200',
+    classes: 'bg-amber-400/15 text-amber-600 dark:text-amber-300 border border-amber-400/30 dark:border-amber-400/40 shadow-[0_0_8px_rgba(245,158,11,0.15)]',
   },
 
   'Deputy Convenor': {
     label: 'Deputy Convenor',
-    classes: 'bg-blue-50 text-blue-700 border-blue-200',
+    classes: 'bg-sky-400/15 text-sky-600 dark:text-sky-300 border border-sky-400/30 dark:border-sky-400/40 shadow-[0_0_8px_rgba(56,189,248,0.15)]',
   },
 
   'Core Member': {
     label: 'Core Member',
-    classes: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    classes: 'bg-indigo-400/15 text-indigo-600 dark:text-indigo-300 border border-indigo-400/30 dark:border-indigo-400/40 shadow-[0_0_8px_rgba(99,102,241,0.15)]',
   },
 
   'Extended Core Member': {
-    label: 'Extended Core Member',
-    classes: 'bg-purple-50 text-purple-700 border-purple-200',
+    label: 'Extended Core',
+    classes: 'bg-purple-400/15 text-purple-600 dark:text-purple-300 border border-purple-400/30 dark:border-purple-400/40 shadow-[0_0_8px_rgba(168,85,247,0.15)]',
   },
 
   'Member': {
     label: 'Member',
-    classes: 'bg-slate-100 text-slate-600 border-slate-200',
+    classes: 'bg-slate-400/10 text-slate-700 dark:text-slate-200 border border-slate-300/80 dark:border-white/10',
   },
 
   'Ex Convenor': {
     label: 'Ex Convenor',
-    classes: 'bg-amber-100/70 text-amber-800 border-amber-300',
+    classes: 'bg-amber-400/15 text-amber-600 dark:text-amber-300 border border-amber-400/30 dark:border-amber-400/40 shadow-[0_0_8px_rgba(245,158,11,0.15)]',
   },
 
   'Ex Deputy Convenor': {
-    label: 'Ex Deputy Convenor',
-    classes: 'bg-blue-100/70 text-blue-800 border-blue-300',
+    label: 'Ex Deputy',
+    classes: 'bg-sky-400/15 text-sky-600 dark:text-sky-300 border border-sky-400/30 dark:border-sky-400/40 shadow-[0_0_8px_rgba(56,189,248,0.15)]',
   },
 
   'Ex Core Member': {
-    label: 'Ex Core Member',
-    classes: 'bg-indigo-100/70 text-indigo-800 border-indigo-300',
+    label: 'Ex Core',
+    classes: 'bg-indigo-400/15 text-indigo-600 dark:text-indigo-300 border border-indigo-400/30 dark:border-indigo-400/40 shadow-[0_0_8px_rgba(99,102,241,0.15)]',
   },
 
   'Alumni': {
     label: 'Alumni',
-    classes: 'bg-emerald-100/80 text-emerald-800 border-emerald-300',
+    classes: 'bg-emerald-400/15 text-emerald-600 dark:text-emerald-300 border border-emerald-400/30 dark:border-emerald-400/40 shadow-[0_0_8px_rgba(16,185,129,0.15)]',
   },
 };
 
@@ -115,7 +115,7 @@ interface NetworkPoint {
    CYLINDRICAL NEURAL NETWORK
 ============================================================ */
 
-function NeuralNetwork({
+const NeuralNetwork = React.memo(function NeuralNetwork({
   radius,
   height,
 }: {
@@ -304,7 +304,7 @@ function NeuralNetwork({
       ))}
     </>
   );
-}
+});
 
 /* ============================================================
    MAIN CYLINDER
@@ -315,29 +315,17 @@ export default function TeamGlobe({
   onSelectMember,
   isHomepage = false,
 }: TeamGlobeProps) {
-  const containerRef =
-    useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cylinderRef = useRef<HTMLDivElement>(null);
 
   /* ----------------------------------------------------------
-     ONLY Y ROTATION
+     DIRECT GPU TRANSFORM REFS (ZERO REACT RE-RENDER OVERHEAD)
   ---------------------------------------------------------- */
-
-  const [rotationY, setRotationY] =
-    useState(0);
-
-  const [isDragging, setIsDragging] =
-    useState(false);
-
-  const dragStart = useRef({
-    x: 0,
-    rotation: 0,
-  });
-
-  const autoRotateRef =
-    useRef<number | null>(null);
-
-  const lastTimeRef =
-    useRef<number>(0);
+  const rotationYRef = useRef(0);
+  const isDraggingRef = useRef(false);
+  const lastPointerX = useRef(0);
+  const velocityRef = useRef(0);
+  const lastTimeRef = useRef<number>(0);
 
   /* ----------------------------------------------------------
      RESPONSIVE CONTAINER SIZE
@@ -522,101 +510,90 @@ export default function TeamGlobe({
   ]);
 
   /* ----------------------------------------------------------
-     RANDOM AI SPOTLIGHT EFFECT
+     AI NEURAL SPOTLIGHT EFFECT
+     Gentle breathing pulse across the network (max 2 active)
   ---------------------------------------------------------- */
   const [activeHighlights, setActiveHighlights] = useState<Array<{ uniqueId: string, color: string }>>([]);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!items.length) return;
 
     let timeoutId: NodeJS.Timeout;
 
-    const neonColors = [
-      '249, 115, 22',  // orange
-      '59, 130, 246',  // blue
-      '16, 185, 129',  // emerald
-      '139, 92, 246',  // violet
-      '236, 72, 153',  // pink
-      '6, 182, 212',   // cyan
-      '234, 179, 8',   // yellow
-      '239, 68, 68',   // red
-      '132, 204, 22',  // lime
+    // Curated high-tech, cyber aesthetic palette matching the dark theme
+    const neuralColors = [
+      '99, 102, 241',  // Indigo / Primary
+      '6, 182, 212',   // Electric Cyan
+      '139, 92, 246',  // Soft Violet
+      '245, 158, 11',  // Warm Gold / Leadership
+      '56, 189, 248',  // Sky Blue
     ];
 
     const spawnHighlight = () => {
       const randomIndex = Math.floor(Math.random() * items.length);
       const uniqueId = items[randomIndex].uniqueId;
-      const color = neonColors[Math.floor(Math.random() * neonColors.length)];
+      const color = neuralColors[Math.floor(Math.random() * neuralColors.length)];
 
       const newHighlight = { uniqueId, color };
 
-      setActiveHighlights(prev => [...prev, newHighlight]);
+      setActiveHighlights(prev => [...prev.slice(-1), newHighlight]);
 
       setTimeout(() => {
-        setActiveHighlights(prev => prev.filter(h => h !== newHighlight));
-      }, 1000);
+        setActiveHighlights(prev => prev.filter(h => h.uniqueId !== uniqueId));
+      }, 1600);
 
-      // Fire a new highlight every 50ms to maintain ~20 active cards
-      timeoutId = setTimeout(spawnHighlight, 50);
+      // Fire a gentle pulse every 1.2s to 1.8s
+      const nextDelay = 1200 + Math.random() * 600;
+      timeoutId = setTimeout(spawnHighlight, nextDelay);
     };
 
-    // Initial delay
-    timeoutId = setTimeout(spawnHighlight, 1000);
+    timeoutId = setTimeout(spawnHighlight, 1200);
 
     return () => clearTimeout(timeoutId);
   }, [items]);
 
   /* ----------------------------------------------------------
-     AUTO ROTATION
+     ULTRA-SMOOTH HARDWARE-ACCELERATED AUTO ROTATION & INERTIA
   ---------------------------------------------------------- */
 
   useEffect(() => {
-    if (isDragging) {
-      if (autoRotateRef.current !== null) {
-        cancelAnimationFrame(
-          autoRotateRef.current
-        );
-      }
-
-      autoRotateRef.current = null;
-
-      return;
-    }
+    let animId: number;
 
     const animate = (time: number) => {
       if (!lastTimeRef.current) {
         lastTimeRef.current = time;
       }
 
-      const delta =
-        time - lastTimeRef.current;
-
+      // Clamp delta to avoid leaps on tab switch
+      const delta = Math.min(time - lastTimeRef.current, 64);
       lastTimeRef.current = time;
 
-      setRotationY(
-        (previous) =>
-          previous + delta * 0.009
-      );
+      if (!isDraggingRef.current) {
+        // Smooth physics inertia if user just dragged and flung
+        if (Math.abs(velocityRef.current) > 0.005) {
+          rotationYRef.current += velocityRef.current;
+          velocityRef.current *= 0.92; // smooth exponential damping friction
+        } else {
+          velocityRef.current = 0;
+          // Gentle, calm, and readable auto-rotation
+          rotationYRef.current += delta * 0.0055;
+        }
 
-      autoRotateRef.current =
-        requestAnimationFrame(
-          animate
-        );
+        if (cylinderRef.current) {
+          cylinderRef.current.style.transform = `translate3d(0, 0, 0) rotateY(${rotationYRef.current}deg)`;
+        }
+      }
+
+      animId = requestAnimationFrame(animate);
     };
 
-    autoRotateRef.current =
-      requestAnimationFrame(animate);
+    animId = requestAnimationFrame(animate);
 
     return () => {
-      if (
-        autoRotateRef.current !== null
-      ) {
-        cancelAnimationFrame(
-          autoRotateRef.current
-        );
-      }
+      cancelAnimationFrame(animId);
     };
-  }, [isDragging]);
+  }, []);
 
   /* ----------------------------------------------------------
      POINTER DOWN
@@ -625,11 +602,6 @@ export default function TeamGlobe({
   const handlePointerDown = (
     event: React.PointerEvent
   ) => {
-    /*
-     * Don't start cylinder dragging when
-     * clicking directly on a member card.
-     */
-
     const target =
       event.target as HTMLElement;
 
@@ -641,12 +613,9 @@ export default function TeamGlobe({
       return;
     }
 
-    setIsDragging(true);
-
-    dragStart.current = {
-      x: event.clientX,
-      rotation: rotationY,
-    };
+    isDraggingRef.current = true;
+    lastPointerX.current = event.clientX;
+    velocityRef.current = 0;
 
     containerRef.current?.setPointerCapture(
       event.pointerId
@@ -654,26 +623,27 @@ export default function TeamGlobe({
   };
 
   /* ----------------------------------------------------------
-     POINTER MOVE
-     
-     ONLY X IS USED.
-     
-     Y movement is completely ignored.
+     POINTER MOVE (DIRECT GPU UPDATE, NO REACT RE-RENDERS)
   ---------------------------------------------------------- */
 
   const handlePointerMove = (
     event: React.PointerEvent
   ) => {
-    if (!isDragging) return;
+    if (!isDraggingRef.current) return;
 
-    const delta =
+    const deltaX =
       event.clientX -
-      dragStart.current.x;
+      lastPointerX.current;
 
-    setRotationY(
-      dragStart.current.rotation +
-        delta * 0.30
-    );
+    lastPointerX.current = event.clientX;
+
+    // Track fling velocity for smooth kinetic inertia
+    velocityRef.current = deltaX * 0.25;
+    rotationYRef.current += deltaX * 0.30;
+
+    if (cylinderRef.current) {
+      cylinderRef.current.style.transform = `translate3d(0, 0, 0) rotateY(${rotationYRef.current}deg)`;
+    }
   };
 
   /* ----------------------------------------------------------
@@ -683,7 +653,7 @@ export default function TeamGlobe({
   const handlePointerUp = (
     event: React.PointerEvent
   ) => {
-    setIsDragging(false);
+    isDraggingRef.current = false;
 
     if (
       containerRef.current?.hasPointerCapture(
@@ -695,7 +665,7 @@ export default function TeamGlobe({
       );
     }
 
-    lastTimeRef.current = 0;
+    lastTimeRef.current = performance.now();
   };
 
   /* ----------------------------------------------------------
@@ -758,12 +728,13 @@ export default function TeamGlobe({
           rounded-[50%]
 
           bg-white/75
+          dark:bg-indigo-500/10
 
           blur-[1px]
+          dark:blur-3xl
 
-          shadow-[
-            0_0_100px_30px_rgba(255,255,255,0.65)
-          ]
+          shadow-[0_0_100px_30px_rgba(255,255,255,0.65)]
+          dark:shadow-[0_0_140px_50px_rgba(99,102,241,0.22)]
         "
         style={{
           width:
@@ -800,6 +771,8 @@ export default function TeamGlobe({
 
           border
           border-indigo-200/35
+          dark:border-indigo-400/30
+          dark:shadow-[0_0_15px_rgba(99,102,241,0.25)]
         "
         style={{
           width:
@@ -839,6 +812,7 @@ export default function TeamGlobe({
 
           border
           border-indigo-100/45
+          dark:border-indigo-400/20
         "
         style={{
           width:
@@ -881,9 +855,9 @@ export default function TeamGlobe({
             rounded-full
 
             border
-            border-indigo-100
+            border-border
 
-            bg-white/85
+            bg-card/90
 
             px-4
             py-1.5
@@ -897,7 +871,7 @@ export default function TeamGlobe({
 
             tracking-[0.16em]
 
-            text-indigo-400
+            text-primary
 
             shadow-sm
 
@@ -906,7 +880,7 @@ export default function TeamGlobe({
         >
           ← Drag horizontally →
 
-          <span className="mx-2 text-slate-300">
+          <span className="mx-2 text-muted-foreground">
             •
           </span>
 
@@ -919,29 +893,19 @@ export default function TeamGlobe({
       ====================================================== */}
 
       <div
+        ref={cylinderRef}
         className="
           absolute
-
           left-1/2
           top-1/2
-
           z-20
-
           h-0
           w-0
+          will-change-transform
         "
         style={{
-          transformStyle:
-            'preserve-3d',
-
-          transform: `
-            translate3d(0, 0, 0)
-            rotateY(${rotationY}deg)
-          `,
-
-          transition: isDragging
-            ? 'none'
-            : 'transform 0.08s linear',
+          transformStyle: 'preserve-3d',
+          transform: `translate3d(0, 0, 0) rotateY(${rotationYRef.current}deg)`,
         }}
       >
         {/* ===================================================
@@ -1033,56 +997,29 @@ export default function TeamGlobe({
             // activeHighlights array tracks active cards by their specific uniqueId
             const activeData = activeHighlights.find(hc => hc.uniqueId === uniqueId);
             const isActive = !!activeData;
-            const cardGlowColor = activeData ? activeData.color : '249, 115, 22';
+            const cardGlowColor = activeData ? activeData.color : '99, 102, 241';
+            const hasValidPhoto = currentUrl && !failedImages[uniqueId];
 
             return (
               <div
                 key={uniqueId}
                 data-member-card="true"
                 className={`
-                  absolute
-                  left-0
-                  top-0
-                  flex
-                  cursor-pointer
-                  flex-col
-                  items-center
-                  justify-center
-                  overflow-hidden
-                  rounded-[14px]
-                  bg-white
-                  p-1.5
-                  transition-all
-                  duration-[600ms]
-                  ease-out
-                  hover:border-indigo-300
-                  hover:shadow-[0_16px_38px_rgba(99,102,241,0.18)]
-                  ${isActive ? 'z-[60]' : 'z-auto'}
+                  team-card
+                  ${isActive ? 'team-card--active z-[60]' : 'z-auto'}
                 `}
                 style={{
                   width: `${cardWidth}px`,
                   height: `${cardHeight}px`,
                   marginLeft: `${-cardWidth / 2}px`,
                   marginTop: `${-cardHeight / 2}px`,
-
-                  border: isActive 
-                    ? `1px solid rgba(${cardGlowColor}, 1)` 
-                    : '1px solid #e2e8f0',
-                    
-                  boxShadow: isActive
-                    ? `0 0 0 2px rgba(${cardGlowColor},0.40), 0 0 36px 4px rgba(${cardGlowColor},0.60)`
-                    : '0 10px 28px rgba(51,65,85,0.12)',
-
+                  ['--spotlight-color' as any]: cardGlowColor,
                   transform: `
                     rotateY(${angle}deg)
                     translateZ(${cylinderRadius}px)
                     translateY(${y}px)
-                    ${isActive ? 'scale(1.04)' : 'scale(1)'}
+                    ${isActive ? 'scale(1.05)' : 'scale(1)'}
                   `,
-
-                  transformStyle: 'preserve-3d',
-                  backfaceVisibility: 'hidden',
-                  WebkitBackfaceVisibility: 'hidden',
                 }}
                 onClick={(event) => {
                   event.stopPropagation();
@@ -1110,15 +1047,21 @@ export default function TeamGlobe({
 
                     border
                     border-slate-200
+                    dark:border-white/10
 
-                    bg-slate-50
+                    bg-slate-100
+                    dark:bg-slate-800/80
 
                     ring-2
-                    ring-indigo-500/10
+                    ring-indigo-500/15
+                    dark:ring-indigo-400/20
 
                     ring-offset-1
 
                     ring-offset-white
+                    dark:ring-offset-slate-900
+
+                    shadow-sm
                   "
                   style={{
                     width:
@@ -1134,12 +1077,18 @@ export default function TeamGlobe({
                       )}px`,
                   }}
                 >
-                  {currentUrl ? (
+                  {hasValidPhoto ? (
                     <img
                       src={currentUrl}
                       alt={member.name}
                       draggable={false}
                       referrerPolicy="no-referrer"
+                      onError={() => {
+                        setFailedImages((prev) => ({
+                          ...prev,
+                          [uniqueId]: true,
+                        }));
+                      }}
                       className={`
                         h-full
                         w-full
@@ -1155,7 +1104,7 @@ export default function TeamGlobe({
                       `}
                     />
                   ) : (
-                    <span
+                    <div
                       className="
                         flex
                         h-full
@@ -1165,20 +1114,25 @@ export default function TeamGlobe({
                         justify-center
 
                         font-bold
+                        font-sans
 
-                        text-indigo-500
+                        bg-gradient-to-br
+                        from-indigo-500/20
+                        to-purple-500/25
+                        text-indigo-600
+                        dark:text-indigo-300
                       "
                       style={{
                         fontSize:
                           `${Math.max(
                             8,
                             cardWidth *
-                              0.10
+                              0.11
                           )}px`,
                       }}
                     >
                       {initials}
-                    </span>
+                    </div>
                   )}
                 </div>
 
@@ -1200,6 +1154,8 @@ export default function TeamGlobe({
                     leading-tight
 
                     text-slate-800
+                    dark:text-white
+                    dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]
                   "
                   style={{
                     fontSize:
@@ -1259,53 +1215,7 @@ export default function TeamGlobe({
         )}
       </div>
 
-      {/* =====================================================
-          SIDE FADE
-      ====================================================== */}
 
-      <div
-        className="
-          pointer-events-none
-
-          absolute
-          inset-y-0
-          left-0
-
-          z-[60]
-
-          w-[10%]
-
-          bg-gradient-to-r
-
-          from-[#ECF0F7]
-
-          via-[#ECF0F7]/65
-
-          to-transparent
-        "
-      />
-
-      <div
-        className="
-          pointer-events-none
-
-          absolute
-          inset-y-0
-          right-0
-
-          z-[60]
-
-          w-[10%]
-
-          bg-gradient-to-l
-
-          from-[#ECF0F7]
-
-          via-[#ECF0F7]/65
-
-          to-transparent
-        "
-      />
 
       {/* =====================================================
           CENTER LIGHT
