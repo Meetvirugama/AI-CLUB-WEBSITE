@@ -2,7 +2,6 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, Check, Mail } from 'lucide-react';
 import aiClubLogo from '@/assets/ai-club-logo.png';
-import GradientWaves from '@/components/reactbits/GradientWaves';
 import FlyingButton from '@/components/reactbits/FlyingButton';
 import { useTheme } from '@/components/redesign/theme';
 import '@/components/redesign/redesign.css';
@@ -200,31 +199,6 @@ export default function Footer({ short = false }: { short?: boolean }) {
         ))}
       </div>
 
-      {/* Wave band with the stencil wordmark */}
-      <div className={`relative overflow-hidden ${short ? 'h-[clamp(150px,20vw,260px)]' : 'h-[clamp(200px,28vw,380px)]'}`}>
-        <div aria-hidden className="absolute inset-0">
-          <GradientWaves
-            key={theme}
-            lightMode={theme === 'light'}
-            horizonColor={theme === 'dark' ? '#5227FF' : '#6d2bff'}
-            waveColor={theme === 'dark' ? '#FF9FFC' : '#f224c8'}
-            crestColor={theme === 'dark' ? '#ffffff' : '#fff4fd'}
-            backgroundColor="transparent"
-            intro={false}
-          />
-        </div>
-        <div
-          aria-hidden
-          className="rd-display pointer-events-none absolute inset-x-0 bottom-0 select-none text-center font-semibold leading-[0.78] tracking-[-0.06em] text-rd-bg"
-          style={{
-            fontSize: short ? 'clamp(5rem, 19vw, 16rem)' : 'clamp(6rem, 25vw, 22rem)',
-            // Outline keeps letters outside the waves visible; over the waves they read as cut-outs.
-            WebkitTextStroke: '1.5px hsl(var(--rd-fg) / 0.22)',
-          }}
-        >
-          AI CLUB
-        </div>
-      </div>
 
       {/* Bottom bar */}
       <div className="rd-mono relative flex flex-col items-center justify-between gap-3 border-t border-rd-line px-5 py-5 text-[10px] text-rd-faint sm:flex-row sm:px-8">
