@@ -799,7 +799,7 @@ const resultCount = displayedUpcomingEvents.length;
                     <div>
                       {pe.image_url && (
                         <div className="w-full mb-4 rounded-xl overflow-hidden bg-secondary">
-                          <img src={pe.image_url} alt={pe.title} className="w-full object-contain group-hover:scale-105 transition-transform duration-500" style={{ maxHeight: '220px' }} />
+                          <img src={normalizeBannerUrl(pe.image_url)} referrerPolicy="no-referrer" alt={pe.title} className="w-full object-contain group-hover:scale-105 transition-transform duration-500" style={{ maxHeight: '220px' }} />
                         </div>
                       )}
                       <span className="font-mono text-[10px] tracking-widest uppercase px-3 py-1 rounded bg-primary/10 text-primary border border-primary/20">{pe.category || 'Workshop'}</span>
@@ -1408,7 +1408,8 @@ const resultCount = displayedUpcomingEvents.length;
           >
             {eventImage ? (
               <motion.img
-                src={eventImage}
+                src={normalizeBannerUrl(eventImage)}
+                referrerPolicy="no-referrer"
                 alt={card.title}
                 loading="lazy"
                 className="w-full h-full object-cover"

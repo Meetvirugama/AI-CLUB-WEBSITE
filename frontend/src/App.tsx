@@ -15,7 +15,6 @@ import NewsPage from "./pages/NewsPage.tsx";
 import ResourcesPage from "./pages/ResourcesPage.tsx";
 import AuraPage from "./pages/AuraPage.tsx";
 import AuthBarrier from "./components/AuthBarrier.tsx";
-import Navbar from "./components/club/Navbar.tsx";
 import Chatbot from "./chatbot/Chatbot.tsx";
 import BackgroundCanvas from "./components/club/BackgroundCanvas.tsx";
 import ScrollToTop from "./components/ScrollToTop.tsx";
@@ -24,7 +23,9 @@ import { AuthProvider } from "./contexts/AuthContext.tsx";
 import { useLocation } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { startSession, trackPageView } from "./lib/analytics";
-import { NeuralAwakening } from "./components/intro/NeuralAwakening";
+import IntroSequence from "./components/redesign/IntroSequence";
+import { ThemeProvider, ThemeRouteSync } from "./components/redesign/theme";
+import SiteHeader from "./components/redesign/SiteHeader";
 
 // Lazy-load heavier pages to keep the initial bundle small
 const Admin = lazy(() => import("./pages/Admin.tsx"));
@@ -48,7 +49,7 @@ const HeaderNavbar = () => {
   if (location.pathname.startsWith('/admin') || location.pathname.startsWith('/aura')) {
     return null;
   }
-  return <Navbar />;
+  return <SiteHeader />;
 };
 
 // Mirrors HeaderNavbar exclusion pattern — hide chatbot on /admin and /aura.
@@ -83,12 +84,14 @@ const App = () => {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <ThemeProvider>
           <TooltipProvider>
-            <NeuralAwakening onComplete={() => {}} />
+            <IntroSequence />
             <Toaster />
             <Sonner />
             <BrowserRouter>
               <RouteTracker />
+              <ThemeRouteSync />
               <BackgroundCanvas />
               <ScrollToTop />
               <HeaderNavbar />
@@ -140,6 +143,7 @@ const App = () => {
               </Routes>
             </BrowserRouter>
           </TooltipProvider>
+          </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>
     </GoogleOAuthProvider>
