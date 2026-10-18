@@ -178,3 +178,45 @@ async def test_live_app_health_and_not_found():
         err_data = res_404.json()
         assert err_data["success"] is False
         assert err_data["code"] == "NOT_FOUND"
+
+
+@pytest.mark.asyncio
+async def test_database_integrity_error_mapped_to_conflict(error_test_app):
+    from sqlalchemy.exc import IntegrityError
+
+    @error_test_app.get("/test/db-unique-constraint")
+    async def trigger_unique_conflict():
+        raise IntegrityError(
+            statement="INSERT INTO registrations ...",
+            params={},
+            orig=Exception("duplicate key value violates unique constraint 'uq_user_event'"),
+        )
+
+    transport = ASGITransport(app=error_test_app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.get("/test/db-unique-constraint")
+        assert res.status_code == 409
+        data = res.json()
+        assert data["success"] is False
+        assert data["code"] == "CONFLICT"
+        assert "already exists" in data["message"].lower()
+
+
+@pytest.mark.asyncio
+async def test_validation_error_clear_guidance_message(error_test_app):
+    transport = ASGITransport(app=error_test_app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Both fields missing
+        res = await client.post("/test/validation", json={})
+        assert res.status_code == 422
+        data = res.json()
+        assert "Validation failed for 2 fields" in data["message"]
+        assert "'name'" in data["message"]
+        assert "'email'" in data["message"]
+
+        # Only one field invalid (too short)
+        res_single = await client.post("/test/validation", json={"name": "a", "email": "valid@dau.ac.in"})
+        assert res_single.status_code == 422
+        data_single = res_single.json()
+        assert "'name' is too short" in data_single["message"] or "'name' is required" in data_single["message"]
+

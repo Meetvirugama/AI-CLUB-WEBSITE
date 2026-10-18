@@ -176,9 +176,18 @@ async def register_for_event_endpoint(
     try:
         reg_data = RegistrationSubmitRequest(**payload_dict)
     except Exception as exc:
+        field_errors = []
+        if hasattr(exc, "errors") and callable(exc.errors):
+            for err in exc.errors():
+                loc = err.get("loc", [])
+                field_name = ".".join(str(part) for part in loc if part != "body") or None
+                field_errors.append({"field": field_name, "message": err.get("msg", "Invalid value")})
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"message": "Request validation failed.", "errors": str(exc)},
+            detail={
+                "message": "Registration validation failed. Please check your submitted fields.",
+                "errors": field_errors or [{"message": "Invalid registration data format."}],
+            },
         )
 
     # ── Process uploaded files (validate + save) ──────────────────────────────
@@ -374,15 +383,20 @@ async def update_registration_endpoint(
         try:
             form_data = await request.form()
         except Exception as exc:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail=f"Failed to parse multipart form: {exc}")
+            logger.warning("Failed to parse multipart form in update_registration: %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to parse form upload data. Please check your attachments and try again.",
+            )
 
         raw_data_str = form_data.get("data", "{}")
         try:
             payload_dict = json.loads(raw_data_str)
         except (json.JSONDecodeError, TypeError):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail="The 'data' form field must be valid JSON.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="The 'data' form field must be valid JSON.",
+            )
 
         from fastapi import UploadFile  # noqa: PLC0415
         raw_uploads: dict[str, UploadFile] = {}
@@ -394,18 +408,34 @@ async def update_registration_endpoint(
         try:
             payload_dict = await request.json()
         except Exception as exc:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail=f"Invalid JSON body: {exc}")
+            logger.warning("Invalid JSON body in update_registration: %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Request body must be valid JSON.",
+            )
         raw_uploads = {}
     else:
-        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                            detail="Content-Type must be application/json or multipart/form-data.")
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Content-Type must be application/json or multipart/form-data.",
+        )
 
     try:
         reg_data = RegistrationSubmitRequest(**payload_dict)
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                            detail={"message": "Request validation failed.", "errors": str(exc)})
+        field_errors = []
+        if hasattr(exc, "errors") and callable(exc.errors):
+            for err in exc.errors():
+                loc = err.get("loc", [])
+                field_name = ".".join(str(part) for part in loc if part != "body") or None
+                field_errors.append({"field": field_name, "message": err.get("msg", "Invalid value")})
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "message": "Registration validation failed. Please check your submitted fields.",
+                "errors": field_errors or [{"message": "Invalid registration data format."}],
+            },
+        )
 
     # ── Process uploaded files ────────────────────────────────────────────────
     uploaded_file_urls: dict[str, tuple] = {}
@@ -461,7 +491,7 @@ async def update_registration_endpoint(
         logger.exception("Unexpected error updating registration event_id=%d user_id=%d: %s",
                          event_id, current_user.id, exc)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=f"Update failed: {type(exc).__name__}: {exc}")
+                            detail="Failed to update registration due to a server error. Please try again.")
 
     return RegistrationSubmitResponse(
         message      = "Registration updated successfully!",
@@ -500,4 +530,4 @@ async def delete_registration_endpoint(
         logger.exception("Unexpected error withdrawing registration event_id=%d user_id=%d: %s",
                          event_id, current_user.id, exc)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=f"Could not withdraw registration: {type(exc).__name__}: {exc}")
+                            detail="Could not withdraw registration due to a server error. Please try again.")
