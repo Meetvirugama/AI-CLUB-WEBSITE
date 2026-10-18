@@ -48,7 +48,23 @@ interface EventDetail {
   winners?: string;
   winner_link?: string;
   contact_email?: string;
+  date_label?: string;
 }
+
+interface PastEvent {
+  id: number;
+  title: string;
+  date_label?: string;
+  category?: string;
+  description?: string;
+  speaker?: string | null;
+  image_url?: string | null;
+  winners?: string | null;
+  winner_link?: string | null;
+}
+
+// Past events (Admin → Past Events & Achievements) live at /events/past-<id>.
+const PAST_PREFIX = 'past-';
 
 interface FormField {
   id: number;
@@ -118,6 +134,8 @@ function formatBareTime(t?: string) {
 
 /** Format event date + optional time for display. */
 function formatEventDate(ev: EventDetail) {
+  // Past events carry a free-text label such as "June, 2026".
+  if (ev.date_label && !ev.event_start_date) return ev.date_label;
   const rawDate = ev.event_start_date || ev.event_date;
   if (!rawDate) return '—';
 
@@ -178,6 +196,9 @@ export default function EventDetailPage() {
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [existingRegistrationId, setExistingRegistrationId] = useState<number | null>(null);
+  // Hide the hero banner when its image link is broken or expired.
+  const [bannerFailed, setBannerFailed] = useState(false);
+  useEffect(() => setBannerFailed(false), [id]);
 
   const { user: authUser, login } = useAuth();
 
@@ -193,7 +214,7 @@ export default function EventDetailPage() {
 
   useEffect(() => {
     setUserProfile(authUser);
-    if (authUser && id) {
+    if (authUser && id && !id.startsWith(PAST_PREFIX)) {
       const fetchRegs = async () => {
         try {
           // Use shared api client so cookies are sent correctly cross-origin (same as auth/me)
@@ -233,6 +254,28 @@ export default function EventDetailPage() {
     setLoading(true);
     setError(null);
     try {
+      if (id.startsWith(PAST_PREFIX)) {
+        // There is no single past-event endpoint, so pick it out of the list.
+        const pastId = Number(id.slice(PAST_PREFIX.length));
+        const past = await api.get<PastEvent[]>('/api/past-events');
+        const p = past.find(x => x.id === pastId);
+        setEvent(p ? {
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          category: p.category,
+          status: 'completed',
+          banner: p.image_url || undefined,
+          speaker: p.speaker || undefined,
+          winners: p.winners || undefined,
+          winner_link: p.winner_link || undefined,
+          date_label: p.date_label,
+          event_date: p.date_label,
+        } : null);
+        setFormFields([]);
+        return;
+      }
+
       const ev = await api.get<EventDetail>(`/api/events/${id}`);
       setEvent(ev);
 
@@ -448,7 +491,7 @@ export default function EventDetailPage() {
     <div style={{ background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', minHeight: '100vh', display: 'flex', flexDirection: 'column', paddingTop: '56px' }}>
 
       {/* ── Hero banner image ───────────────────────────────────────────────── */}
-      {bannerSrc && (
+      {bannerSrc && !bannerFailed && (
         <div style={{ width: '100%', height: 420, overflow: 'hidden', position: 'relative', background: 'hsl(var(--card))', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           {/* Blurred background layer */}
           <div style={{
@@ -459,10 +502,18 @@ export default function EventDetailPage() {
             filter: 'blur(25px)',
             opacity: 0.4
           }} />
+          {/* Gradient overlay: fades the blurred backdrop only, painted under the poster */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.8) 100%)',
+            pointerEvents: 'none'
+          }} />
           {/* Main image */}
           <img
             src={bannerSrc}
             alt={event.title}
+            referrerPolicy="no-referrer"
+            onError={() => setBannerFailed(true)}
             style={{ 
               position: 'relative',
               maxWidth: '90%', 
@@ -472,12 +523,6 @@ export default function EventDetailPage() {
               boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
             }}
           />
-          {/* Gradient overlay */}
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.8) 100%)',
-            pointerEvents: 'none'
-          }} />
         </div>
       )}
 

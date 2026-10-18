@@ -37,22 +37,6 @@
     <!-- Google Fonts: Inter + Playfair Display + JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Prevent theme flash (FOUC) -->
-    <script>
-      (function() {
-        try {
-          var stored = localStorage.getItem('ai-club-theme');
-          var isDark = stored ? stored === 'dark' : true;
-          if (isDark) {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-          }
-        } catch (e) {
-          document.documentElement.classList.add('dark');
-        }
-      })();
-    </script>
   </head>
   <body>
     <div id="root"></div>
