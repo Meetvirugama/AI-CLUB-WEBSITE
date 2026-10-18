@@ -41,6 +41,8 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from core.errors import format_error_response
+
 logger = logging.getLogger(__name__)
 
 # Methods that can change server state and therefore need CSRF protection.
@@ -196,13 +198,17 @@ class CSRFOriginMiddleware(BaseHTTPMiddleware):
 
         if origin.rstrip("/") not in self._allowed:
             logger.warning(
-                "Blocked cross-origin %s %s from disallowed origin.",
+                "Blocked cross-origin %s %s from disallowed origin: %s",
                 request.method,
                 request.url.path,
+                origin,
             )
-            return JSONResponse(
+            req_id = getattr(request.state, "request_id", None) if hasattr(request, "state") else None
+            return format_error_response(
                 status_code=403,
-                content={"detail": "Cross-origin request blocked."},
+                message="Cross-origin request blocked by security policy.",
+                code="CSRF_FORBIDDEN",
+                request_id=req_id,
             )
 
         return await call_next(request)

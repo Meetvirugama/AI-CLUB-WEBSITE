@@ -45,7 +45,10 @@ async def full_reindex(
         return {"status": "ok", "message": "Full reindex complete.", **stats}
     except Exception as exc:
         logger.error(f"[RAG] Full reindex failed: {exc}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Reindex failed: {type(exc).__name__}")
+        raise HTTPException(
+            status_code=500,
+            detail="Full knowledge base reindex failed. Please check server logs and try again.",
+        )
 
 
 @router.post("/reindex/incremental")
@@ -62,7 +65,10 @@ async def incremental_reindex(
         return {"status": "ok", "message": "Incremental reindex complete.", **stats}
     except Exception as exc:
         logger.error(f"[RAG] Incremental reindex failed: {exc}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Incremental reindex failed: {type(exc).__name__}")
+        raise HTTPException(
+            status_code=500,
+            detail="Incremental knowledge base reindex failed. Please check server logs and try again.",
+        )
 
 
 @router.get("/stats")

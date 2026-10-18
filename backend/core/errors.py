@@ -145,7 +145,7 @@ def format_error_response(
 
 def register_error_handlers(app: Any) -> None:
     """Registers centralized exception handlers on the FastAPI application instance."""
-    from fastapi.exceptions import RequestValidationError
+    from fastapi.exceptions import RequestValidationError, HTTPException as FastAPIHTTPException
     from starlette.exceptions import HTTPException as StarletteHTTPException
 
     @app.exception_handler(AppException)
@@ -183,11 +183,60 @@ def register_error_handlers(app: Any) -> None:
     except ImportError:
         pass
 
+    # Database Integrity & Constraint Error Handling
+    try:
+        from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+
+        @app.exception_handler(IntegrityError)
+        async def integrity_exception_handler(request: Request, exc: IntegrityError):
+            req_id = getattr(request.state, "request_id", None)
+            orig_msg = str(getattr(exc, "orig", exc)).lower()
+            logger.warning(
+                "Database IntegrityError on %s %s [req_id=%s]: %s",
+                request.method, request.url.path, req_id, orig_msg,
+            )
+
+            if "unique" in orig_msg or "duplicate" in orig_msg:
+                msg = "A record with this information already exists. Please verify your input."
+                code = "CONFLICT"
+                status_code = status.HTTP_409_CONFLICT
+            elif "foreign key" in orig_msg:
+                msg = "The referenced resource does not exist or has been removed."
+                code = "NOT_FOUND"
+                status_code = status.HTTP_404_NOT_FOUND
+            else:
+                msg = "The submitted data conflicts with database constraints."
+                code = "DATABASE_CONSTRAINT_ERROR"
+                status_code = status.HTTP_400_BAD_REQUEST
+
+            return format_error_response(
+                status_code=status_code,
+                message=msg,
+                code=code,
+                request_id=req_id,
+            )
+
+        @app.exception_handler(SQLAlchemyError)
+        async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+            req_id = getattr(request.state, "request_id", None)
+            logger.exception(
+                "Database error on %s %s [req_id=%s]: %s",
+                request.method, request.url.path, req_id, exc,
+            )
+            return format_error_response(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                message="A database error occurred while processing your request. Please try again shortly.",
+                code="DATABASE_ERROR",
+                request_id=req_id,
+            )
+    except ImportError:
+        pass
+
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
         req_id = getattr(request.state, "request_id", None)
         errors: List[Dict[str, Any]] = []
-        first_error_msg = None
+        first_guidance = None
 
         for err in exc.errors():
             loc = err.get("loc", [])
@@ -195,15 +244,30 @@ def register_error_handlers(app: Any) -> None:
             field_parts = [str(part) for part in loc if part != "body"]
             field = ".".join(field_parts) if field_parts else None
             msg = err.get("msg", "Invalid value")
-            errors.append({"field": field, "message": msg})
-            if not first_error_msg:
-                first_error_msg = f"{field}: {msg}" if field else msg
+            err_type = str(err.get("type", ""))
 
-        summary = (
-            f"Validation failed: {first_error_msg}"
-            if first_error_msg
-            else "Invalid request parameters provided."
-        )
+            # Construct intuitive guidance without raw validation jargon
+            if err_type == "missing":
+                clean_msg = f"'{field}' is required" if field else "Required field is missing"
+            elif "string_too_short" in err_type or "too_short" in err_type:
+                clean_msg = f"'{field}' is too short" if field else msg
+            elif "email" in err_type or ("value_error" in err_type and "email" in (field or "")):
+                clean_msg = f"'{field}' must be a valid email address" if field else msg
+            else:
+                clean_msg = f"'{field}': {msg}" if field else msg
+
+            errors.append({"field": field, "message": msg, "guidance": clean_msg})
+            if not first_guidance:
+                first_guidance = clean_msg
+
+        if len(errors) > 1:
+            field_names = [f"'{e['field']}'" for e in errors if e.get("field")]
+            fields_summary = f" ({', '.join(field_names[:3])})" if field_names else ""
+            summary = f"Validation failed for {len(errors)} fields{fields_summary}: {first_guidance}"
+        elif first_guidance:
+            summary = f"Validation failed: {first_guidance}"
+        else:
+            summary = "Invalid request parameters provided."
 
         logger.warning(
             "Validation error on %s %s [req_id=%s]: %s",
@@ -217,8 +281,7 @@ def register_error_handlers(app: Any) -> None:
             request_id=req_id,
         )
 
-    @app.exception_handler(StarletteHTTPException)
-    async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    async def _handle_http_exception(request: Request, exc: Any):
         req_id = getattr(request.state, "request_id", None)
         errors: Optional[List[Dict[str, Any]]] = None
 
@@ -229,7 +292,15 @@ def register_error_handlers(app: Any) -> None:
             errors = [{"message": str(item)} for item in exc.detail]
         elif isinstance(exc.detail, dict):
             message = str(exc.detail.get("message") or exc.detail.get("detail") or "Request failed")
-            errors = exc.detail.get("errors")
+            raw_errors = exc.detail.get("errors")
+            if raw_errors is not None:
+                if not isinstance(raw_errors, list):
+                    errors = [{"message": str(raw_errors)}]
+                else:
+                    errors = [
+                        item if isinstance(item, dict) else {"message": str(item)}
+                        for item in raw_errors
+                    ]
         else:
             message = str(exc.detail) if exc.detail else "Request failed"
 
@@ -252,8 +323,16 @@ def register_error_handlers(app: Any) -> None:
             code=code,
             errors=errors,
             request_id=req_id,
-            headers=exc.headers,
+            headers=getattr(exc, "headers", None),
         )
+
+    @app.exception_handler(FastAPIHTTPException)
+    async def fastapi_http_exception_handler(request: Request, exc: FastAPIHTTPException):
+        return await _handle_http_exception(request, exc)
+
+    @app.exception_handler(StarletteHTTPException)
+    async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPException):
+        return await _handle_http_exception(request, exc)
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception):
@@ -268,4 +347,5 @@ def register_error_handlers(app: Any) -> None:
             code="INTERNAL_SERVER_ERROR",
             request_id=req_id,
         )
+
 
