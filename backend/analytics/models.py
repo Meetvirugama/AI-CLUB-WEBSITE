@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from sqlalchemy import (
-    Column, Integer, String, Float, DateTime, Date, Index,
+    Column, Integer, String, Float, DateTime, Date, Index, JSON,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -71,7 +71,7 @@ class AnalyticsEvent(Base):
     page        = Column(String(255), nullable=True)
     timestamp   = Column(DateTime(timezone=True), nullable=False, default=_now, index=True)
     # Store arbitrary metadata (project_id, event_id, duration_sec, etc.)
-    meta        = Column(JSONB, nullable=True)
+    meta        = Column(JSON().with_variant(JSONB, "postgresql"), nullable=True)
 
     __table_args__ = (
         Index("ix_analytics_events_ts", "timestamp"),

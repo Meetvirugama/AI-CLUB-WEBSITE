@@ -135,6 +135,17 @@ async def google_auth(
             detail="Could not reach Google's verification service. Try again later.",
         )
 
+    # ── Step 1.5: Enforce allowed domain (@dau.ac.in) ──────────────────────────
+    if not settings.is_email_allowed(google_user.email):
+        logger.warning(
+            "Rejected sign-in attempt from unauthorized email domain: %s",
+            google_user.email,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access restricted. Only @dau.ac.in Google accounts are allowed to log in or register.",
+        )
+
     # ── Step 2: Upsert user in database ───────────────────────────────────────
     try:
         # Import the shared session factory from the db module.

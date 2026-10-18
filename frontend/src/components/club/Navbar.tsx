@@ -6,6 +6,7 @@ import aiClubLogo from '@/assets/ai-club-logo.png';
 import FireworkLauncher, { type FireworkLauncherHandle } from './FireworkLauncher';
 import { useAuth } from '../../contexts/AuthContext';
 import ThemeToggle from '../ThemeToggle';
+import { toast } from 'sonner';
 
 const navItems = [
   { label: 'About', href: '/#hero' },
@@ -286,16 +287,19 @@ export default function Navbar() {
           ) : (
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <GoogleLogin
+                hosted_domain="dau.ac.in"
                 onSuccess={async (credentialResponse) => {
                   if (credentialResponse.credential) {
                     try {
                       await login(credentialResponse.credential);
-                    } catch (err) {
+                      toast.success('Signed in successfully');
+                    } catch (err: any) {
                       console.error('Login error:', err);
+                      toast.error(err.message || 'Access restricted. Only @dau.ac.in accounts are permitted to sign in.');
                     }
                   }
                 }}
-                onError={() => console.error('Google login error')}
+                onError={() => toast.error('Google sign-in was cancelled or failed.')}
               />
             </div>
           )}
@@ -355,17 +359,20 @@ export default function Navbar() {
               ) : (
                 <div style={{ display: 'inline-flex' }}>
                   <GoogleLogin
+                    hosted_domain="dau.ac.in"
                     onSuccess={async (credentialResponse) => {
                       if (credentialResponse.credential) {
                         try {
                           await login(credentialResponse.credential);
                           setMobileOpen(false);
-                        } catch (err) {
+                          toast.success('Signed in successfully');
+                        } catch (err: any) {
                           console.error('Login error:', err);
+                          toast.error(err.message || 'Access restricted. Only @dau.ac.in accounts are permitted to sign in.');
                         }
                       }
                     }}
-                    onError={() => console.error('Google login error')}
+                    onError={() => toast.error('Google sign-in was cancelled or failed.')}
                   />
                 </div>
               )}

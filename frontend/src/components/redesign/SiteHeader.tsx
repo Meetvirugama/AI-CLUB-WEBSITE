@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { getApiUrl } from '@/lib/api';
 import { ThemeToggle, useTheme } from './theme';
+import { toast } from 'sonner';
 import './redesign.css';
 
 const NAV = [
@@ -103,8 +104,10 @@ export default function SiteHeader() {
     try {
       await login(credential);
       setMenuOpen(false);
-    } catch (err) {
+      toast.success('Signed in successfully');
+    } catch (err: any) {
       console.error('Login error:', err);
+      toast.error(err.message || 'Access restricted. Only @dau.ac.in accounts are permitted to sign in.');
     }
   };
 
@@ -231,8 +234,9 @@ export default function SiteHeader() {
                   theme={effective === 'dark' ? 'filled_black' : 'outline'}
                   shape="pill"
                   size="medium"
+                  hosted_domain="dau.ac.in"
                   onSuccess={r => onLogin(r.credential)}
-                  onError={() => console.error('Google login error')}
+                  onError={() => toast.error('Google sign-in was cancelled or failed.')}
                 />
               )}
             </div>
@@ -301,8 +305,9 @@ export default function SiteHeader() {
                 <GoogleLogin
                   theme={effective === 'dark' ? 'filled_black' : 'outline'}
                   shape="pill"
+                  hosted_domain="dau.ac.in"
                   onSuccess={r => onLogin(r.credential)}
-                  onError={() => console.error('Google login error')}
+                  onError={() => toast.error('Google sign-in was cancelled or failed.')}
                 />
               )}
             </div>

@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     
     # ── Google OAuth ──
     GOOGLE_CLIENT_ID: str = ""
+    ALLOWED_EMAIL_DOMAINS: str = "dau.ac.in"
     
     # ── JWT ──
     JWT_SECRET_KEY: str = "CHANGE_ME_IN_PRODUCTION"
@@ -79,6 +80,30 @@ class Settings(BaseSettings):
             "http://localhost:8080",
             "http://localhost:3000",
         ]
+
+    @property
+    def allowed_email_domains(self) -> List[str]:
+        if self.ALLOWED_EMAIL_DOMAINS:
+            return [d.strip().lower() for d in self.ALLOWED_EMAIL_DOMAINS.split(",") if d.strip()]
+        return ["dau.ac.in"]
+
+    @property
+    def super_admin_emails(self) -> List[str]:
+        if self.SUPER_ADMIN_EMAIL:
+            return [e.strip().lower() for e in self.SUPER_ADMIN_EMAIL.split(",") if e.strip()]
+        return []
+
+    def is_email_allowed(self, email: Optional[str]) -> bool:
+        if not email or "@" not in email:
+            return False
+        clean = email.strip().lower()
+        domain = clean.split("@")[-1]
+        is_domain_match = any(
+            domain == d or domain.endswith(f".{d}")
+            for d in self.allowed_email_domains
+        )
+        is_super = clean in self.super_admin_emails
+        return is_domain_match or is_super
 
     def validate_production(self):
         import logging

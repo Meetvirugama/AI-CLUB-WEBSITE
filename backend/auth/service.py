@@ -49,11 +49,17 @@ async def get_or_create_user(session: AsyncSession, google_user: GoogleUserInfo)
     )
     db_user = result.scalars().first()
 
+    # Check if this user is a designated super admin
+    from core.config import settings  # noqa: PLC0415
+    is_super_admin = (google_user.email or "").strip().lower() in settings.super_admin_emails
+
     if db_user:
         # Sync mutable fields that can change in Google profile
         db_user.name = google_user.name
         db_user.profile_image = google_user.profile_image
         db_user.last_login = datetime.now(timezone.utc)
+        if is_super_admin and not db_user.is_admin:
+            db_user.is_admin = True
         await session.commit()
         await session.refresh(db_user)
         return db_user, False   # existing user
@@ -70,6 +76,8 @@ async def get_or_create_user(session: AsyncSession, google_user: GoogleUserInfo)
         email_user.name = google_user.name
         email_user.profile_image = google_user.profile_image
         email_user.last_login = datetime.now(timezone.utc)
+        if is_super_admin and not email_user.is_admin:
+            email_user.is_admin = True
         await session.commit()
         await session.refresh(email_user)
         return email_user, False  # existing user (merged)
@@ -80,6 +88,7 @@ async def get_or_create_user(session: AsyncSession, google_user: GoogleUserInfo)
         name=google_user.name,
         email=google_user.email,
         profile_image=google_user.profile_image,
+        is_admin=is_super_admin,
         last_login=datetime.now(timezone.utc),
         created_at=datetime.now(timezone.utc),
     )
