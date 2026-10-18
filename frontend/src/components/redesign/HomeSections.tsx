@@ -181,32 +181,49 @@ interface TrackItem {
 }
 
 function PastTrack({ items }: { items: TrackItem[] }) {
-  const trackRef = useRef<HTMLDivElement>(null);
+  // Native horizontal scrolling, so trackpads, touch and shift+wheel all work.
+  // Mouse users can also click and drag; a drag swallows the click that ends it.
   const viewRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
-  const [limit, setLimit] = useState(0);
+  const drag = useRef({ active: false, moved: false, startX: 0, startLeft: 0 });
+
   useEffect(() => {
-    const measure = () => {
-      if (trackRef.current && viewRef.current) setLimit(Math.max(0, trackRef.current.scrollWidth - viewRef.current.clientWidth));
+    const onMove = (e: MouseEvent) => {
+      const d = drag.current;
+      if (!d.active || !viewRef.current) return;
+      const dx = e.clientX - d.startX;
+      if (Math.abs(dx) > 4) d.moved = true;
+      viewRef.current.scrollLeft = d.startLeft - dx;
     };
-    measure();
-    const ro = new ResizeObserver(measure);
-    if (viewRef.current) ro.observe(viewRef.current);
-    return () => ro.disconnect();
-  }, [items.length]);
+    const onUp = () => {
+      drag.current.active = false;
+      viewRef.current?.classList.remove('cursor-grabbing');
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, []);
 
   return (
-    <div ref={viewRef} className="overflow-hidden">
-      <motion.div
-        ref={trackRef}
-        drag="x"
-        dragConstraints={{ left: -limit, right: 0 }}
-        dragElastic={0.12}
-        onDragStart={() => { dragging.current = true; }}
-        // Let the click that ends a drag pass before links work again.
-        onDragEnd={() => { setTimeout(() => { dragging.current = false; }, 0); }}
-        className="flex w-max cursor-grab gap-4 active:cursor-grabbing"
-      >
+    <div
+      ref={viewRef}
+      onMouseDown={e => {
+        if (e.button !== 0 || !viewRef.current) return;
+        drag.current = { active: true, moved: false, startX: e.clientX, startLeft: viewRef.current.scrollLeft };
+        viewRef.current.classList.add('cursor-grabbing');
+      }}
+      onClickCapture={e => {
+        if (drag.current.moved) {
+          e.preventDefault();
+          e.stopPropagation();
+          drag.current.moved = false;
+        }
+      }}
+      className="cursor-grab select-none overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      <div className="flex w-max gap-4 pr-6 sm:pr-8">
         {items.map((p, i) => {
           const body = (
             <>
@@ -232,19 +249,14 @@ function PastTrack({ items }: { items: TrackItem[] }) {
               className="group w-[250px] shrink-0 overflow-hidden rounded-[20px] border border-rd-line bg-rd-card sm:w-[280px]"
             >
               {p.to ? (
-                <Link
-                  to={p.to}
-                  draggable={false}
-                  onClick={e => { if (dragging.current) e.preventDefault(); }}
-                  className="block"
-                >
+                <Link to={p.to} draggable={false} className="block">
                   {body}
                 </Link>
               ) : body}
             </motion.div>
           );
         })}
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -287,6 +299,7 @@ function HomeEvents() {
       category: p.category,
       dateLabel: p.date_label,
       image: p.image_url,
+      to: `/events/past-${p.id}`,
     })),
   ];
 
@@ -315,7 +328,7 @@ function HomeEvents() {
             <div>
               <div className="rd-mono flex items-center justify-between text-[10.5px] text-rd-faint">
                 <span>Recently</span>
-                <span className="inline-flex items-center gap-1.5"><MoveHorizontal size={12} /> Drag</span>
+                <span className="inline-flex items-center gap-1.5"><MoveHorizontal size={12} /> Scroll</span>
               </div>
               <div className="rd-display mt-3 text-4xl font-medium text-rd-fg">{events.length + past.length}+ events</div>
               <p className="mt-2 text-sm text-rd-muted">From Kaggle contests to a BlackRock speaker session.</p>

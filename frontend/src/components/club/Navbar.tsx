@@ -5,7 +5,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import aiClubLogo from '@/assets/ai-club-logo.png';
 import FireworkLauncher, { type FireworkLauncherHandle } from './FireworkLauncher';
 import { useAuth } from '../../contexts/AuthContext';
-import ThemeToggle from '../ThemeToggle';
+import { ThemeToggle, useTheme } from '../redesign/theme';
 import { toast } from 'sonner';
 
 const navItems = [
@@ -38,6 +38,8 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { user, isAuthenticated, isLoading: authLoading, login, logout } = useAuth();
+  // Dark mode only exists on the redesigned pages, so the toggle only shows there.
+  const { themed } = useTheme();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fireworkRef = useRef<FireworkLauncherHandle | null>(null);
@@ -303,13 +305,13 @@ export default function Navbar() {
               />
             </div>
           )}
-          <ThemeToggle />
+          {themed && <ThemeToggle />}
         </div>
         </div>
 
         {/* Mobile toggle + hamburger */}
         <div className="flex items-center gap-2 md:hidden">
-          <ThemeToggle />
+          {themed && <ThemeToggle />}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 4 }}

@@ -495,11 +495,11 @@ const NewsPage = () => {
           <div>
             <SectionLabel index="NW">The dispatch</SectionLabel>
             <h1 className="rd-display mt-6 text-[clamp(2.4rem,5.4vw,4.6rem)] font-medium text-rd-fg">
-              <SplitWords lines={['News from the club', 'and the AI frontier.']} delay={0.1} />
+              <SplitWords lines={['News from', 'the club.']} delay={0.1} />
             </h1>
           </div>
           <Reveal delay={0.4} className="max-w-sm">
-            <p className="text-[15px] leading-relaxed text-rd-fg/85">Club milestones, speaker sessions and the AI breakthroughs worth your time.</p>
+            <p className="text-[15px] leading-relaxed text-rd-fg/85">Club milestones, speaker sessions, competition results and everything happening at AI Club DAU.</p>
             {!loading && (
               <div className="rd-mono mt-4 text-[10.5px] text-rd-muted">
                 {String(newsList.length).padStart(2, '0')} {newsList.length === 1 ? 'story' : 'stories'}
@@ -566,7 +566,7 @@ const NewsPage = () => {
           ) : !featured ? (
             <EmptyState
               title="No stories yet"
-              description="Check back soon for club updates and AI news."
+              description="Check back soon for club updates."
               icon={Newspaper}
               className="my-16"
             />
