@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
-  ArrowUpRight,
   BrainCircuit,
   Code2,
   Sparkles,
