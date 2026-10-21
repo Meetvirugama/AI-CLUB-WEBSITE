@@ -64,8 +64,8 @@ describe('EventWinnersPage', () => {
 
     expect(screen.getByText('The Podium')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: /Official Results/i })).toBeInTheDocument();
-    // Default featured event is BuildNight'26 with Team NeuralPulse as champion
-    expect(screen.getAllByText(/Team NeuralPulse/i).length).toBeGreaterThan(0);
+    // Default featured event is AI Buildathon 2026 with Cheetah Sprinter as champion
+    expect(screen.getAllByText(/Cheetah Sprinter/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/CHAMPION · 1ST PLACE/i).length).toBeGreaterThan(0);
   });
 
@@ -78,19 +78,19 @@ describe('EventWinnersPage', () => {
     expect(within(resultsSection).getByText(/All Placements/i)).toBeInTheDocument();
 
     const searchInput = screen.getByPlaceholderText(/Search team, member, project…/i);
-    fireEvent.change(searchInput, { target: { value: 'SyntaxError' } });
+    fireEvent.change(searchInput, { target: { value: 'Chaos' } });
 
     await waitFor(() => {
-      expect(within(resultsSection).getByText('Team SyntaxError')).toBeInTheDocument();
-      expect(within(resultsSection).queryByText('Team ByteForce')).not.toBeInTheDocument();
+      expect(within(resultsSection).getByText('Chaos')).toBeInTheDocument();
+      expect(within(resultsSection).queryByText('Cheetah Sprinter')).not.toBeInTheDocument();
     });
   });
 
   it('opens winner detail modal when details button is clicked', async () => {
     renderPage();
 
-    // Click on the details button for Team NeuralPulse
-    const detailsBtn = screen.getAllByTestId('winner-details-btn-bn26-w1')[0];
+    // Click on the details button for Cheetah Sprinter
+    const detailsBtn = screen.getAllByTestId('winner-details-btn-past-6-w1')[0];
     fireEvent.click(detailsBtn);
 
     let dialog: HTMLElement | null = null;
@@ -100,10 +100,9 @@ describe('EventWinnersPage', () => {
     });
 
     const dialogWithin = within(dialog!);
-    expect(dialogWithin.getByRole('heading', { level: 2, name: /Team NeuralPulse/i })).toBeInTheDocument();
-    expect(dialogWithin.getByText(/Kush Patel/i)).toBeInTheDocument();
-    expect(dialogWithin.getByText(/Anmol Ghogare/i)).toBeInTheDocument();
-    expect(dialogWithin.getByText(/Dirgh Patel/i)).toBeInTheDocument();
+    expect(dialogWithin.getByRole('heading', { level: 2, name: /Cheetah Sprinter/i })).toBeInTheDocument();
+    expect(dialogWithin.getByText(/DAU Pulse/i)).toBeInTheDocument();
+    expect(dialogWithin.getByText(/1ST PLACE CHAMPION/i)).toBeInTheDocument();
 
     // Close modal
     const closeBtn = screen.getByRole('button', { name: /Close modal/i });
@@ -118,7 +117,6 @@ describe('EventWinnersPage', () => {
     renderPage();
 
     expect(screen.getByRole('heading', { level: 2, name: /From Our Archives/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 3, name: /AI Buildathon 2026/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 3, name: /Kaggle Contest/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 3, name: /Integration Bee/i })).toBeInTheDocument();
   });
@@ -126,12 +124,12 @@ describe('EventWinnersPage', () => {
   it('navigates to archive competition when archive card is clicked', async () => {
     renderPage();
 
-    const buildathonCard = screen.getByTestId('archive-card-past-6');
-    fireEvent.click(buildathonCard);
+    const integrationBeeCard = screen.getByTestId('archive-card-past-2');
+    fireEvent.click(integrationBeeCard);
 
     await waitFor(() => {
-      // Podium should now show Cheetah Sprinter
-      expect(screen.getAllByText(/Cheetah Sprinter/i).length).toBeGreaterThan(0);
+      // Podium should now show Dirgh Patel
+      expect(screen.getAllByText(/Dirgh Patel/i).length).toBeGreaterThan(0);
     });
   });
 });

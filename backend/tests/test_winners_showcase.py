@@ -74,9 +74,37 @@ def test_parse_raw_winner_string_json():
     assert parsed[0]["projectTitle"] == "AlphaNet"
 
 
+@pytest_asyncio.fixture(scope="module", autouse=True)
+async def _create_tables():
+    import main  # noqa: F401
+    from db import Base, engine
+
+    tables = [t for t in Base.metadata.sorted_tables if t.name != "chatbot_knowledge_chunks"]
+
+    async with engine.begin() as conn:
+        await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, tables=tables))
+    yield
+
+
 @pytest.mark.asyncio
 async def test_winners_endpoint_public_access():
     """Verify GET /api/events/winners is public, returns 200, and returns a valid list."""
+    from db import async_session
+    from past_events.models import PastEvent
+
+    # Seed test past event with real winners structure
+    async with async_session() as s:
+        test_pe = PastEvent(
+            id=6,
+            title="AI Buildathon 2026",
+            date_label="July 2026",
+            category="Competition",
+            description="Flagship 48-hour summer AI buildathon.",
+            winners="🥇 1st Place - Cheetah Sprinter (DAU Pulse)\n🥈 2nd Place - Chaos (ProcastiSense)\n🥉 3rd Place - 0/1 (Echo Notes)",
+        )
+        s.add(test_pe)
+        await s.commit()
+
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
@@ -95,10 +123,11 @@ async def test_winners_endpoint_public_access():
         assert "edition" in first_event
         assert "winners" in first_event
         assert isinstance(first_event["winners"], list)
-        assert len(first_event["winners"]) > 0
+        assert len(first_event["winners"]) == 3
 
         # Check podium winner structure
         winner = first_event["winners"][0]
-        assert "name" in winner
-        assert "placement" in winner
+        assert winner["name"] == "Cheetah Sprinter"
+        assert winner["projectTitle"] == "DAU Pulse"
         assert winner["placement"] == 1
+
