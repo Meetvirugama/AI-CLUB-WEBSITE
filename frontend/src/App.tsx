@@ -35,6 +35,7 @@ const MyRegistrationsPage = lazy(() => import("./pages/MyRegistrationsPage.tsx")
 const RoadmapDetailPage = lazy(() => import("./pages/RoadmapDetailPage.tsx"));
 const CurriculumPage = lazy(() => import("./pages/CurriculumPage.tsx"));
 const WeeklyVenezaPage = lazy(() => import("./pages/WeeklyVenezaPage.tsx"));
+const EventWinnersPage = lazy(() => import("./pages/EventWinnersPage.tsx"));
 
 const queryClient = new QueryClient();
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "placeholder_client_id_for_google_oauth_provider.apps.googleusercontent.com";
@@ -102,6 +103,8 @@ const App = () => {
                     {/* ── Public routes — no login required ── */}
                     <Route path="/" element={<Index />} />
                     <Route path="/events" element={<EventsPage />} />
+                    <Route path="/winners" element={<Suspense fallback={<Loader />}><EventWinnersPage /></Suspense>} />
+                    <Route path="/events/winners" element={<Suspense fallback={<Loader />}><EventWinnersPage /></Suspense>} />
                     <Route path="/projects" element={<ProjectsPage />} />
                     <Route path="/team" element={<TeamPage />} />
                     <Route path="/achievements" element={<AchievementsPage />} />

@@ -16,6 +16,7 @@ const NAV = [
   { label: 'About', href: '/#about' },
   { label: 'News', href: '/news', pagePath: '/news' },
   { label: 'Events', href: '/events', pagePath: '/events', count: 'events' as const },
+  { label: 'Winners', href: '/winners', pagePath: '/winners' },
   { label: 'Projects', href: '/projects', pagePath: '/projects', count: 'projects' as const },
   { label: 'Resources', href: '/resources', pagePath: '/resources' },
   { label: 'Team', href: '/team', pagePath: '/team', count: 'members' as const },

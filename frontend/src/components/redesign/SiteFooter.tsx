@@ -46,6 +46,7 @@ const explore = [
   { label: 'Weekly Veneza', href: '/weekly-veneza' },
   { label: 'News', href: '/news' },
   { label: 'Events', href: '/events' },
+  { label: 'Winners Showcase', href: '/winners' },
   { label: 'Projects', href: '/projects' },
   { label: 'Team', href: '/team' },
   { label: 'Achievements', href: '/achievements' },

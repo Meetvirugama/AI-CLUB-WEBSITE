@@ -258,3 +258,37 @@ class EventUpdateResponse(BaseModel):
 class EventDeleteResponse(BaseModel):
     status:  str = "success"
     message: str
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Winners Showcase models
+# ─────────────────────────────────────────────────────────────────────────────
+
+class EventWinnerItem(BaseModel):
+    id:                 str
+    eventId:            str
+    name:               str
+    placement:          int
+    category:           Optional[str] = None
+    score:              Optional[float] = None
+    imageUrl:           Optional[str] = None
+    members:            Optional[list[str]] = None
+    projectTitle:       Optional[str] = None
+    projectDescription: Optional[str] = None
+    award:              Optional[str] = None
+
+
+class EventWinnersShowcaseItem(BaseModel):
+    id:                str
+    title:             str
+    edition:           str
+    date:              Optional[str] = None
+    status:            str = "completed"
+    category:          Optional[str] = None
+    description:       Optional[str] = None
+    banner:            Optional[str] = None
+    winner_link:       Optional[str] = None
+    registration_link: Optional[str] = None
+    featured:          bool = False
+    winners:           list[EventWinnerItem]
+
