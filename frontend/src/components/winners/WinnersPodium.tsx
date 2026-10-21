@@ -6,11 +6,13 @@ import { WinnerCard } from './WinnerCard';
 interface WinnersPodiumProps {
   event: ShowcaseEvent;
   onSelectWinner: (winner: EventWinner) => void;
+  hideHeader?: boolean;
 }
 
 export const WinnersPodium: React.FC<WinnersPodiumProps> = ({
   event,
   onSelectWinner,
+  hideHeader = false,
 }) => {
   const winners = event.winners || [];
   const first = winners.find((w) => w.placement === 1) || winners[0];
@@ -22,22 +24,24 @@ export const WinnersPodium: React.FC<WinnersPodiumProps> = ({
   }
 
   return (
-    <section id="podium-section" className="py-12 md:py-16 relative">
+    <section id="podium-section" className={hideHeader ? "py-4 md:py-6 relative" : "py-12 md:py-16 relative"}>
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-10 md:mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F4B942]/10 border border-[#F4B942]/20 text-[#F4B942] text-xs font-mono tracking-widest uppercase mb-3">
-            <Trophy size={13} />
-            <span>The Podium</span>
-          </div>
+        {!hideHeader && (
+          <div className="text-center max-w-2xl mx-auto mb-10 md:mb-16">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F4B942]/10 border border-[#F4B942]/20 text-[#F4B942] text-xs font-mono tracking-widest uppercase mb-3">
+              <Trophy size={13} />
+              <span>The Podium</span>
+            </div>
 
-          <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-            Official Results
-          </h2>
-          <p className="mt-3 text-sm md:text-base text-slate-400">
-            {event.title} · Edition {event.edition}
-          </p>
-        </div>
+            <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+              Official Results
+            </h2>
+            <p className="mt-3 text-sm md:text-base text-slate-400">
+              {event.title} · Edition {event.edition}
+            </p>
+          </div>
+        )}
 
         {/* Desktop Podium Layout (1024px+): 2nd (left), 1st (center, elevated), 3rd (right) */}
         <div className="hidden lg:grid lg:grid-cols-3 gap-6 items-end max-w-6xl mx-auto">
