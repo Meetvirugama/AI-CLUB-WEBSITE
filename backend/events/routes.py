@@ -39,6 +39,7 @@ from events.schemas import (
     EventResponse,
     EventUpdateRequest,
     EventUpdateResponse,
+    EventWinnersShowcaseItem,
 )
 from events.service import (
     create_event,
@@ -47,6 +48,7 @@ from events.service import (
     list_events,
     update_event,
 )
+from events.winners_service import get_winners_showcase
 
 logger = logging.getLogger(__name__)
 
@@ -208,6 +210,41 @@ async def list_events_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve events. Please try again.",
+        )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PUBLIC: GET /api/events/winners (and GET /api/winners)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get(
+    "/api/events/winners",
+    response_model=list[EventWinnersShowcaseItem],
+    status_code=status.HTTP_200_OK,
+    summary="Get official event winners showcase",
+    description="Public endpoint. Returns data-driven results, podium standings, and archives for event winners.",
+)
+@router.get(
+    "/api/winners",
+    response_model=list[EventWinnersShowcaseItem],
+    status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+)
+async def get_winners_showcase_endpoint(
+    event_id: Optional[str] = Query(default=None, description="Filter by event identifier (e.g. 'club-16', '16', 'past-6')"),
+    year: Optional[str] = Query(default=None, description="Filter by competition year (e.g. '2026')"),
+    category: Optional[str] = Query(default=None, description="Filter by category (e.g. 'Hackathon', 'Competition')"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Retrieve official event winners showcase with podium and archive listings."""
+    try:
+        data = await get_winners_showcase(db, event_id=event_id, year=year, category=category)
+        return [EventWinnersShowcaseItem.model_validate(item) for item in data]
+    except Exception as exc:
+        logger.exception("Failed to retrieve winners showcase: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve event winners. Please try again.",
         )
 
 

@@ -13,6 +13,7 @@ const navItems = [
   { label: 'Weekly Veneza', href: '/weekly-veneza', pagePath: '/weekly-veneza' },
   { label: 'News', href: '/news', pagePath: '/news' },
   { label: 'Events', href: '/#events', pagePath: '/events' },
+  { label: 'Winners', href: '/winners', pagePath: '/winners' },
   { label: 'Projects', href: '/#projects', pagePath: '/projects' },
   { label: 'Resources', href: '/resources', pagePath: '/resources' },
   { label: 'Team', href: '/#team', pagePath: '/team' },
