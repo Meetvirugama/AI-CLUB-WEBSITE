@@ -390,53 +390,26 @@ export default function RoadmapDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-rd-bg text-rd-fg font-sans transition-colors duration-300">
       <main className="section-container pt-28 pb-20">
         {/* Navigation bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div className="flex items-center justify-between gap-4 mb-8">
           <motion.button
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             onClick={() => navigate("/#roadmaps")}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-transparent border border-border/50 text-[10px] font-mono tracking-widest uppercase text-muted-foreground hover:text-foreground hover:border-primary/30 hover:from-primary/15 transition-all duration-300 group"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rd-card border border-rd-line text-[10.5px] rd-mono tracking-widest uppercase text-rd-muted hover:text-rd-fg hover:border-rd-fg/30 transition-all duration-300 group shadow-sm"
           >
             <ArrowLeft
-              size={11}
+              size={12}
               className="group-hover:-translate-x-1 transition-transform duration-300 text-primary"
             />
             <span>All Roadmaps</span>
           </motion.button>
-
-          {isGenAi && (
-            <div className="flex items-center p-1 rounded-xl bg-card border border-border/80 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setViewMode("curriculum")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  viewMode === "curriculum"
-                    ? "bg-primary text-primary-foreground shadow"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                8-Week Roadmap (Deep Dive)
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("phases")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  viewMode === "phases"
-                    ? "bg-primary text-primary-foreground shadow"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Phases Summary
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Content View */}
-        {isGenAi && viewMode === "curriculum" ? (
+        {isGenAi ? (
           <GenAiRoadmapView />
         ) : (
           <>
@@ -534,7 +507,7 @@ export default function RoadmapDetail() {
         )}
       </main>
 
-      <SiteFooter short />
+      {!isGenAi && <SiteFooter short />}
     </div>
   );
 }
