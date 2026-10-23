@@ -92,10 +92,10 @@ const ROADMAP_CONFIG: Record<string, RoadmapConfig> = {
   },
 
   GENAI: {
-    title: "Generative AI",
-    subtitle: "GenAI & Foundation Models",
+    title: "Generative AI + Agentic AI",
+    subtitle: "8-Week Intensive Roadmap",
     description:
-      "Learn the foundations of generative models, prompting, embeddings, RAG, multimodal AI and foundation models.",
+      "A complete 8-week curriculum: LLM internals, prompt engineering, RAG, tool calling & MCP, LangGraph, and multi-agent systems.",
     icon: Sparkles,
     accent: "hsl(330 55% 48%)",
     number: "06",

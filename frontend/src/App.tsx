@@ -122,6 +122,16 @@ const App = () => {
                         <RoadmapDetailPage />
                       </Suspense>
                     } />
+                    <Route path="/roadmap/:slug" element={
+                      <Suspense fallback={<Loader />}>
+                        <RoadmapDetailPage />
+                      </Suspense>
+                    } />
+                    <Route path="/genai-roadmap" element={
+                      <Suspense fallback={<Loader />}>
+                        <RoadmapDetailPage />
+                      </Suspense>
+                    } />
 
                     {/* ── Event detail page ── */}
                     <Route path="/events/:id" element={
