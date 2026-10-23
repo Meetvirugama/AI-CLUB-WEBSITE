@@ -721,12 +721,20 @@ export default function EventDetailPage() {
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'hsl(35,90%,40%)', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' }}>Winners</span>
                 </div>
                 <p style={{ fontSize: '0.9rem', color: 'hsl(var(--foreground))', fontFamily: 'Inter, sans-serif', lineHeight: 1.6, margin: 0 }}>{event.winners}</p>
-                {event.winner_link && (
-                  <a href={event.winner_link} target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 10, fontSize: '0.82rem', color: 'hsl(var(--primary))', textDecoration: 'none', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
-                    View results <ExternalLink size={13} />
-                  </a>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: 12, flexWrap: 'wrap' }}>
+                  <Link
+                    to={`/events/${event.id}/winners`}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.82rem', color: '#F4B942', textDecoration: 'none', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}
+                  >
+                    View Official Winners Page →
+                  </Link>
+                  {event.winner_link && (
+                    <a href={event.winner_link} target="_blank" rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.82rem', color: 'hsl(var(--primary))', textDecoration: 'none', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
+                      View results <ExternalLink size={13} />
+                    </a>
+                  )}
+                </div>
               </div>
             )}
 

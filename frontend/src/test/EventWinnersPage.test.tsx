@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import EventWinnersPage from '../pages/EventWinnersPage';
 import { INITIAL_SHOWCASE_EVENTS } from '../components/winners/initialData';
@@ -38,7 +38,10 @@ function renderPage(initialEntries = ['/winners']) {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={initialEntries}>
-        <EventWinnersPage />
+        <Routes>
+          <Route path="/winners" element={<EventWinnersPage />} />
+          <Route path="/events/:id/winners" element={<EventWinnersPage />} />
+        </Routes>
       </MemoryRouter>
     </QueryClientProvider>
   );
@@ -49,47 +52,40 @@ describe('EventWinnersPage', () => {
     vi.clearAllMocks();
   });
 
-  it('renders championship hero heading and subtitle', () => {
+  it('renders back to events navigation button', () => {
     renderPage();
 
-    expect(screen.getByRole('heading', { level: 1, name: /Every win has a/i })).toBeInTheDocument();
-    expect(
-      screen.getByText(/The people and teams who pushed boundaries and made their mark/i)
-    ).toBeInTheDocument();
-    expect(screen.getByText(/FEATURED EVENT/i)).toBeInTheDocument();
+    const backBtn = screen.getByTestId('back-to-events-btn');
+    expect(backBtn).toBeInTheDocument();
+    expect(backBtn).toHaveAttribute('href', '/events');
+    expect(within(backBtn).getByText(/Back to Events/i)).toBeInTheDocument();
   });
 
-  it('renders official results podium with first place champion', () => {
-    renderPage();
+  it('renders only selected event title and its official winners', () => {
+    renderPage(['/events/past-6/winners']);
 
-    expect(screen.getByText('The Podium')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: /Official Results/i })).toBeInTheDocument();
-    // Default featured event is AI Buildathon 2026 with Cheetah Sprinter as champion
+    expect(screen.getByRole('heading', { level: 1, name: /AI Buildathon 2026/i })).toBeInTheDocument();
+    expect(screen.getByText(/OFFICIAL WINNERS/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Cheetah Sprinter/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/CHAMPION · 1ST PLACE/i).length).toBeGreaterThan(0);
   });
 
-  it('renders complete results section and filters by search', async () => {
-    renderPage();
+  it('does not render other events archive grid or promotional showcase hero', () => {
+    renderPage(['/events/past-6/winners']);
 
-    const resultsHeading = screen.getByRole('heading', { level: 2, name: /All Results/i });
-    expect(resultsHeading).toBeInTheDocument();
-    const resultsSection = resultsHeading.closest('section')!;
-    expect(within(resultsSection).getByText(/All Placements/i)).toBeInTheDocument();
+    // Should NOT have the promotional hero or archive section
+    expect(screen.queryByText(/Every win has a story/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/From Our Archives/i)).not.toBeInTheDocument();
 
-    const searchInput = screen.getByPlaceholderText(/Search team, member, project…/i);
-    fireEvent.change(searchInput, { target: { value: 'Chaos' } });
-
-    await waitFor(() => {
-      expect(within(resultsSection).getByText('Chaos')).toBeInTheDocument();
-      expect(within(resultsSection).queryByText('Cheetah Sprinter')).not.toBeInTheDocument();
-    });
+    // Should NOT render titles of other competitions as headings or cards on this page
+    expect(screen.queryByRole('heading', { name: /Integration Bee/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /Kaggle Contest/i })).not.toBeInTheDocument();
   });
 
   it('opens winner detail modal when details button is clicked', async () => {
-    renderPage();
+    renderPage(['/events/past-6/winners']);
 
-    // Click on the details button for Cheetah Sprinter
+    // Click on details for Cheetah Sprinter
     const detailsBtn = screen.getAllByTestId('winner-details-btn-past-6-w1')[0];
     fireEvent.click(detailsBtn);
 
@@ -113,24 +109,24 @@ describe('EventWinnersPage', () => {
     });
   });
 
-  it('renders past events archive and displays previous competitions', () => {
-    renderPage();
+  it('switches to another event using the event switcher dropdown', async () => {
+    renderPage(['/events/past-6/winners']);
 
-    expect(screen.getByRole('heading', { level: 2, name: /From Our Archives/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 3, name: /Kaggle Contest/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 3, name: /Integration Bee/i })).toBeInTheDocument();
-  });
+    const select = screen.getByTestId('event-switcher-select');
+    expect(select).toBeInTheDocument();
 
-  it('navigates to archive competition when archive card is clicked', async () => {
-    renderPage();
-
-    const integrationBeeCard = screen.getByTestId('archive-card-past-2');
-    fireEvent.click(integrationBeeCard);
+    fireEvent.change(select, { target: { value: 'past-3' } });
 
     await waitFor(() => {
-      // Podium should now show Dirgh Patel
-      expect(screen.getAllByText(/Dirgh Patel/i).length).toBeGreaterThan(0);
+      expect(screen.getByRole('heading', { level: 1, name: /Kaggle Contest/i })).toBeInTheDocument();
+      expect(screen.getAllByText(/Dhruvil Patel/i).length).toBeGreaterThan(0);
     });
   });
-});
 
+  it('renders event not found state gracefully for unknown event ID', () => {
+    renderPage(['/events/unknown-event-999/winners']);
+
+    expect(screen.getByRole('heading', { level: 3, name: /Event Not Found/i })).toBeInTheDocument();
+    expect(screen.getByText(/Back to All Events/i)).toBeInTheDocument();
+  });
+});

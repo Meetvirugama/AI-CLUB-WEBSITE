@@ -44,16 +44,98 @@ roadmaps_data = {
         {"title": "RL Applications", "topics": ["Robotics", "Autonomous Vehicles", "Games", "Recommendation Systems", "Resource Optimization", "Trading", "LLM Alignment / RLHF", "AI Agents"]}
     ],
     "GENAI": [
-        {"title": "Foundations", "topics": ["Generative vs Discriminative AI", "Probability basics", "Neural Networks", "Deep Learning basics", "Embeddings", "Tokenization"]},
-        {"title": "Generative Models", "topics": ["Autoencoders", "VAE", "GANs", "Diffusion Models", "Autoregressive Models"]},
-        {"title": "Transformers", "topics": ["Attention", "Self-Attention", "Multi-Head Attention", "Encoder / Decoder", "Positional Encoding", "Transformer architecture"]},
-        {"title": "LLMs", "topics": ["Large Language Models", "GPT-style models", "BERT-style models", "Tokenizers", "Context Windows", "Pretraining", "Instruction Tuning", "Fine-tuning"]},
-        {"title": "LLM Engineering", "topics": ["Prompt Engineering", "Structured Outputs", "Function / Tool Calling", "Embeddings", "Vector Databases", "Semantic Search", "RAG", "Hybrid Search", "Reranking"]},
-        {"title": "Fine-Tuning", "topics": ["Full Fine-Tuning", "PEFT", "LoRA", "QLoRA", "SFT", "Preference Optimization", "RLHF", "DPO"]},
-        {"title": "AI Agents", "topics": ["Agent Architecture", "Tool Use", "Planning", "Memory", "Reflection", "Multi-Agent Systems", "Agentic RAG", "MCP"]},
-        {"title": "Multimodal GenAI", "topics": ["Text → Image", "Text → Video", "Text → Audio", "Image → Text", "Vision-Language Models", "Multimodal LLMs"]},
-        {"title": "GenAI Evaluation & Safety", "topics": ["Hallucination", "Grounding", "Factuality", "Toxicity", "Bias", "Prompt Injection", "Red Teaming", "LLM Evaluation", "Guardrails"]},
-        {"title": "GenAI Production", "topics": ["Model Serving", "Quantization", "Inference Optimization", "GPU Optimization", "Caching", "LLM Observability", "Cost Optimization", "AI/LLM MLOps"]}
+        {
+            "title": "Week 1: LLM Internals & Inference",
+            "topics": [
+                "AI vs ML vs DL vs GenAI vs LLMs",
+                "Tokenization, token IDs & context windows",
+                "Token embeddings vs retrieval embeddings",
+                "Transformer self-attention & residual layers",
+                "Logits, softmax probabilities & sampling (temp, top-p)",
+                "Base vs instruction-tuned models & hallucinations",
+                "Deliverable: LLM Playground"
+            ]
+        },
+        {
+            "title": "Week 2: Prompt Engineering & LLM APIs",
+            "topics": [
+                "Prompt anatomy: instructions, constraints & examples",
+                "Zero-shot, few-shot, role & task decomposition",
+                "Structured outputs, JSON schemas & Pydantic validation",
+                "Function / tool calling interaction loops",
+                "Async requests, streaming & retry with backoff",
+                "Prompt evaluation & regression test suites",
+                "Deliverable: AI Assistant"
+            ]
+        },
+        {
+            "title": "Week 3: RAG Fundamentals & Vector Databases",
+            "topics": [
+                "End-to-end RAG pipeline: ingest to generate",
+                "Document loaders, metadata extraction & chunking strategies",
+                "Embedding models & vector similarity metrics",
+                "Qdrant vector database & pgvector PostgreSQL extension",
+                "Top-k similarity search & metadata filtering",
+                "Citations, groundedness & refusal handling",
+                "Deliverable: PDF Q&A System"
+            ]
+        },
+        {
+            "title": "Week 4: Hybrid Search, Reranking & Adaptive Retrieval",
+            "topics": [
+                "Lexical BM25 + dense vector search (RRF)",
+                "Cross-encoder reranking query-doc pairs",
+                "Query rewriting, RAG-Fusion & HyDE",
+                "Parent-child retrieval & contextual chunking",
+                "Adaptive RAG, Self-RAG & Agentic retrieval",
+                "RAG evaluation metrics: Ragas, Recall@K, Faithfulness",
+                "Deliverable: Evaluated RAG Benchmark"
+            ]
+        },
+        {
+            "title": "Week 5: Function Calling, APIs & MCP",
+            "topics": [
+                "Tool schemas, required fields & argument validation",
+                "Model-application tool execution lifecycle",
+                "Idempotency, retries, error handling & allowlists",
+                "Model Context Protocol (MCP): host, client & server",
+                "Permission boundaries, human approval & secrets safety",
+                "Deliverable: MCP Assistant"
+            ]
+        },
+        {
+            "title": "Week 6: LangGraph, State, Memory & Agent Loops",
+            "topics": [
+                "StateGraph, nodes, edges & conditional routing",
+                "Planner/executor & ReAct observation-action loops",
+                "Short-term thread state & checkpoint persistence",
+                "Human-in-the-loop approval interrupts",
+                "LangSmith observability & trace telemetry",
+                "Deliverable: Personal AI Agent"
+            ]
+        },
+        {
+            "title": "Week 7: Multi-Agent Systems & Coordination",
+            "topics": [
+                "Supervisor router, specialist agents & synthesis",
+                "Sequential vs parallel execution & delegation contracts",
+                "Researcher, analyst, coder & reviewer roles",
+                "Conflict resolution & reviewer rejection loops",
+                "Multi-agent latency/cost trade-offs (CrewAI vs AutoGen)",
+                "Deliverable: Multi-Agent Research System"
+            ]
+        },
+        {
+            "title": "Week 8: Evaluation, Security, Production & Deployment",
+            "topics": [
+                "Golden evaluation datasets & regression spot-checks",
+                "OWASP Top 10 for LLMs: prompt injection defenses",
+                "Secrets management, auth, rate limiting & input sanitization",
+                "FastAPI production serving, health checks & Dockerization",
+                "Threat modeling, system documentation & limitations",
+                "Deliverable: Deployed Capstone System"
+            ]
+        }
     ],
     "AGENTIC": [
         {"title": "Foundations", "topics": ["LLMs", "Prompt Engineering", "Context Management", "Tool / Function Calling", "Structured Outputs", "APIs"]},
@@ -123,11 +205,14 @@ async def add_data():
                 icons = ["BookOpen", "Layers", "BarChart3", "Network", "Layers", "CheckCircle2", "Zap", "Sparkles", "Brain", "Code2"]
                 icon = icons[i % len(icons)]
                 
+                phase_label = f"Week {i+1}" if r_type == "GENAI" else f"Phase {i+1}"
+                duration_label = "1 Week" if r_type == "GENAI" else "TBD"
+
                 roadmap = ClubRoadmap(
                     roadmap_type=r_type,
-                    phase=f"Phase {i+1}",
+                    phase=phase_label,
                     title=module["title"],
-                    duration="TBD",
+                    duration=duration_label,
                     color=color,
                     icon_name=icon,
                     topics=json.dumps(module["topics"]),

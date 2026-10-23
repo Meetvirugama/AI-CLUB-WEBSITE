@@ -1655,18 +1655,28 @@ const resultCount = displayedUpcomingEvents.length;
                   {card.winners}
                 </div>
 
-                {card.winner_link && (
-                  <a
-                    href={card.winner_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                <div className="flex flex-wrap items-center gap-3 mt-3">
+                  <Link
+                    to={`/events/${card.id}/winners`}
                     onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-cyan-300 hover:text-cyan-200 hover:underline"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#F4B942] hover:text-[#fbbf24] hover:underline"
                   >
-                    View results
-                    <ExternalLink size={11} />
-                  </a>
-                )}
+                    View Winners Page →
+                  </Link>
+
+                  {card.winner_link && (
+                    <a
+                      href={card.winner_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-cyan-300 hover:text-cyan-200 hover:underline"
+                    >
+                      Official Results
+                      <ExternalLink size={11} />
+                    </a>
+                  )}
+                </div>
               </motion.div>
             )}
 

@@ -104,7 +104,9 @@ const App = () => {
                     <Route path="/" element={<Index />} />
                     <Route path="/events" element={<EventsPage />} />
                     <Route path="/winners" element={<Suspense fallback={<Loader />}><EventWinnersPage /></Suspense>} />
+                    <Route path="/winners/:id" element={<Suspense fallback={<Loader />}><EventWinnersPage /></Suspense>} />
                     <Route path="/events/winners" element={<Suspense fallback={<Loader />}><EventWinnersPage /></Suspense>} />
+                    <Route path="/events/:id/winners" element={<Suspense fallback={<Loader />}><EventWinnersPage /></Suspense>} />
                     <Route path="/projects" element={<ProjectsPage />} />
                     <Route path="/team" element={<TeamPage />} />
                     <Route path="/achievements" element={<AchievementsPage />} />
@@ -116,6 +118,16 @@ const App = () => {
 
                     {/* ── Roadmap detail page ── */}
                     <Route path="/roadmaps/:slug" element={
+                      <Suspense fallback={<Loader />}>
+                        <RoadmapDetailPage />
+                      </Suspense>
+                    } />
+                    <Route path="/roadmap/:slug" element={
+                      <Suspense fallback={<Loader />}>
+                        <RoadmapDetailPage />
+                      </Suspense>
+                    } />
+                    <Route path="/genai-roadmap" element={
                       <Suspense fallback={<Loader />}>
                         <RoadmapDetailPage />
                       </Suspense>

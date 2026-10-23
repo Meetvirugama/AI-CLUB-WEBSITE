@@ -13,8 +13,11 @@ import {
 import {
   useNavigate,
   useParams,
+  useLocation,
 } from "react-router-dom";
 import { getApiUrl } from "../lib/api";
+import GenAiRoadmapView from "@/components/roadmaps/GenAiRoadmapView";
+import SiteFooter from "@/components/redesign/SiteFooter";
 
 type RoadmapPhase = {
   phase: string;
@@ -74,10 +77,10 @@ const ROADMAP_META: Record<
   },
 
   genai: {
-    title: "Generative AI",
-    subtitle: "GenAI & Foundation Models",
+    title: "Generative AI + Agentic AI",
+    subtitle: "8-Week Intensive Curriculum",
     description:
-      "Learn the technologies behind modern generative AI systems, from embeddings and RAG to foundation models.",
+      "A rigorous 8-week curriculum bridging foundational LLM internals, advanced RAG architectures, function calling, Model Context Protocol (MCP), LangGraph agent loops, multi-agent coordination, and production-grade safety & evaluation.",
     number: "06",
   },
 
@@ -307,49 +310,27 @@ function PhaseSection({
 
 export default function RoadmapDetail() {
   const { slug } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
 
-  const meta =
-    ROADMAP_META[slug || ""];
+  const effectiveSlug = slug || (location.pathname.includes("genai") ? "genai" : "");
+  const meta = ROADMAP_META[effectiveSlug || ""];
+  const isGenAi = effectiveSlug === "genai";
 
-  const [phases, setPhases] = useState<
-    RoadmapPhase[]
-  >([]);
-
-  const [loading, setLoading] =
-    useState(true);
+  const [viewMode, setViewMode] = useState<"curriculum" | "phases">("curriculum");
+  const [phases, setPhases] = useState<RoadmapPhase[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadRoadmap = async () => {
       try {
-        const response = await fetch(
-          getApiUrl("/api/roadmaps")
-        );
+        const response = await fetch(getApiUrl("/api/roadmaps"));
 
         if (!response.ok) {
-          throw new Error(
-            "Failed to fetch roadmap"
-          );
+          throw new Error("Failed to fetch roadmap");
         }
 
         const data = await response.json();
-
-        const roadmapType = Object.keys(
-          ROADMAP_META
-        ).find((key) => {
-          const map: Record<string, string> = {
-            ml: "ML",
-            dl: "DL",
-            rl: "RL",
-            nlp: "NLP",
-            transformers: "TRANSFORMER",
-            genai: "GENAI",
-            llm: "LLM",
-            "agentic-ai": "AGENTIC",
-          };
-
-          return map[key] === data?.[0]?.roadmap_type;
-        });
 
         const typeMap: Record<string, string> = {
           ml: "ML",
@@ -362,45 +343,33 @@ export default function RoadmapDetail() {
           "agentic-ai": "AGENTIC",
         };
 
-        const type = typeMap[slug || ""];
+        const type = typeMap[effectiveSlug || ""];
 
         const filtered = data
-          .filter(
-            (item: any) =>
-              item.roadmap_type === type
-          )
+          .filter((item: any) => item.roadmap_type === type)
           .map((item: any) => ({
             phase: item.phase,
             title: item.title,
             duration: item.duration || "",
-            color:
-              item.color ||
-              "hsl(var(--primary))",
-            topics: Array.isArray(item.topics)
-              ? item.topics
-              : [],
+            color: item.color || "hsl(var(--primary))",
+            topics: Array.isArray(item.topics) ? item.topics : [],
           }));
 
         setPhases(filtered);
       } catch (error) {
-        console.error(
-          "Failed to load roadmap:",
-          error
-        );
+        console.error("Failed to load roadmap:", error);
       } finally {
         setLoading(false);
       }
     };
 
     loadRoadmap();
-  }, [slug]);
+  }, [effectiveSlug]);
 
   const topicCount = useMemo(
     () =>
       phases.reduce(
-        (total, phase) =>
-          total +
-          (phase.topics?.length || 0),
+        (total, phase) => total + (phase.topics?.length || 0),
         0
       ),
     [phases]
@@ -408,11 +377,8 @@ export default function RoadmapDetail() {
 
   if (!meta) {
     return (
-      <div className="section-container text-center pt-32">
-        <h1 className="headline-md">
-          Roadmap not found
-        </h1>
-
+      <div className="section-container text-center pt-32 min-h-screen">
+        <h1 className="headline-md">Roadmap not found</h1>
         <button
           onClick={() => navigate("/#roadmaps")}
           className="btn-primary mt-6"
@@ -424,147 +390,151 @@ export default function RoadmapDetail() {
   }
 
   return (
-    <main className="min-h-screen bg-background pt-32 pb-24">
-      <div className="section-container">
-        {/* Back */}
+    <div className="min-h-screen bg-background">
+      <main className="section-container pt-28 pb-20">
+        {/* Navigation bar */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+          <motion.button
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            onClick={() => navigate("/#roadmaps")}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-transparent border border-border/50 text-[10px] font-mono tracking-widest uppercase text-muted-foreground hover:text-foreground hover:border-primary/30 hover:from-primary/15 transition-all duration-300 group"
+          >
+            <ArrowLeft
+              size={11}
+              className="group-hover:-translate-x-1 transition-transform duration-300 text-primary"
+            />
+            <span>All Roadmaps</span>
+          </motion.button>
 
-        <motion.button
-          initial={{
-            opacity: 0,
-            x: -10,
-          }}
-          animate={{
-            opacity: 1,
-            x: 0,
-          }}
-          onClick={() => navigate("/#roadmaps")}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-transparent border border-border/50 text-[10px] font-mono tracking-widest uppercase text-muted-foreground hover:text-foreground hover:border-primary/30 hover:from-primary/15 transition-all duration-300 group mb-12"
-        >
-          <ArrowLeft size={11} className="group-hover:-translate-x-1 transition-transform duration-300 text-primary" />
-          <span>All Roadmaps</span>
-        </motion.button>
-
-        {/* Hero */}
-
-        <motion.header
-          initial={{
-            opacity: 0,
-            y: 20,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
-          transition={{
-            duration: 0.6,
-          }}
-          className="mb-16"
-        >
-          <div className="mb-6 flex items-center gap-3">
-            <span className="section-label mb-0">
-              {meta.number} — Learning Path
-            </span>
-
-            <span className="h-px w-10 bg-border" />
-          </div>
-
-          <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-            <div>
-              <h1 className="headline-lg">
-                {meta.title}
-              </h1>
-
-              <p className="mt-3 font-mono text-xs text-primary">
-                {meta.subtitle}
-              </p>
+          {isGenAi && (
+            <div className="flex items-center p-1 rounded-xl bg-card border border-border/80 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setViewMode("curriculum")}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  viewMode === "curriculum"
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                8-Week Roadmap (Deep Dive)
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("phases")}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  viewMode === "phases"
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Phases Summary
+              </button>
             </div>
-
-            <p className="max-w-lg text-sm leading-7 text-muted-foreground">
-              {meta.description}
-            </p>
-          </div>
-
-          {/* Stats */}
-
-          <div className="mt-8 flex flex-wrap items-center gap-6 border-y border-border py-5">
-            <div className="flex items-center gap-2">
-              <Route
-                size={13}
-                className="text-primary"
-              />
-
-              <span className="font-mono text-[10px] text-muted-foreground">
-                {phases.length} PHASES
-              </span>
-            </div>
-
-            <span className="text-border">/</span>
-
-            <div className="flex items-center gap-2">
-              <BookOpen
-                size={13}
-                className="text-primary"
-              />
-
-              <span className="font-mono text-[10px] text-muted-foreground">
-                {topicCount} TOPICS
-              </span>
-            </div>
-          </div>
-        </motion.header>
-
-        {/* Content */}
-
-        <div className="mx-auto max-w-4xl">
-          {loading ? (
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map(
-                (item) => (
-                  <div
-                    key={item}
-                    className="shimmer h-28"
-                  />
-                )
-              )}
-            </div>
-          ) : (
-            phases.map((phase, index) => (
-              <PhaseSection
-                key={`${phase.phase}-${index}`}
-                phase={phase}
-                index={index}
-              />
-            ))
           )}
         </div>
 
-        {/* Bottom */}
-
-        {!loading && phases.length > 0 && (
-          <div className="mx-auto mt-8 max-w-4xl border-t border-border pt-8">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <span className="mono-label">
-                  Roadmap complete
+        {/* Content View */}
+        {isGenAi && viewMode === "curriculum" ? (
+          <GenAiRoadmapView />
+        ) : (
+          <>
+            {/* Standard Hero */}
+            <motion.header
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="mb-16"
+            >
+              <div className="mb-6 flex items-center gap-3">
+                <span className="section-label mb-0">
+                  {meta.number} — Learning Path
                 </span>
+                <span className="h-px w-10 bg-border" />
+              </div>
 
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Master each phase before moving
-                  to the next.
+              <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+                <div>
+                  <h1 className="headline-lg">{meta.title}</h1>
+                  <p className="mt-3 font-mono text-xs text-primary">
+                    {meta.subtitle}
+                  </p>
+                </div>
+
+                <p className="max-w-lg text-sm leading-7 text-muted-foreground">
+                  {meta.description}
                 </p>
               </div>
 
-              <button
-                onClick={() => navigate("/#roadmaps")}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-transparent border border-border/50 text-[10px] font-mono tracking-widest uppercase text-muted-foreground hover:text-foreground hover:border-primary/30 hover:from-primary/15 transition-all duration-300 group mt-4 sm:mt-0"
-              >
-                <ArrowLeft size={11} className="group-hover:-translate-x-1 transition-transform duration-300 text-primary" />
-                <span>All Roadmaps</span>
-              </button>
+              {/* Stats */}
+              <div className="mt-8 flex flex-wrap items-center gap-6 border-y border-border py-5">
+                <div className="flex items-center gap-2">
+                  <Route size={13} className="text-primary" />
+                  <span className="font-mono text-[10px] text-muted-foreground">
+                    {phases.length} PHASES
+                  </span>
+                </div>
+
+                <span className="text-border">/</span>
+
+                <div className="flex items-center gap-2">
+                  <BookOpen size={13} className="text-primary" />
+                  <span className="font-mono text-[10px] text-muted-foreground">
+                    {topicCount} TOPICS
+                  </span>
+                </div>
+              </div>
+            </motion.header>
+
+            {/* Standard Content */}
+            <div className="mx-auto max-w-4xl">
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3, 4].map((item) => (
+                    <div key={item} className="shimmer h-28" />
+                  ))}
+                </div>
+              ) : (
+                phases.map((phase, index) => (
+                  <PhaseSection
+                    key={`${phase.phase}-${index}`}
+                    phase={phase}
+                    index={index}
+                  />
+                ))
+              )}
             </div>
-          </div>
+
+            {/* Bottom */}
+            {!loading && phases.length > 0 && (
+              <div className="mx-auto mt-8 max-w-4xl border-t border-border pt-8">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <span className="mono-label">Roadmap complete</span>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Master each phase before moving to the next.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => navigate("/#roadmaps")}
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-transparent border border-border/50 text-[10px] font-mono tracking-widest uppercase text-muted-foreground hover:text-foreground hover:border-primary/30 hover:from-primary/15 transition-all duration-300 group mt-4 sm:mt-0"
+                  >
+                    <ArrowLeft
+                      size={11}
+                      className="group-hover:-translate-x-1 transition-transform duration-300 text-primary"
+                    />
+                    <span>All Roadmaps</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
-      </div>
-    </main>
+      </main>
+
+      <SiteFooter short />
+    </div>
   );
 }

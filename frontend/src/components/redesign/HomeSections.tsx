@@ -592,7 +592,7 @@ const PATHS = [
   { key: 'RL', title: 'Reinforcement Learning', sub: 'Agents & environments', slug: 'rl' },
   { key: 'NLP', title: 'Natural Language Processing', sub: 'Text & language', slug: 'nlp' },
   { key: 'TRANSFORMER', title: 'Transformers', sub: 'Attention, end to end', slug: 'transformers' },
-  { key: 'GENAI', title: 'Generative AI', sub: 'Foundation models & RAG', slug: 'genai' },
+  { key: 'GENAI', title: 'GenAI + Agents', sub: '8-week study roadmap', slug: 'genai' },
   { key: 'LLM', title: 'Large Language Models', sub: 'Training to inference', slug: 'llm' },
   { key: 'AGENTIC', title: 'Agentic AI', sub: 'Tools, memory, multi-agent', slug: 'agentic-ai' },
 ];
