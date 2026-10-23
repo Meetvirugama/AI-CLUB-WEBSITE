@@ -350,70 +350,55 @@ export default function GenAiRoadmapView() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {GENAI_ROADMAP_STAGES.map((stage) => {
             const isStageActive = stage.weeks.includes(selectedWeekNum);
+            const stageWeeks = GENAI_ROADMAP_WEEKS.filter((w) => stage.weeks.includes(w.weekNumber));
+            const totalStageTasks = stageWeeks.reduce((acc, w) => acc + w.topics.length + w.buildTasks.length, 0);
+            const completedStageTasks = stageWeeks.reduce(
+              (acc, w) => acc + getWeekProgress(w.weekNumber).completed,
+              0
+            );
+            const stagePct = totalStageTasks ? Math.round((completedStageTasks / totalStageTasks) * 100) : 0;
+
             return (
               <div
                 key={stage.number}
-                className={`relative overflow-hidden rounded-2xl border p-4 transition-all duration-300 ${
+                onClick={() => {
+                  setSelectedWeekNum(stage.weeks[0]);
+                  setActiveTab("weekly");
+                }}
+                className={`group relative overflow-hidden rounded-2xl border p-5 transition-all duration-300 cursor-pointer ${
                   isStageActive
-                    ? "border-rd-fg/30 bg-rd-card shadow-lg ring-1 ring-primary/20"
-                    : "border-rd-line bg-rd-bg-2/50 hover:border-rd-line/80"
+                    ? "border-primary/60 bg-rd-card shadow-xl ring-1 ring-primary/30"
+                    : "border-rd-line bg-rd-bg-2/50 hover:border-rd-line/80 hover:bg-rd-card"
                 }`}
               >
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-3">
                   <span
-                    className="rd-mono text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: `${stage.color}15`, color: stage.color }}
+                    className="rd-mono text-xs font-bold px-3 py-1 rounded-full"
+                    style={{ backgroundColor: `${stage.color}18`, color: stage.color }}
                   >
                     STAGE 0{stage.number}
                   </span>
-                  <span className="rd-mono text-[10px] text-rd-faint">{stage.subtitle}</span>
+                  <span className="rd-mono text-xs font-semibold text-rd-muted">{stage.subtitle}</span>
                 </div>
 
-                <h3 className="text-sm font-semibold text-rd-fg">{stage.title}</h3>
-                <p className="mt-1 text-xs text-rd-muted leading-relaxed line-clamp-2">
+                <h3 className="text-base font-bold text-rd-fg group-hover:text-primary transition-colors">
+                  {stage.title}
+                </h3>
+                <p className="mt-1.5 text-xs sm:text-sm text-rd-muted leading-relaxed line-clamp-2">
                   {stage.description}
                 </p>
 
-                <div className="mt-3 flex items-center gap-1.5 pt-2 border-t border-rd-line/60">
-                  {stage.weeks.map((wNum) => {
-                    const st = getWeekProgress(wNum);
-                    const isSelected = selectedWeekNum === wNum;
-                    return (
-                      <button
-                        key={wNum}
-                        type="button"
-                        onClick={() => {
-                          setSelectedWeekNum(wNum);
-                          setActiveTab("weekly");
-                        }}
-                        style={
-                          isSelected
-                            ? { backgroundColor: stage.color, color: "#ffffff", borderColor: stage.color }
-                            : undefined
-                        }
-                        className={`flex-1 flex items-center justify-between px-2 py-1 rounded-lg text-[10px] rd-mono font-medium transition-all ${
-                          isSelected
-                            ? "shadow-sm font-semibold"
-                            : "bg-rd-card hover:bg-rd-line/50 text-rd-muted hover:text-rd-fg border border-rd-line"
-                        }`}
-                      >
-                        <span className="flex items-center gap-1">
-                          <span
-                            className="h-1.5 w-1.5 rounded-full shrink-0"
-                            style={{ backgroundColor: isSelected ? "#ffffff" : stage.color }}
-                          />
-                          <span>W{wNum}</span>
-                        </span>
-                        {st.pct === 100 ? (
-                          <CheckCircle2 size={10} className={isSelected ? "text-white" : "text-emerald-400"} />
-                        ) : st.completed > 0 ? (
-                          <span className={`text-[9px] ${isSelected ? "text-white/90" : "opacity-80"}`}>
-                            {st.pct}%
-                          </span>
-                        ) : null}
-                      </button>
-                    );
-                  })}
+                <div className="mt-4 pt-3 border-t border-rd-line/60 flex items-center justify-between">
+                  <span className="text-xs rd-mono font-medium text-rd-muted">
+                    {stageWeeks.length} Weeks · 2 Capstones
+                  </span>
+                  {stagePct > 0 ? (
+                    <span className="text-xs rd-mono font-semibold text-emerald-400">{stagePct}% Done</span>
+                  ) : (
+                    <span className="text-xs rd-mono text-rd-muted group-hover:text-primary transition-colors">
+                      {isStageActive ? "Active Stage" : "Jump to Stage →"}
+                    </span>
+                  )}
                 </div>
               </div>
             );
@@ -514,40 +499,49 @@ export default function GenAiRoadmapView() {
           </div>
         </div>
 
-        {/* Week Selector Pills (Shown when in Weekly Focus tab) */}
+        {/* Sole, High-Visibility Week Selector Grid */}
         {activeTab === "weekly" && (
-          <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1 pt-1 no-scrollbar border-t border-rd-line/50">
-            <span className="shrink-0 rd-mono text-[9.5px] text-rd-faint mr-1">WEEK:</span>
-            {GENAI_ROADMAP_WEEKS.map((w) => {
-              const st = getWeekProgress(w.weekNumber);
-              const isSelected = selectedWeekNum === w.weekNumber;
-              return (
-                <button
-                  key={w.id}
-                  type="button"
-                  onClick={() => setSelectedWeekNum(w.weekNumber)}
-                  className={`shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all ${
-                    isSelected
-                      ? "border-rd-fg/30 bg-rd-fg text-rd-card font-semibold shadow-sm"
-                      : "border-rd-line bg-rd-bg-2 hover:border-rd-fg/20 text-rd-muted hover:text-rd-fg"
-                  }`}
-                >
-                  <span
-                    className="h-2 w-2 rounded-full shrink-0"
-                    style={{ backgroundColor: w.accentColor }}
-                  />
-                  <span className="rd-mono font-bold text-[10.5px]">W0{w.weekNumber}</span>
-                  <span className="hidden sm:inline font-medium text-xs truncate max-w-[140px]">{w.title}</span>
-                  {st.pct === 100 ? (
-                    <CheckCircle2 size={12} className={isSelected ? "text-emerald-300" : "text-emerald-400"} />
-                  ) : st.completed > 0 ? (
-                    <span className={`text-[9px] rd-mono ${isSelected ? "text-rd-card/70" : "text-primary"}`}>
-                      {st.completed}/{st.total}
+          <div className="mt-3 pt-3 border-t border-rd-line/60">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+              {GENAI_ROADMAP_WEEKS.map((w) => {
+                const st = getWeekProgress(w.weekNumber);
+                const isSelected = selectedWeekNum === w.weekNumber;
+                return (
+                  <button
+                    key={w.id}
+                    type="button"
+                    onClick={() => setSelectedWeekNum(w.weekNumber)}
+                    className={`flex flex-col text-left p-2.5 rounded-xl border transition-all ${
+                      isSelected
+                        ? "border-rd-fg/40 bg-rd-bg shadow-md ring-1 ring-primary/40 text-rd-fg"
+                        : "border-rd-line bg-rd-bg-2 hover:border-rd-fg/30 text-rd-muted hover:text-rd-fg"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="flex items-center gap-1.5">
+                        <span
+                          className="h-2 w-2 rounded-full shrink-0"
+                          style={{ backgroundColor: w.accentColor }}
+                        />
+                        <span className={`rd-mono text-xs font-bold ${isSelected ? "text-primary" : "text-rd-fg"}`}>
+                          W0{w.weekNumber}
+                        </span>
+                      </span>
+                      {st.pct === 100 ? (
+                        <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
+                      ) : st.completed > 0 ? (
+                        <span className="text-[10px] rd-mono font-semibold text-primary">
+                          {st.completed}/{st.total}
+                        </span>
+                      ) : null}
+                    </div>
+                    <span className="text-xs font-semibold text-rd-fg truncate">
+                      {w.title.split(":")[0]}
                     </span>
-                  ) : null}
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -558,35 +552,35 @@ export default function GenAiRoadmapView() {
           <article className="rounded-[28px] border border-rd-line bg-rd-card p-6 md:p-8 shadow-xl">
             {/* Week Headline & Mission Banner */}
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-6 border-b border-rd-line">
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className="rd-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-                    style={{ backgroundColor: `${activeWeek.accentColor}18`, color: activeWeek.accentColor }}
+                    className="rd-mono text-xs font-bold px-3 py-1 rounded-full"
+                    style={{ backgroundColor: `${activeWeek.accentColor}20`, color: activeWeek.accentColor }}
                   >
                     {activeWeek.badge}
                   </span>
                   <span className="text-rd-line">/</span>
-                  <span className="rd-mono text-[10px] text-rd-faint">{activeWeek.stageName}</span>
+                  <span className="rd-mono text-xs font-semibold text-rd-muted">{activeWeek.stageName}</span>
                   <span className="text-rd-line">/</span>
-                  <span className="inline-flex items-center gap-1 text-[10px] rd-mono text-rd-muted">
-                    <Clock size={11} /> {activeWeek.estHours}
+                  <span className="inline-flex items-center gap-1.5 text-xs rd-mono font-medium text-rd-muted">
+                    <Clock size={13} className="text-primary" /> {activeWeek.estHours}
                   </span>
                 </div>
 
-                <h2 className="rd-display text-2xl sm:text-3xl font-medium text-rd-fg">
+                <h2 className="rd-display text-2xl sm:text-3xl md:text-4xl font-bold text-rd-fg tracking-tight">
                   {activeWeek.title}
                 </h2>
 
-                <p className="text-sm text-rd-muted max-w-2xl leading-relaxed">
+                <p className="text-sm sm:text-base text-rd-muted max-w-2xl leading-relaxed">
                   {activeWeek.description}
                 </p>
               </div>
 
               {/* Deliverable Badge & Tech Stack */}
               <div className="flex flex-col md:items-end gap-2.5 shrink-0">
-                <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold">
-                  <Trophy size={14} className="text-emerald-400" />
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs sm:text-sm font-bold">
+                  <Trophy size={16} className="text-emerald-400" />
                   <span>{activeWeek.deliverable}</span>
                 </div>
 
@@ -594,7 +588,7 @@ export default function GenAiRoadmapView() {
                   {activeWeek.techStack.map((tech) => (
                     <span
                       key={tech}
-                      className="px-2 py-0.5 rounded-lg border border-rd-line bg-rd-bg-2 rd-mono text-[9.5px] text-rd-muted"
+                      className="px-2.5 py-1 rounded-lg border border-rd-line bg-rd-bg-2 rd-mono text-xs font-semibold text-rd-fg"
                     >
                       {tech}
                     </span>
@@ -604,15 +598,15 @@ export default function GenAiRoadmapView() {
             </div>
 
             {/* Mission Objective Callout */}
-            <div className="my-6 rounded-2xl border border-rd-line bg-rd-bg-2/70 p-4 sm:p-5 flex items-start gap-3.5">
-              <div className="mt-0.5 p-2 rounded-xl bg-primary/10 text-primary shrink-0">
-                <Zap size={16} />
+            <div className="my-6 rounded-2xl border border-primary/20 bg-primary/5 p-5 flex items-start gap-4">
+              <div className="mt-0.5 p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+                <Zap size={18} />
               </div>
               <div>
-                <span className="rd-mono text-[10px] font-bold text-primary tracking-wider uppercase">
+                <span className="rd-mono text-xs font-bold text-primary tracking-wider uppercase">
                   WEEKLY MISSION & INTENT
                 </span>
-                <p className="mt-1 text-xs sm:text-sm text-rd-fg leading-relaxed">
+                <p className="mt-1.5 text-sm sm:text-base font-medium text-rd-fg leading-relaxed">
                   {activeWeek.mission}
                 </p>
               </div>
@@ -625,27 +619,27 @@ export default function GenAiRoadmapView() {
                 {/* Topics to Learn Checklist */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs font-bold rd-mono tracking-wider text-rd-fg flex items-center gap-2">
-                      <BookOpen size={13} className="text-primary" />
+                    <h3 className="text-sm font-bold rd-mono tracking-wider text-rd-fg flex items-center gap-2">
+                      <BookOpen size={15} className="text-primary" />
                       <span>THEORY & TOPICS TO MASTER</span>
                     </h3>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={toggleAllInWeek}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-rd-line bg-rd-bg-2 hover:bg-rd-card text-[10px] rd-mono text-rd-muted hover:text-rd-fg transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-rd-line bg-rd-bg-2 hover:bg-rd-card text-xs rd-mono font-medium text-rd-muted hover:text-rd-fg transition-colors"
                         title={isWeekFullyCompleted ? "Reset checkmarks for this week" : "Mark all topics & tasks done for this week"}
                       >
-                        <CheckSquare size={11} className={isWeekFullyCompleted ? "text-emerald-400" : "text-primary"} />
+                        <CheckSquare size={13} className={isWeekFullyCompleted ? "text-emerald-400" : "text-primary"} />
                         <span>{isWeekFullyCompleted ? "Reset Week" : "Mark Week Done"}</span>
                       </button>
-                      <span className="text-[10px] rd-mono text-rd-faint">
-                        {activeWeek.topics.length} CONCEPTS
+                      <span className="text-xs rd-mono text-rd-muted font-medium">
+                        {activeWeek.topics.length} TOPICS
                       </span>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     {activeWeek.topics.map((topic, i) => {
                       const itemKey = `w${activeWeek.weekNumber}-topic-${i}`;
                       const checked = !!completedItems[itemKey];
@@ -654,22 +648,22 @@ export default function GenAiRoadmapView() {
                         <div
                           key={itemKey}
                           onClick={() => toggleCheck(itemKey)}
-                          className={`group flex items-start gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
+                          className={`group flex items-start gap-3.5 p-4 rounded-2xl border transition-all cursor-pointer ${
                             checked
-                              ? "border-emerald-500/25 bg-emerald-500/5 text-rd-muted line-through decoration-emerald-500/40"
+                              ? "border-emerald-500/30 bg-emerald-500/5 text-rd-muted line-through decoration-emerald-500/50"
                               : "border-rd-line bg-rd-bg-2/50 hover:border-rd-fg/30 hover:bg-rd-card text-rd-fg"
                           }`}
                         >
                           <div className="mt-0.5 shrink-0">
                             {checked ? (
-                              <div className="h-4 w-4 rounded-md bg-emerald-400 text-black flex items-center justify-center font-bold">
-                                <Check size={11} strokeWidth={3} />
+                              <div className="h-5 w-5 rounded-lg bg-emerald-400 text-black flex items-center justify-center font-bold">
+                                <Check size={13} strokeWidth={3} />
                               </div>
                             ) : (
-                              <div className="h-4 w-4 rounded-md border border-rd-line group-hover:border-primary transition-colors" />
+                              <div className="h-5 w-5 rounded-lg border-2 border-rd-line group-hover:border-primary transition-colors" />
                             )}
                           </div>
-                          <span className="text-xs leading-relaxed">{topic}</span>
+                          <span className="text-sm font-medium leading-relaxed">{topic}</span>
                         </div>
                       );
                     })}
@@ -679,16 +673,16 @@ export default function GenAiRoadmapView() {
                 {/* Build Tasks Checklist */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs font-bold rd-mono tracking-wider text-rd-fg flex items-center gap-2">
-                      <Terminal size={13} className="text-primary" />
+                    <h3 className="text-sm font-bold rd-mono tracking-wider text-rd-fg flex items-center gap-2">
+                      <Terminal size={15} className="text-primary" />
                       <span>HANDS-ON BUILD TASKS</span>
                     </h3>
-                    <span className="text-[10px] rd-mono text-rd-faint">
+                    <span className="text-xs rd-mono text-rd-muted font-medium">
                       {activeWeek.buildTasks.length} MILESTONES
                     </span>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     {activeWeek.buildTasks.map((task, i) => {
                       const itemKey = `w${activeWeek.weekNumber}-build-${i}`;
                       const checked = !!completedItems[itemKey];
@@ -697,22 +691,22 @@ export default function GenAiRoadmapView() {
                         <div
                           key={itemKey}
                           onClick={() => toggleCheck(itemKey)}
-                          className={`group flex items-start gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
+                          className={`group flex items-start gap-3.5 p-4 rounded-2xl border transition-all cursor-pointer ${
                             checked
-                              ? "border-emerald-500/25 bg-emerald-500/5 text-rd-muted line-through decoration-emerald-500/40"
+                              ? "border-emerald-500/30 bg-emerald-500/5 text-rd-muted line-through decoration-emerald-500/50"
                               : "border-rd-line bg-rd-bg-2/50 hover:border-rd-fg/30 hover:bg-rd-card text-rd-fg"
                           }`}
                         >
                           <div className="mt-0.5 shrink-0">
                             {checked ? (
-                              <div className="h-4 w-4 rounded-md bg-emerald-400 text-black flex items-center justify-center font-bold">
-                                <Check size={11} strokeWidth={3} />
+                              <div className="h-5 w-5 rounded-lg bg-emerald-400 text-black flex items-center justify-center font-bold">
+                                <Check size={13} strokeWidth={3} />
                               </div>
                             ) : (
-                              <div className="h-4 w-4 rounded-md border border-rd-line group-hover:border-primary transition-colors" />
+                              <div className="h-5 w-5 rounded-lg border-2 border-rd-line group-hover:border-primary transition-colors" />
                             )}
                           </div>
-                          <span className="text-xs leading-relaxed font-mono">{task}</span>
+                          <span className="text-sm font-medium leading-relaxed">{task}</span>
                         </div>
                       );
                     })}
@@ -720,14 +714,14 @@ export default function GenAiRoadmapView() {
                 </div>
 
                 {/* Definition of Done Quality Box */}
-                <div className="rounded-2xl border border-rd-line bg-rd-bg-2/60 p-4">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <ShieldCheck size={15} className="text-emerald-400" />
-                    <h4 className="text-xs font-bold rd-mono text-rd-fg uppercase tracking-wider">
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ShieldCheck size={17} className="text-emerald-400" />
+                    <h4 className="text-xs font-bold rd-mono text-emerald-400 uppercase tracking-wider">
                       DEFINITION OF DONE & ACCEPTANCE CRITERIA
                     </h4>
                   </div>
-                  <p className="text-xs text-rd-muted leading-relaxed pl-6">
+                  <p className="text-sm font-medium text-rd-fg leading-relaxed pl-6">
                     {activeWeek.definitionOfDone}
                   </p>
                 </div>
@@ -737,39 +731,39 @@ export default function GenAiRoadmapView() {
               <div className="lg:col-span-5 space-y-7">
                 {/* Watch / Read / Learn Hub */}
                 <div>
-                  <h3 className="text-xs font-bold rd-mono tracking-wider text-rd-fg flex items-center gap-2 mb-3">
-                    <Bookmark size={13} className="text-primary" />
+                  <h3 className="text-sm font-bold rd-mono tracking-wider text-rd-fg flex items-center gap-2 mb-3">
+                    <Bookmark size={15} className="text-primary" />
                     <span>CURATED STUDY RESOURCES</span>
                   </h3>
 
-                  <div className="space-y-2.5">
+                  <div className="space-y-3">
                     {activeWeek.resources.map((res, i) => (
                       <div
                         key={i}
-                        className="rounded-2xl border border-rd-line bg-rd-bg-2/60 p-3.5 hover:border-rd-fg/30 hover:bg-rd-card transition-all"
+                        className="rounded-2xl border border-rd-line bg-rd-bg-2/60 p-4 hover:border-rd-fg/30 hover:bg-rd-card transition-all"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span className="rd-mono text-[9.5px] font-bold text-primary">
+                          <span className="rd-mono text-xs font-bold text-primary">
                             {res.kind}
                           </span>
                           <a
                             href={res.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-rd-faint hover:text-primary transition-colors"
+                            className="text-rd-muted hover:text-primary transition-colors"
                           >
-                            <ExternalLink size={12} />
+                            <ExternalLink size={13} />
                           </a>
                         </div>
 
-                        <h4 className="mt-1 text-xs font-semibold text-rd-fg hover:text-primary transition-colors">
+                        <h4 className="mt-1.5 text-sm sm:text-base font-semibold text-rd-fg hover:text-primary transition-colors">
                           <a href={res.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5">
                             <span>{res.title}</span>
-                            <ArrowUpRight size={11} className="shrink-0 text-rd-faint" />
+                            <ArrowUpRight size={13} className="shrink-0 text-rd-muted" />
                           </a>
                         </h4>
 
-                        <p className="mt-1 text-[11px] text-rd-muted leading-relaxed">
+                        <p className="mt-1 text-xs sm:text-sm text-rd-muted leading-relaxed">
                           {res.desc}
                         </p>
                       </div>
@@ -780,39 +774,39 @@ export default function GenAiRoadmapView() {
                 {/* Seminal Papers for this week */}
                 {activeWeek.papers && activeWeek.papers.length > 0 && (
                   <div>
-                    <h3 className="text-xs font-bold rd-mono tracking-wider text-rd-fg flex items-center gap-2 mb-3">
-                      <GraduationCap size={13} className="text-primary" />
+                    <h3 className="text-sm font-bold rd-mono tracking-wider text-rd-fg flex items-center gap-2 mb-3">
+                      <GraduationCap size={15} className="text-primary" />
                       <span>SEMINAL RESEARCH PAPERS</span>
                     </h3>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       {activeWeek.papers.map((p) => (
                         <a
                           key={p.number}
                           href={p.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="group block rounded-2xl border border-rd-line bg-rd-bg-2/60 hover:border-primary/50 hover:bg-rd-card p-3.5 transition-all"
+                          className="group block rounded-2xl border border-rd-line bg-rd-bg-2/60 hover:border-primary/50 hover:bg-rd-card p-4 transition-all"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <span className="rd-mono font-bold text-xs text-primary">
+                              <span className="rd-mono font-bold text-sm text-primary">
                                 #{p.number}
                               </span>
-                              <span className="text-xs font-semibold text-rd-fg group-hover:text-primary transition-colors">
+                              <span className="text-sm font-semibold text-rd-fg group-hover:text-primary transition-colors">
                                 {p.title}
                               </span>
                             </div>
-                            <ArrowUpRight size={12} className="text-rd-faint group-hover:text-primary group-hover:translate-x-0.5 transition-transform" />
+                            <ArrowUpRight size={14} className="text-rd-muted group-hover:text-primary group-hover:translate-x-0.5 transition-transform" />
                           </div>
 
-                          <div className="mt-1.5 flex items-center gap-2">
+                          <div className="mt-2 flex items-center gap-2">
                             {p.venue && (
-                              <span className="px-2 py-0.5 rounded-full border border-rd-line bg-rd-card rd-mono text-[9px] text-rd-muted">
+                              <span className="px-2.5 py-0.5 rounded-full border border-rd-line bg-rd-card rd-mono text-xs font-semibold text-rd-fg">
                                 {p.venue}
                               </span>
                             )}
-                            <span className="text-[11px] text-rd-muted">
+                            <span className="text-xs sm:text-sm text-rd-muted leading-relaxed">
                               {p.notes}
                             </span>
                           </div>
@@ -883,7 +877,7 @@ export default function GenAiRoadmapView() {
               <h2 className="text-base font-bold text-rd-fg">8 Capstone Projects to Build</h2>
               <p className="text-xs text-rd-muted">Every single week culminates in a concrete, runnable engineering artifact.</p>
             </div>
-            <span className="rd-mono text-xs text-primary font-semibold">100% Code-First</span>
+            <span className="rd-mono text-xs text-primary font-bold">100% Code-First</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -892,38 +886,38 @@ export default function GenAiRoadmapView() {
               return (
                 <div
                   key={w.id}
-                  className="rounded-2xl border border-rd-line bg-rd-card p-5 hover:border-rd-fg/30 transition-all flex flex-col justify-between shadow-sm"
+                  className="rounded-2xl border border-rd-line bg-rd-card p-6 hover:border-rd-fg/30 transition-all flex flex-col justify-between shadow-sm"
                 >
                   <div>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-3">
                       <span
-                        className="rd-mono text-[10px] font-bold px-2 py-0.5 rounded-full"
-                        style={{ backgroundColor: `${w.accentColor}18`, color: w.accentColor }}
+                        className="rd-mono text-xs font-bold px-3 py-1 rounded-full"
+                        style={{ backgroundColor: `${w.accentColor}20`, color: w.accentColor }}
                       >
                         WEEK 0{w.weekNumber}
                       </span>
-                      <span className="rd-mono text-[10px] text-rd-faint">{w.difficulty}</span>
+                      <span className="rd-mono text-xs font-semibold text-rd-muted">{w.difficulty}</span>
                     </div>
 
-                    <h3 className="text-base font-semibold text-rd-fg">{w.deliverableName}</h3>
-                    <p className="text-xs text-rd-muted mt-1 leading-relaxed">{w.description}</p>
+                    <h3 className="text-lg font-bold text-rd-fg">{w.deliverableName}</h3>
+                    <p className="text-sm text-rd-muted mt-1.5 leading-relaxed">{w.description}</p>
 
-                    <div className="my-3 p-3 rounded-xl bg-rd-bg-2 border border-rd-line text-xs text-rd-fg">
-                      <span className="rd-mono text-[9.5px] text-primary font-bold block mb-0.5">DEFINITION OF DONE</span>
-                      {w.definitionOfDone}
+                    <div className="my-4 p-4 rounded-xl bg-rd-bg-2 border border-rd-line text-xs sm:text-sm text-rd-fg">
+                      <span className="rd-mono text-xs text-primary font-bold block mb-1">DEFINITION OF DONE</span>
+                      <p className="leading-relaxed font-medium">{w.definitionOfDone}</p>
                     </div>
 
-                    <div className="flex flex-wrap gap-1 mt-2">
+                    <div className="flex flex-wrap gap-1.5 mt-2">
                       {w.techStack.map((tech) => (
-                        <span key={tech} className="px-2 py-0.5 rounded-md bg-rd-bg-2 rd-mono text-[9px] text-rd-muted">
+                        <span key={tech} className="px-2.5 py-1 rounded-lg bg-rd-bg-2 border border-rd-line rd-mono text-xs font-semibold text-rd-fg">
                           {tech}
                         </span>
                       ))}
                     </div>
                   </div>
 
-                  <div className="mt-5 pt-3 border-t border-rd-line flex items-center justify-between">
-                    <span className="text-xs text-rd-muted font-mono">
+                  <div className="mt-6 pt-4 border-t border-rd-line flex items-center justify-between">
+                    <span className="text-xs text-rd-muted font-mono font-medium">
                       {st.completed}/{st.total} tasks completed
                     </span>
                     <button
@@ -932,10 +926,10 @@ export default function GenAiRoadmapView() {
                         setSelectedWeekNum(w.weekNumber);
                         setActiveTab("weekly");
                       }}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                      className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
                     >
                       <span>Open Week 0{w.weekNumber}</span>
-                      <ChevronRight size={13} />
+                      <ChevronRight size={14} />
                     </button>
                   </div>
                 </div>
@@ -948,10 +942,10 @@ export default function GenAiRoadmapView() {
       {/* ─── TAB 3: 18 SEMINAL PAPERS EXPLORER ─── */}
       {activeTab === "papers" && (
         <div className="space-y-4">
-          <div className="p-4 rounded-2xl border border-rd-line bg-rd-card mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-5 rounded-2xl border border-rd-line bg-rd-card mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-base font-bold text-rd-fg">18 Seminal GenAI & Agentic AI Papers</h2>
-              <p className="text-xs text-rd-muted">Read the foundational literature from attention mechanisms to multi-agent swarms.</p>
+              <h2 className="text-lg font-bold text-rd-fg">18 Seminal GenAI & Agentic AI Papers</h2>
+              <p className="text-sm text-rd-muted mt-0.5">Read the foundational literature from attention mechanisms to multi-agent swarms.</p>
             </div>
 
             {/* Filter by Category */}
@@ -961,9 +955,9 @@ export default function GenAiRoadmapView() {
                   key={cat}
                   type="button"
                   onClick={() => setPaperFilter(cat)}
-                  className={`px-2.5 py-1 rounded-lg text-[10.5px] rd-mono font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-xs rd-mono font-semibold transition-colors ${
                     paperFilter === cat
-                      ? "bg-primary text-primary-foreground font-semibold"
+                      ? "bg-primary text-primary-foreground font-bold shadow-sm"
                       : "bg-rd-bg-2 text-rd-muted hover:text-rd-fg border border-rd-line"
                   }`}
                 >
@@ -973,40 +967,40 @@ export default function GenAiRoadmapView() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredPapers.map((paper) => (
               <a
                 key={paper.number}
                 href={paper.url}
                 target="_blank"
                 rel="noreferrer"
-                className="group rounded-2xl border border-rd-line bg-rd-card p-4 hover:border-primary/50 hover:shadow-md transition-all flex flex-col justify-between"
+                className="group rounded-2xl border border-rd-line bg-rd-card p-5 hover:border-primary/50 hover:shadow-md transition-all flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2.5">
                     <span className="rd-mono text-xs font-bold text-primary">
                       PAPER #{paper.number}
                     </span>
                     {paper.venue && (
-                      <span className="px-2 py-0.5 rounded-full border border-rd-line bg-rd-bg-2 rd-mono text-[9px] text-rd-muted">
+                      <span className="px-2.5 py-0.5 rounded-full border border-rd-line bg-rd-bg-2 rd-mono text-xs font-semibold text-rd-fg">
                         {paper.venue}
                       </span>
                     )}
                   </div>
 
-                  <h3 className="text-xs font-semibold text-rd-fg group-hover:text-primary transition-colors flex items-start gap-1">
+                  <h3 className="text-sm sm:text-base font-bold text-rd-fg group-hover:text-primary transition-colors flex items-start gap-1.5">
                     <span>{paper.title}</span>
-                    <ArrowUpRight size={11} className="shrink-0 text-rd-faint group-hover:text-primary mt-0.5" />
+                    <ArrowUpRight size={13} className="shrink-0 text-rd-muted group-hover:text-primary mt-1" />
                   </h3>
 
-                  <p className="mt-2 text-[11px] text-rd-muted leading-relaxed">
+                  <p className="mt-2 text-xs sm:text-sm text-rd-muted leading-relaxed">
                     {paper.notes}
                   </p>
                 </div>
 
-                <div className="mt-4 pt-2.5 border-t border-rd-line flex items-center justify-between text-[10px] rd-mono text-rd-faint">
+                <div className="mt-4 pt-3 border-t border-rd-line flex items-center justify-between text-xs rd-mono text-rd-muted">
                   <span>From Week 0{paper.weekNum}</span>
-                  {paper.category && <span className="text-primary">{paper.category}</span>}
+                  {paper.category && <span className="text-primary font-bold">{paper.category}</span>}
                 </div>
               </a>
             ))}
@@ -1017,38 +1011,38 @@ export default function GenAiRoadmapView() {
       {/* ─── TAB 4: 7-DAY SPRINTS COMPLETE TIMELINE ─── */}
       {activeTab === "schedules" && (
         <div className="space-y-4">
-          <div className="p-4 rounded-2xl border border-rd-line bg-rd-card mb-4 flex items-center justify-between">
+          <div className="p-5 rounded-2xl border border-rd-line bg-rd-card mb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-base font-bold text-rd-fg">Full 56-Day Implementation Schedule</h2>
-              <p className="text-xs text-rd-muted">Daily structured micro-tasks from Day 1 to Day 56.</p>
+              <h2 className="text-lg font-bold text-rd-fg">Full 56-Day Implementation Schedule</h2>
+              <p className="text-sm text-rd-muted mt-0.5">Daily structured micro-tasks from Day 1 to Day 56.</p>
             </div>
-            <span className="rd-mono text-xs text-primary font-semibold">Day 1 → Day 56</span>
+            <span className="rd-mono text-xs text-primary font-bold">Day 1 → Day 56</span>
           </div>
 
           <div className="space-y-4">
             {GENAI_ROADMAP_WEEKS.map((w) => (
-              <div key={w.id} className="rounded-2xl border border-rd-line bg-rd-card p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
+              <div key={w.id} className="rounded-2xl border border-rd-line bg-rd-card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2.5">
                     <span
-                      className="rd-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-                      style={{ backgroundColor: `${w.accentColor}18`, color: w.accentColor }}
+                      className="rd-mono text-xs font-bold px-3 py-1 rounded-full"
+                      style={{ backgroundColor: `${w.accentColor}20`, color: w.accentColor }}
                     >
                       WEEK 0{w.weekNumber}
                     </span>
-                    <h3 className="text-sm font-semibold text-rd-fg">{w.title}</h3>
+                    <h3 className="text-base font-bold text-rd-fg">{w.title}</h3>
                   </div>
-                  <span className="rd-mono text-[10px] text-rd-faint">{w.deliverable}</span>
+                  <span className="rd-mono text-xs font-semibold text-rd-muted">{w.deliverable}</span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
                   {w.dayPlan.map((d, i) => (
                     <div
                       key={i}
-                      className="p-2.5 rounded-xl border border-rd-line bg-rd-bg-2/50 text-xs"
+                      className="p-3 rounded-xl border border-rd-line bg-rd-bg-2/60 text-xs sm:text-sm"
                     >
-                      <div className="rd-mono text-[10px] font-bold text-primary">{d.day}</div>
-                      <div className="text-[11px] text-rd-muted mt-0.5 leading-snug">{d.task}</div>
+                      <div className="rd-mono text-xs font-bold text-primary">{d.day}</div>
+                      <div className="text-xs sm:text-sm font-medium text-rd-fg mt-1 leading-snug">{d.task}</div>
                     </div>
                   ))}
                 </div>
