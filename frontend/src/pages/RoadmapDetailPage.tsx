@@ -507,7 +507,7 @@ export default function RoadmapDetail() {
         )}
       </main>
 
-      <SiteFooter short />
+      {!isGenAi && <SiteFooter short />}
     </div>
   );
 }
