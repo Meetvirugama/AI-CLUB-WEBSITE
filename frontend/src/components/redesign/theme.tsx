@@ -10,8 +10,13 @@ export type Theme = 'light' | 'dark';
 const STORAGE_KEY = 'ai-club-theme';
 
 /** Only these pages are redesigned for dark mode; every other page always renders in its original light style. */
-const THEMED_PATHS = ['/', '/news', '/weekly-veneza'];
-export const isThemedPath = (pathname: string) => THEMED_PATHS.includes(pathname.replace(/\/+$/, '') || '/');
+const THEMED_PATHS = ['/', '/news', '/weekly-veneza', '/winners'];
+export const isThemedPath = (pathname: string) => {
+  const p = pathname.replace(/\/+$/, '') || '/';
+  if (THEMED_PATHS.includes(p)) return true;
+  if (p.startsWith('/roadmaps') || p.startsWith('/roadmap') || p === '/genai-roadmap') return true;
+  return false;
+};
 
 const readStoredTheme = (): Theme => {
   try {

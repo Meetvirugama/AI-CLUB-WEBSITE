@@ -23,6 +23,7 @@ export default {
         rd: {
           bg: "hsl(var(--rd-bg) / <alpha-value>)",
           bg2: "hsl(var(--rd-bg-2) / <alpha-value>)",
+          "bg-2": "hsl(var(--rd-bg-2) / <alpha-value>)",
           card: "hsl(var(--rd-card) / <alpha-value>)",
           fg: "hsl(var(--rd-fg) / <alpha-value>)",
           muted: "hsl(var(--rd-muted) / <alpha-value>)",
