@@ -42,7 +42,17 @@ export const EventWinnersFooter: React.FC = () => {
         </div>
 
         <div className="mt-12 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-mono gap-4">
-          <p>© {new Date().getFullYear()} AI Club DA-IICT · Championship Showcase</p>
+          <p>
+            © {new Date().getFullYear()} AI Club DA-IICT · Championship Showcase · Website Creator:{' '}
+            <a
+              href="https://github.com/Meetvirugama"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-300 hover:text-white transition-colors"
+            >
+              MeetVirugama
+            </a>
+          </p>
           <div className="flex items-center gap-4">
             <Link to="/" className="hover:text-slate-300 transition-colors">
               Home

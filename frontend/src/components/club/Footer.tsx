@@ -251,7 +251,21 @@ export default function Footer({ short = false }: { short?: boolean }) {
               color: 'hsl(var(--muted-foreground))',
             }}
           >
-            Built with ❤️ by the core team
+            Website Creator:{' '}
+            <a
+              href="https://github.com/Meetvirugama"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: 'hsl(var(--foreground))',
+                textDecoration: 'none',
+                transition: 'color 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(var(--primary))'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(var(--foreground))'}
+            >
+              MeetVirugama
+            </a>
           </p>
         </div>
       </div>

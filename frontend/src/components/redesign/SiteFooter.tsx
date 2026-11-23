@@ -204,7 +204,17 @@ export default function Footer({ short = false }: { short?: boolean }) {
       {/* Bottom bar */}
       <div className="rd-mono relative flex flex-col items-center justify-between gap-3 border-t border-rd-line px-5 py-5 text-[10px] text-rd-faint sm:flex-row sm:px-8">
         <span>© {new Date().getFullYear()} AI Club DAU · Dhirubhai Ambani University, Gandhinagar</span>
-        <span>Built by the core team</span>
+        <span>
+          Website Creator:{' '}
+          <a
+            href="https://github.com/Meetvirugama"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-rd-fg transition-colors hover:underline"
+          >
+            MeetVirugama
+          </a>
+        </span>
       </div>
     </footer>
   );
